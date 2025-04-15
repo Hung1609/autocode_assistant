@@ -43,6 +43,150 @@ def save_to_json(data, filename=None):
         json.dump(data, f, ensure_ascii=False, indent=2)
     return filepath
 
+# Hàm tự động làm rõ các giả định và câu hỏi
+def auto_clarify_assumptions_questions(spec_data, chosen_model):
+    try:
+        # Extract assumptions and questions from the initial spec
+        assumptions = spec_data.get("assumptions", [])
+        questions = spec_data.get("open_questions", [])
+        
+        if not assumptions and not questions:
+            return spec_data, []  # Nothing to clarify
+        
+        clarification_prompt = """
+        # Objective
+        You are an AI assistant tasked with automatically clarifying assumptions and answering open questions about a software project specification without human interaction.
+        
+        # Context
+        I have a software specification with the following assumptions and open questions that need clarification:
+        
+        Project Name: {project_name}
+        Project Overview: {overview}
+        
+        Assumptions:
+        {assumptions}
+        
+        Open Questions:
+        {questions}
+        
+        # Instructions
+        1. For each assumption, evaluate if it's reasonable based on industry standards and best practices.
+            - If reasonable, provide a brief justification
+            - If not reasonable, provide an alternative assumption with justification
+        
+        2. For each open question, provide the most reasonable answer based on:
+            - Information already present in the specification
+            - Industry standards and best practices
+            - Common user expectations for similar software
+        
+        # Output Format
+        Return a JSON object with the following structure:
+        ```json
+        {{
+          "clarified_assumptions": [
+            {{
+              "original_assumption": "Original assumption text",
+              "clarification": "Your clarification or justification",
+              "is_reasonable": true/false
+            }}
+          ],
+          "answered_questions": [
+            {{
+              "original_question": "Original question text",
+              "answer": "Your answer to the question",
+              "confidence": "High/Medium/Low"
+            }}
+          ]
+        }}
+        ```
+        """
+        
+        # Format the clarification prompt
+        formatted_prompt = clarification_prompt.format(
+            project_name=spec_data.get("project_name", "Unnamed Project"),
+            overview=spec_data.get("overview", "No overview provided"),
+            assumptions="\n".join([f"- {a}" for a in assumptions]) if assumptions else "None",
+            questions="\n".join([f"- {q}" for q in questions]) if questions else "None"
+        )
+        
+        # Get clarifications from the model
+        response = chosen_model.generate_content(formatted_prompt)
+        
+        # Parse the response
+        response_text = response.text
+        if "```json" in response_text:
+            json_text = response_text.split("```json")[1].split("```")[0].strip()
+            clarifications = json.loads(json_text)
+        else:
+            clarifications = json.loads(response_text)
+        
+        # Create a log of all clarifications made
+        clarification_log = []
+        
+        # Update assumptions with clarifications
+        updated_assumptions = []
+        for i, assumption in enumerate(assumptions):
+            if i < len(clarifications.get("clarified_assumptions", [])):
+                clarification = clarifications["clarified_assumptions"][i]
+                
+                # Log the clarification
+                clarification_log.append(f"Assumption: '{assumption}' - {clarification['clarification']}")
+                
+                if clarification.get("is_reasonable", True):
+                    # Keep the original assumption but add justification
+                    updated_assumptions.append(f"{assumption} (Justified: {clarification['clarification']})")
+                else:
+                    # Replace with the alternative assumption
+                    updated_assumptions.append(f"{clarification['clarification']} (Replaced original: {assumption})")
+            else:
+                updated_assumptions.append(assumption)
+        
+        # Update questions with answers
+        resolved_questions = []
+        remaining_questions = []
+        
+        for i, question in enumerate(questions):
+            if i < len(clarifications.get("answered_questions", [])):
+                answer = clarifications["answered_questions"][i]
+                
+                # Log the answer
+                confidence = answer.get("confidence", "Medium")
+                clarification_log.append(f"Question: '{question}' - Answered with {confidence} confidence: {answer['answer']}")
+                
+                # Add to resolved questions
+                resolved_questions.append({
+                    "question": question,
+                    "answer": answer['answer'],
+                    "confidence": confidence
+                })
+            else:
+                remaining_questions.append(question)
+        
+        # Update the specification with clarified information
+        updated_spec = spec_data.copy()
+        updated_spec["assumptions"] = updated_assumptions
+        updated_spec["open_questions"] = remaining_questions
+        
+        # Add resolved questions to the spec
+        if resolved_questions:
+            updated_spec["resolved_questions"] = resolved_questions
+        
+        # Add clarification metadata
+        if "metadata" not in updated_spec:
+            updated_spec["metadata"] = {}
+        
+        updated_spec["metadata"]["auto_clarification"] = {
+            "timestamp": datetime.now().isoformat(),
+            "assumptions_clarified": len(clarifications.get("clarified_assumptions", [])),
+            "questions_answered": len(clarifications.get("answered_questions", []))
+        }
+        
+        return updated_spec, clarification_log
+        
+    except Exception as e:
+        st.error(f"Error during automatic clarification: {str(e)}")
+        return spec_data, [f"Error during clarification: {str(e)}"]
+
 # Hàm sinh đặc tả
 def generate_spec(user_description, prompt_template):
     try:
@@ -73,6 +217,13 @@ def generate_spec(user_description, prompt_template):
                 "chosen_model": "gemini-2.0-flash",
                 "original_description": user_description
             }
+            
+            # Automatically clarify assumptions and questions
+            result, clarification_log = auto_clarify_assumptions_questions(result, chosen_model)
+            
+            # Add clarification log to metadata
+            if clarification_log:
+                result["metadata"]["clarification_log"] = clarification_log
             
             return result
             
@@ -226,7 +377,7 @@ def main():
                 if not user_description:
                     st.warning("Please enter a description of your software requirements.")
                 else:
-                    with st.spinner("Generating technical specification..."):
+                    with st.spinner("Generating technical specification and automatically clarifying assumptions and questions..."):
                         spec_data = generate_spec(user_description, st.session_state.prompt_template)
                         
                         if spec_data:
@@ -240,7 +391,15 @@ def main():
                             st.session_state.spec_data = spec_data
                             st.session_state.filepath = filepath
                             
-                            st.success(f"Specification generated and saved to {filepath}")
+                            # Show success message with clarification info
+                            if "metadata" in spec_data and "auto_clarification" in spec_data["metadata"]:
+                                auto_clarify = spec_data["metadata"]["auto_clarification"]
+                                assumptions_clarified = auto_clarify.get("assumptions_clarified", 0)
+                                questions_answered = auto_clarify.get("questions_answered", 0)
+                                
+                                st.success(f"Specification generated and saved to {filepath}. Automatically clarified {assumptions_clarified} assumptions and answered {questions_answered} questions.")
+                            else:
+                                st.success(f"Specification generated and saved to {filepath}")
         
         with col2:
             st.subheader("Generated Files")
@@ -387,6 +546,19 @@ def main():
                         st.markdown(f"- {question}")
                 else:
                     st.info("No open questions specified.")
+                
+                # Display resolved questions if available
+                if "resolved_questions" in spec_data and spec_data["resolved_questions"]:
+                    st.markdown("### Automatically Resolved Questions")
+                    for item in spec_data["resolved_questions"]:
+                        confidence_color = {
+                            "High": "green",
+                            "Medium": "orange",
+                            "Low": "red"
+                        }.get(item.get("confidence", "Medium"), "orange")
+                        
+                        st.markdown(f"- **Q:** {item['question']}")
+                        st.markdown(f"  **A:** {item['answer']} <span style='color:{confidence_color}'>(Confidence: {item.get('confidence', 'Medium')})</span>", unsafe_allow_html=True)
             
             # Raw JSON
             with spec_tabs[5]:
@@ -416,6 +588,13 @@ def main():
                         markdown_content += f"### {req.get('id')} - {req.get('title')}\n"
                         markdown_content += f"- Description: {req.get('description')}\n"
                         markdown_content += f"- Priority: {req.get('priority')}\n\n"
+                
+                # Add resolved questions to markdown
+                if "resolved_questions" in spec_data and spec_data["resolved_questions"]:
+                    markdown_content += "## Automatically Resolved Questions\n\n"
+                    for item in spec_data["resolved_questions"]:
+                        markdown_content += f"**Q:** {item['question']}\n"
+                        markdown_content += f"**A:** {item['answer']} (Confidence: {item.get('confidence', 'Medium')})\n\n"
                 
                 st.download_button(
                     label="Download as Markdown",
