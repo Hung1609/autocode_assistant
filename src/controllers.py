@@ -1,47 +1,28 @@
-"""
-This module contains controller functions that coordinate between models and views.
-"""
+# Control models and views.
 
-import streamlit as st
 from datetime import datetime
-
-from .models import SpecificationGenerator
-from .utils import save_to_json, get_timestamp_filename, load_json_file
+from models import SpecificationGenerator
+from utils import save_data_to_json_file, get_filename, load_json_file
 
 class SpecificationController:
-    """
-    Controller class for managing specification generation and handling.
-    """
-    
     def __init__(self):
-        """Initialize the specification controller."""
         self.generator = SpecificationGenerator()
     
     def generate_specification(self, user_description, custom_prompt=None):
-        """
-        Generate a specification based on user description.
-        
-        Args:
-            user_description (str): The user's description of the software requirements.
-            custom_prompt (str, optional): A custom prompt template. Defaults to None.
-            
-        Returns:
-            tuple: A tuple containing (success, result, filepath or error message).
-        """
         if not user_description:
             return False, None, "Please enter a description of your software requirements."
         
         try:
             # Generate the specification
-            spec_data = self.generator.generate_spec(user_description, custom_prompt)
+            spec_data = self.generator.generate_specification(user_description, custom_prompt)
             
             if not spec_data:
                 return False, None, "Failed to generate specification."
             
             # Save to JSON file
             project_name = spec_data.get("project_name", "unnamed_project")
-            filename = get_timestamp_filename(project_name=project_name)
-            filepath = save_to_json(spec_data, filename)
+            filename = get_filename(project_name=project_name)
+            filepath = save_data_to_json_file(spec_data, filename)
             
             # Create success message
             if "metadata" in spec_data and "auto_clarification" in spec_data["metadata"]:

@@ -1,7 +1,3 @@
-"""
-This module contains all prompt templates used in the application.
-"""
-
 # Main specification generation prompt template
 SPECIFICATION_PROMPT = """
 # Objective

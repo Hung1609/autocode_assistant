@@ -1,39 +1,15 @@
-"""
-This module contains data models and business logic for the application.
-"""
-
 import json
 from datetime import datetime
 import streamlit as st
 
-from .config import get_gemini_model
-from .prompts import SPECIFICATION_PROMPT, CLARIFICATION_PROMPT
+from config import get_gemini_model
+from prompts import SPECIFICATION_PROMPT, CLARIFICATION_PROMPT
 
 class SpecificationGenerator:
-    """
-    Class responsible for generating software specifications.
-    """
-    
-    def __init__(self, model_name='gemini-2.0-flash'):
-        """
-        Initialize the specification generator.
-        
-        Args:
-            model_name (str, optional): The name of the model to use. Defaults to 'gemini-2.0-flash'.
-        """
+    def __init__(self, model_name='gemini-2.0-flash'): #change model here
         self.model = get_gemini_model(model_name)
     
-    def generate_spec(self, user_description, prompt_template=None):
-        """
-        Generate a specification based on a user description.
-        
-        Args:
-            user_description (str): The user's description of the software requirements.
-            prompt_template (str, optional): The prompt template to use. Defaults to None.
-            
-        Returns:
-            dict: The generated specification, or None if an error occurred.
-        """
+    def generate_specification(self, user_description, prompt_template=None):
         try:
             if prompt_template is None:
                 prompt_template = SPECIFICATION_PROMPT
@@ -44,7 +20,7 @@ class SpecificationGenerator:
             # Parse JSON response
             try:
                 response_text = response.text
-                if "```json" in response_text:
+                if "```json" in response_text: # if response is markdown
                     json_text = response_text.split("```json")[1].split("```")[0].strip()
                     result = json.loads(json_text)
                 else:
@@ -79,15 +55,6 @@ class SpecificationGenerator:
             return None
     
     def auto_clarify_assumptions_questions(self, spec_data):
-        """
-        Automatically clarify assumptions and answer questions in the specification.
-        
-        Args:
-            spec_data (dict): The specification data.
-            
-        Returns:
-            tuple: A tuple containing the updated specification and a log of clarifications.
-        """
         try:
             # Extract assumptions and questions from the initial spec
             assumptions = spec_data.get("assumptions", [])

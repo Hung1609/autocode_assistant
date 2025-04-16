@@ -6,8 +6,8 @@ import streamlit as st
 import json
 from datetime import datetime
 
-from .controllers import SpecificationController
-from .utils import get_output_files, load_json_file
+from controllers import SpecificationController
+from utils import get_output_files, load_json_file
 
 class SpecificationView:
     """
