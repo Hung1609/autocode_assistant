@@ -8,6 +8,7 @@ from views import SpecificationView
 
 def main():
     load_environment()
+    st.set_option('client.showErrorDetails', True)
     
     if not configure_genai():
         st.error("Failed to configure Gemini API. Please check your API key.")
