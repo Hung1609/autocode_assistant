@@ -1,7 +1,3 @@
-"""
-This is the main entry point for the Streamlit application.
-"""
-
 import streamlit as st
 from config import load_environment, configure_genai
 from views import SpecificationView

@@ -1,7 +1,3 @@
-"""
-This module contains UI components and presentation logic for the application.
-"""
-
 import streamlit as st
 import json
 from datetime import datetime
@@ -10,18 +6,10 @@ from controllers import SpecificationController
 from utils import get_output_files, load_json_file
 
 class SpecificationView:
-    """
-    View class for displaying the specification generator UI.
-    """
-    
     def __init__(self):
-        """Initialize the specification view."""
         self.controller = SpecificationController()
     
     def display_ui(self):
-        """
-        Display the main UI for the specification generator.
-        """
         st.set_page_config(page_title="Module 1 - Software Requirements Specification Generator", layout="wide")
         st.title("Module 1 - Software Requirements Specification Generator")
         st.markdown("This tool converts natural language descriptions into structured technical specifications.")
@@ -45,9 +33,6 @@ class SpecificationView:
         self.display_specification()
     
     def display_generation_tab(self):
-        """
-        Display the tab for generating specifications.
-        """
         col1, col2 = st.columns([2, 1])
         
         with col1:
@@ -87,9 +72,6 @@ class SpecificationView:
             self.display_generated_files()
     
     def display_generated_files(self):
-        """
-        Display a list of generated files and allow the user to load them.
-        """
         files = get_output_files()
         
         if files:
@@ -109,9 +91,6 @@ class SpecificationView:
             st.info("No generated files yet.")
     
     def display_settings_tab(self):
-        """
-        Display the tab for customizing settings.
-        """
         st.subheader("Customize Prompt Template")
         custom_prompt = st.text_area(
             "Edit the prompt template used for generation",
@@ -124,9 +103,6 @@ class SpecificationView:
             st.success("Prompt template updated")
     
     def display_specification(self):
-        """
-        Display the generated specification.
-        """
         if "spec_data" in st.session_state:
             st.markdown("---")
             st.subheader("Generated Specification")

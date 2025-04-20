@@ -40,15 +40,6 @@ class SpecificationController:
             return False, None, f"Error generating specification: {str(e)}"
     
     def load_specification(self, filepath):
-        """
-        Load a specification from a file.
-        
-        Args:
-            filepath (str): The path to the specification file.
-            
-        Returns:
-            tuple: A tuple containing (success, loaded data, message).
-        """
         try:
             file_data = load_json_file(filepath)
             return True, file_data, f"Loaded specification from {filepath}"
@@ -56,15 +47,6 @@ class SpecificationController:
             return False, None, f"Error loading specification: {str(e)}"
     
     def export_to_markdown(self, spec_data):
-        """
-        Export specification data to markdown format.
-        
-        Args:
-            spec_data (dict): The specification data.
-            
-        Returns:
-            str: The markdown content.
-        """
         markdown_content = []
     
         # Project Overview
