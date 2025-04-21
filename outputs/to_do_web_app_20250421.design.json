@@ -1,0 +1,224 @@
+{
+  "system_Architecture": {
+    "description": "Client-server architecture.  A React frontend communicates with a Flask backend API, which interacts with a PostgreSQL database.",
+    "components": [
+      {
+        "name": "Web Frontend",
+        "description": "Provides a user interface for creating and viewing tasks.",
+        "technologies": [
+          "React",
+          "JavaScript"
+        ],
+        "inputs": [
+          "User interactions (task creation, viewing task list)"
+        ],
+        "outputs": [
+          "API requests to the backend"
+        ]
+      },
+      {
+        "name": "Backend API",
+        "description": "Handles API requests from the frontend, interacts with the database, and returns responses.",
+        "technologies": [
+          "Python",
+          "Flask",
+          "RESTful"
+        ],
+        "inputs": [
+          "HTTP requests from the frontend"
+        ],
+        "outputs": [
+          "HTTP responses to the frontend, database queries"
+        ]
+      },
+      {
+        "name": "Database",
+        "description": "Stores task data.",
+        "technologies": [
+          "PostgreSQL",
+          "SQL"
+        ],
+        "inputs": [
+          "Data read/write requests from the backend"
+        ],
+        "outputs": [
+          "Stored data, query results"
+        ]
+      }
+    ]
+  },
+  "data_Design": {
+    "data_Flow_Description": "User input on the frontend is sent as an API request to the backend. The backend processes the request, interacts with the PostgreSQL database to perform CRUD operations, and sends the results back to the frontend for display.",
+    "storage_Type": "SQL",
+    "database_Type": "PostgreSQL",
+    "data_Models": [
+      {
+        "model_Name": "Task",
+        "storage_Location": "PostgreSQL table",
+        "description": "Represents a single to-do task.",
+        "fields": [
+          {
+            "name": "task_id",
+            "type": "SERIAL PRIMARY KEY",
+            "description": "Unique identifier for the task.",
+            "constraints": [
+              "primary_key: true"
+            ]
+          },
+          {
+            "name": "title",
+            "type": "VARCHAR(255)",
+            "description": "Title of the task.",
+            "constraints": [
+              "required"
+            ]
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "description": "Timestamp of task creation.",
+            "constraints": [
+              "default: NOW()"
+            ]
+          }
+        ],
+        "relationships": []
+      }
+    ]
+  },
+  "interface_Design": {
+    "api_Specifications": [
+      {
+        "endpoint": "/api/tasks",
+        "method": "GET",
+        "description": "Retrieve a list of all tasks.",
+        "request_Format": {
+          "params": [],
+          "query": [],
+          "body_Schema": {}
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "Returns a JSON array of task objects."
+          },
+          "error_Status": [
+            500
+          ],
+          "error_Schema": {
+            "description": "{ \"error\": \"Error message\" }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "NFR-003"
+        ]
+      },
+      {
+        "endpoint": "/api/tasks",
+        "method": "POST",
+        "description": "Create a new task.",
+        "request_Format": {
+          "params": [],
+          "query": [],
+          "body_Schema": {
+            "description": "{ \"title\": \"string\" }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 201,
+          "success_Schema": {
+            "description": "Returns the newly created task object."
+          },
+          "error_Status": [
+            400,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ \"error\": \"Error message\" }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "NFR-001",
+          "NFR-003"
+        ]
+      }
+    ],
+    "ui_Interaction_Notes": "The frontend displays a list of tasks fetched from GET /api/tasks.  A form allows users to create tasks via POST /api/tasks."
+  },
+  "workflow_Interaction": [
+    {
+      "workflow_Name": "Task Creation",
+      "description": "1. User enters task title in the frontend form. 2. Frontend sends POST request to /api/tasks with the title. 3. Backend API receives the request, validates the title. 4. Backend inserts the task into the PostgreSQL database. 5. Backend returns the created task to the frontend. 6. Frontend updates the task list.",
+      "related_Requirements": [
+        "FR-001"
+      ]
+    },
+    {
+      "workflow_Name": "Task Viewing",
+      "description": "1. Frontend sends a GET request to /api/tasks. 2. Backend receives the request and queries the PostgreSQL database for all tasks. 3. Backend returns a JSON array of tasks to the frontend. 4. Frontend displays the tasks in a list.",
+      "related_Requirements": [
+        "FR-002"
+      ]
+    }
+  ],
+  "folder_Structure": {
+    "description": "Standard Flask and Create React App structure.",
+    "structure": [
+      {
+        "path": "/backend",
+        "description": "Backend application"
+      },
+      {
+        "path": "/backend/app.py",
+        "description": "Main application file"
+      },
+      {
+        "path": "/backend/models.py",
+        "description": "Database models"
+      },
+      {
+        "path": "/backend/routes.py",
+        "description": "API routes"
+      },
+      {
+        "path": "/frontend",
+        "description": "Frontend application"
+      },
+      {
+        "path": "/frontend/public",
+        "description": "Static assets"
+      },
+      {
+        "path": "/frontend/src",
+        "description": "Source code"
+      },
+      {
+        "path": "/frontend/src/components",
+        "description": "React components"
+      },
+      {
+        "path": "/frontend/src/App.js",
+        "description": "Main App component"
+      }
+    ]
+  },
+  "dependencies": {
+    "backend": [
+      "Flask",
+      "psycopg2-binary"
+    ],
+    "frontend": [
+      "react",
+      "react-dom",
+      "axios"
+    ]
+  },
+  "metadata": {
+    "generation_step": "design",
+    "timestamp": "2025-04-21T09:44:01.118702",
+    "model_used": "gemini-1.5-flash",
+    "source_specification_timestamp": "2025-04-21T09:43:26.892335"
+  }
+}
