@@ -13,39 +13,66 @@ class SpecificationController:
             return False, None, "Please enter a description of your software requirements."
         
         try:
-            # Generate the specification
+            # Generate the specification (model method now returns data or None)
             spec_data = self.generator.generate_specification(user_description, custom_prompt)
-            
-            if not spec_data:
-                return False, None, "Failed to generate specification."
-            
+
+            if spec_data is None:
+                # Error messages are now handled within the model/view via st.error
+                return None # Indicate failure
+
             # Save to JSON file
-            project_name = spec_data.get("project_name", "unnamed_project")
-            filename = get_filename(project_name=project_name)
+            project_name = "unnamed_project"
+            if isinstance(spec_data, dict) and "project_Overview" in spec_data and "project_Name" in spec_data["project_Overview"]:
+                 project_name = spec_data["project_Overview"]["project_Name"] or project_name
+
+            filename = get_filename(project_name=project_name, extension="spec.json") # Add suffix
             filepath = save_data_to_json_file(spec_data, filename)
-            
-            # Create success message
-            if "metadata" in spec_data and "auto_clarification" in spec_data["metadata"]:
-                auto_clarify = spec_data["metadata"]["auto_clarification"]
-                assumptions_clarified = auto_clarify.get("assumptions_clarified", 0)
-                questions_answered = auto_clarify.get("questions_answered", 0)
-                
-                message = f"Specification generated and saved to {filepath}. Automatically clarified {assumptions_clarified} assumptions and answered {questions_answered} questions."
-            else:
-                message = f"Specification generated and saved to {filepath}"
-            
-            return True, spec_data, message
-            
+
+            return spec_data
+
         except Exception as e:
-            return False, None, f"Error generating specification: {str(e)}"
+            # Log error or display in Streamlit? View handles st.error now.
+            print(f"Error in controller generate_specification: {str(e)}")
+            return None # Indicate failure
     
     def load_specification(self, filepath):
         try:
             file_data = load_json_file(filepath)
-            return True, file_data, f"Loaded specification from {filepath}"
+        
+            file_data = load_json_file(filepath)
+            return file_data # Return data directly, message handled in view
         except Exception as e:
-            return False, None, f"Error loading specification: {str(e)}"
-    
+            print(f"Error loading specification: {str(e)}")
+            return None # Indicate failure
+
+    def generate_design_specification(self, spec_data):
+        """Generates and saves the design specification based on the provided spec data."""
+        if not spec_data or not isinstance(spec_data, dict):
+            return None # Indicate failure
+
+        try:
+            # Generate the design specification using the model
+            design_data = self.generator.generate_design(spec_data)
+
+            if design_data is None:
+                # Error messages handled within the model/view
+                return None # Indicate failure
+
+            # Save to JSON file
+            project_name = "unnamed_project"
+            if "project_Overview" in spec_data and "project_Name" in spec_data["project_Overview"]:
+                 project_name = spec_data["project_Overview"]["project_Name"] or project_name
+
+            filename = get_filename(project_name=project_name, extension="design.json") # Add suffix
+            filepath = save_data_to_json_file(design_data, filename)
+
+            # Return the generated data
+            return design_data
+
+        except Exception as e:
+            print(f"Error in controller generate_design_specification: {str(e)}")
+            return None # Indicate failure
+
     def export_to_markdown(self, spec_data):
         markdown_content = []
     

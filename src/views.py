@@ -1,380 +1,301 @@
 import streamlit as st
 import json
-from datetime import datetime
-
 from controllers import SpecificationController
-from utils import get_output_files, load_json_file
+# Removed unused imports: datetime, get_output_files, load_json_file
 
 class SpecificationView:
     def __init__(self):
         self.controller = SpecificationController()
-    
-    def display_ui(self):
-        st.set_page_config(page_title="Module 1 - Software Requirements Specification Generator", layout="wide")
-        st.title("Module 1 - Software Requirements Specification Generator")
-        st.markdown("This tool converts natural language descriptions into structured technical specifications.")
-        
-        # Sidebar
-        with st.sidebar:
-            st.header("Configuration")
-            st.markdown("---")
-            st.markdown("This module is using Gemini API to process.")
-        
-        # Main content area with two tabs
-        tab1, tab2 = st.tabs(["Generate Specification", "Advanced Settings"])
-        
-        with tab1:
-            self.display_generation_tab()
-        
-        with tab2:
-            self.display_settings_tab()
-        
-        # Display the generated specification
-        self.display_specification()
-    
-    def display_generation_tab(self):
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            st.subheader("Enter Software Requirements")
-            user_description = st.text_area(
-                "Describe your software requirements",
-                height=200,
-                placeholder="E.g., Create a task management app where users can create projects, add tasks with deadlines, and invite team members to collaborate"
-            )
-            
-            # Generate button
-            if st.button("Generate Specification", use_container_width=True):
-                with st.spinner("Generating specification..."):
-                    try:
-                        # Show progress
-                        progress = st.progress(0)
-                        
-                        # Generate specification
-                        spec_data = self.controller.generate_specification(
-                            user_description, 
-                            st.session_state.get("prompt_template")
-                        )
-                        
-                        progress.progress(100)
-                        
-                        if spec_data:
-                            st.session_state.spec_data = spec_data
-                            st.success("Specification generated successfully!")
-                        else:
-                            st.error("Failed to generate specification. Please check the logs for details.")
-                            
-                    except Exception as e:
-                        st.error(f"Error during generation: {str(e)}")
-        
-        with col2:
-            st.subheader("Generated Files")
-            self.display_generated_files()
-    
-    def display_generated_files(self):
-        files = get_output_files()
-        
-        if files:
-            selected_file = st.selectbox("Select a file to view", files)
-            
-            if st.button("Load Selected File", use_container_width=True):
-                # Load specification using the controller
-                file_path = f"outputs/{selected_file}"
-                success, file_data, message = self.controller.load_specification(file_path)
-                
-                if success:
-                    st.session_state.spec_data = file_data
-                    st.success(message)
-                else:
-                    st.error(message)
-        else:
-            st.info("No generated files yet.")
-    
-    def display_settings_tab(self):
-        st.subheader("Customize Prompt Template")
-        custom_prompt = st.text_area(
-            "Edit the prompt template used for generation",
-            value=st.session_state.get("prompt_template", ""),
-            height=400
-        )
-        
-        if st.button("Save Template", use_container_width=True):
-            st.session_state.prompt_template = custom_prompt
-            st.success("Prompt template updated")
-    
-    def display_specification(self):
-        if "spec_data" in st.session_state:
-            st.markdown("---")
-            st.subheader("Generated Specification")
-            
-            spec_data = st.session_state.spec_data
-            
-            # Display project name and overview
-            if "project_Overview" in spec_data:
-                overview = spec_data["project_Overview"]
-                st.markdown(f"## {overview.get('project_Name', 'Unnamed Project')}")
-                st.markdown(f"**Purpose:** {overview.get('project_Purpose', 'N/A')}")
-                st.markdown(f"**Scope:** {overview.get('product_Scope', 'N/A')}")
-            
-            # Create tabs for different sections
-            spec_tabs = st.tabs([
-                "Functional Requirements", 
-                "Non-Functional Requirements",
-                "External Interfaces",
-                "Technology Stack",
-                "Data Storage",
-                "Raw JSON"
-            ])
-            
-            # Functional Requirements
-            with spec_tabs[0]:
-                if "functional_Requirements" in spec_data:
-                    for req in spec_data["functional_Requirements"]:
-                        with st.expander(f"{req.get('id', 'FR')} - {req.get('title', 'Requirement')}"):
-                            st.markdown(f"**Description:** {req.get('description', 'N/A')}")
-                            st.markdown(f"**Priority:** {req.get('priority', 'N/A')}")
-                            if "acceptance_criteria" in req:
-                                st.markdown("**Acceptance Criteria:**")
-                                for criterion in req["acceptance_criteria"]:
-                                    st.markdown(f"- {criterion}")
-            
-            # Non-Functional Requirements
-            with spec_tabs[1]:
-                if "non_Functional_Requirements" in spec_data:
-                    for req in spec_data["non_Functional_Requirements"]:
-                        with st.expander(f"{req.get('id', 'NFR')} - {req.get('category', 'Requirement')}"):
-                            st.markdown(f"**Description:** {req.get('description', 'N/A')}")
-                            if "acceptance_criteria" in req:
-                                st.markdown("**Acceptance Criteria:**")
-                                for criterion in req["acceptance_criteria"]:
-                                    st.markdown(f"- {criterion}")
-            
-            # External Interfaces
-            with spec_tabs[2]:
-                if "external_Interface_Requirements" in spec_data:
-                    interfaces = spec_data["external_Interface_Requirements"]
-                    cols = st.columns(2)
-                    with cols[0]:
-                        st.markdown("### User Interfaces")
-                        for ui in interfaces.get("user_Interfaces", []):
-                            st.markdown(f"- {ui}")
-                        
-                        st.markdown("### Hardware Interfaces")
-                        for hi in interfaces.get("hardware_Interfaces", []):
-                            st.markdown(f"- {hi}")
-                    
-                    with cols[1]:
-                        st.markdown("### Software Interfaces")
-                        for si in interfaces.get("software_Interfaces", []):
-                            st.markdown(f"- {si}")
-                        
-                        st.markdown("### Communication Interfaces")
-                        for ci in interfaces.get("communication_Interfaces", []):
-                            st.markdown(f"- {ci}")
-            
-            # Technology Stack
-            with spec_tabs[3]:
-                if "technology_Stack" in spec_data:
-                    tech_stack = spec_data["technology_Stack"]
-                    cols = st.columns(2)
-                    
-                    with cols[0]:
-                        st.markdown("### Backend")
-                        backend = tech_stack.get("backend", {})
-                        st.markdown(f"- **Language:** {backend.get('language', 'N/A')}")
-                        st.markdown(f"- **Framework:** {backend.get('framework', 'N/A')}")
-                        st.markdown(f"- **API Architecture:** {backend.get('api_Architecture', 'N/A')}")
-                    
-                    with cols[1]:
-                        st.markdown("### Frontend")
-                        frontend = tech_stack.get("frontend", {})
-                        st.markdown(f"- **Language:** {frontend.get('language', 'N/A')}")
-                        st.markdown(f"- **Framework:** {frontend.get('framework', 'N/A')}")
-                        st.markdown(f"- **Responsive Design:** {frontend.get('responsive_Design', 'N/A')}")
-            
-            # Data Storage
-            with spec_tabs[4]:
-                if "data_Storage" in spec_data:
-                    storage = spec_data["data_Storage"]
-                    st.markdown(f"**Storage Type:** {storage.get('storage_Type', 'N/A')}")
-                    st.markdown(f"**Database Type:** {storage.get('database_Type', 'N/A')}")
-                    
-                    st.markdown("### Data Models")
-                    for model in storage.get("data_models", []):
-                        st.markdown(f"- {model}")
-            
-            # Raw JSON
-            with spec_tabs[5]:
-                st.json(spec_data)
+        # Initialize session state keys if they don't exist
+        if "spec_data" not in st.session_state:
+            st.session_state.spec_data = None
+        if "design_data" not in st.session_state:
+            st.session_state.design_data = None
+        if "user_description" not in st.session_state:
+            st.session_state.user_description = ""
 
-            # Create tabs for different sections
-    #         if any(key in spec_data for key in ["functional_requirements", "non_functional_requirements", 
-    #                                          "data_entities", "api_endpoints", "assumptions", "open_questions"]):
-                
-    #             spec_tabs = st.tabs([
-    #                 "Functional Requirements", 
-    #                 "Non-Functional Requirements",
-    #                 "Data Entities",
-    #                 "API Endpoints",
-    #                 "Assumptions & Questions",
-    #                 "Raw JSON"
-    #             ])
-                
-    #             # Functional Requirements
-    #             with spec_tabs[0]:
-    #                 self.display_functional_requirements(spec_data)
-                
-    #             # Non-Functional Requirements
-    #             with spec_tabs[1]:
-    #                 self.display_non_functional_requirements(spec_data)
-                
-    #             # Data Entities
-    #             with spec_tabs[2]:
-    #                 self.display_data_entities(spec_data)
-                
-    #             # API Endpoints
-    #             with spec_tabs[3]:
-    #                 self.display_api_endpoints(spec_data)
-                
-    #             # Assumptions & Questions
-    #             with spec_tabs[4]:
-    #                 self.display_assumptions_questions(spec_data)
-                
-    #             # Raw JSON
-    #             with spec_tabs[5]:
-    #                 st.json(spec_data)
-            
-    #         # Download buttons
-    #         self.display_download_buttons(spec_data)
-    
-    # def display_functional_requirements(self, spec_data):
-    #     """
-    #     Display functional requirements in a tab.
-    #     """
-    #     if "functional_requirements" in spec_data and spec_data["functional_requirements"]:
-    #         for req in spec_data["functional_requirements"]:
-    #             with st.expander(f"{req.get('id', 'FR')} - {req.get('title', 'Requirement')}"):
-    #                 st.markdown(f"**Description:** {req.get('description', 'N/A')}")
-    #                 st.markdown(f"**Priority:** {req.get('priority', 'N/A')}")
-                    
-    #                 if "acceptance_criteria" in req and req["acceptance_criteria"]:
-    #                     st.markdown("**Acceptance Criteria:**")
-    #                     for ac in req["acceptance_criteria"]:
-    #                         st.markdown(f"- {ac}")
-    #     else:
-    #         st.info("No functional requirements specified.")
-    
-    # def display_non_functional_requirements(self, spec_data):
-    #     """
-    #     Display non-functional requirements in a tab.
-    #     """
-    #     if "non_functional_requirements" in spec_data and spec_data["non_functional_requirements"]:
-    #         for req in spec_data["non_functional_requirements"]:
-    #             with st.expander(f"{req.get('id', 'NFR')} - {req.get('category', 'Requirement')}"):
-    #                 st.markdown(f"**Description:** {req.get('description', 'N/A')}")
-    #                 if "constraints" in req:
-    #                     st.markdown(f"**Constraints:** {req.get('constraints', 'N/A')}")
-    #     else:
-    #         st.info("No non-functional requirements specified.")
-    
-    # def display_data_entities(self, spec_data):
-    #     """
-    #     Display data entities in a tab.
-    #     """
-    #     if "data_entities" in spec_data and spec_data["data_entities"]:
-    #         for entity in spec_data["data_entities"]:
-    #             with st.expander(f"Entity: {entity.get('name', 'Entity')}"):
-    #                 if "attributes" in entity and entity["attributes"]:
-    #                     st.markdown("**Attributes:**")
-    #                     for attr in entity["attributes"]:
-    #                         st.markdown(f"- **{attr.get('name', 'Attribute')}** ({attr.get('type', 'N/A')}): {attr.get('description', 'N/A')}")
-                    
-    #                 if "relationships" in entity and entity["relationships"]:
-    #                     st.markdown("**Relationships:**")
-    #                     for rel in entity["relationships"]:
-    #                         st.markdown(f"- {rel}")
-    #     else:
-    #         st.info("No data entities specified.")
-    
-    # def display_api_endpoints(self, spec_data):
-    #     """
-    #     Display API endpoints in a tab.
-    #     """
-    #     if "api_endpoints" in spec_data and spec_data["api_endpoints"]:
-    #         for endpoint in spec_data["api_endpoints"]:
-    #             with st.expander(f"{endpoint.get('method', 'GET')} {endpoint.get('path', '/endpoint')}"):
-    #                 st.markdown(f"**Description:** {endpoint.get('description', 'N/A')}")
-                    
-    #                 if "request_parameters" in endpoint and endpoint["request_parameters"]:
-    #                     st.markdown("**Request Parameters:**")
-    #                     for param in endpoint["request_parameters"]:
-    #                         required = "Required" if param.get("required", False) else "Optional"
-    #                         st.markdown(f"- **{param.get('name', 'param')}** ({param.get('type', 'N/A')}, {required}): {param.get('description', 'N/A')}")
-                    
-    #                 if "response" in endpoint:
-    #                     st.markdown("**Response:**")
-    #                     if "success" in endpoint["response"]:
-    #                         st.markdown(f"- **Success:** {endpoint['response']['success']}")
-    #                     if "error" in endpoint["response"]:
-    #                         st.markdown(f"- **Error:** {endpoint['response']['error']}")
-    #     else:
-    #         st.info("No API endpoints specified.")
-    
-    # def display_assumptions_questions(self, spec_data):
-    #     """
-    #     Display assumptions and questions in a tab.
-    #     """
-    #     if "assumptions" in spec_data and spec_data["assumptions"]:
-    #         st.markdown("### Assumptions")
-    #         for assumption in spec_data["assumptions"]:
-    #             st.markdown(f"- {assumption}")
-    #     else:
-    #         st.info("No assumptions specified.")
-        
-    #     st.markdown("---")
-        
-    #     if "open_questions" in spec_data and spec_data["open_questions"]:
-    #         st.markdown("### Open Questions")
-    #         for question in spec_data["open_questions"]:
-    #             st.markdown(f"- {question}")
-    #     else:
-    #         st.info("No open questions specified.")
-        
-    #     # Display resolved questions if available
-    #     if "resolved_questions" in spec_data and spec_data["resolved_questions"]:
-    #         st.markdown("### Automatically Resolved Questions")
-    #         for item in spec_data["resolved_questions"]:
-    #             confidence_color = {
-    #                 "High": "green",
-    #                 "Medium": "orange",
-    #                 "Low": "red"
-    #             }.get(item.get("confidence", "Medium"), "orange")
-                
-    #             st.markdown(f"- **Q:** {item['question']}")
-    #             st.markdown(f"  **A:** {item['answer']} <span style='color:{confidence_color}'>(Confidence: {item.get('confidence', 'Medium')})</span>", unsafe_allow_html=True)
-    
-    # def display_download_buttons(self, spec_data):
-    #     """
-    #     Display download buttons for JSON and Markdown formats.
-    #     """
-    #     col1, col2 = st.columns(2)
-        
-    #     with col1: #JSON
-    #         json_str = json.dumps(spec_data, ensure_ascii=False, indent=2)
-    #         st.download_button(
-    #             label="Download JSON",
-    #             data=json_str,
-    #             file_name=f"specification_{datetime.now().strftime('%Y%m%d')}.json",
-    #             mime="application/json",
-    #             use_container_width=True
-    #         )
-        
-    #     with col2: #Markdown
-    #         markdown_content = self.controller.export_to_markdown(spec_data)
-    #         st.download_button(
-    #             label="Download as Markdown",
-    #             data=markdown_content,
-    #             file_name=f"{spec_data.get('project_name', 'unnamed_project')}_{datetime.now().strftime('%Y%m%d')}.md",
-    #             mime="text/markdown",
-    #             use_container_width=True
-    #         )
+    def display_ui(self):
+        st.set_page_config(page_title="Specification & Design Generator", layout="wide")
+        st.title("Software Specification & Design Generator")
+        st.markdown("Generate technical specifications and system designs from natural language descriptions using Gemini.")
+
+        # --- Input Area ---
+        st.subheader("1. Enter Software Requirements")
+        st.session_state.user_description = st.text_area(
+            "Describe your software requirements",
+            value=st.session_state.user_description, # Persist input
+            height=150,
+            placeholder="E.g., Create a task management app where users can create projects, add tasks with deadlines, and invite team members to collaborate"
+        )
+
+        # --- Generate Specification Button ---
+        if st.button("Generate Specification", use_container_width=True, key="gen_spec_btn"):
+            if not st.session_state.user_description:
+                st.warning("Please enter a description first.")
+            else:
+                with st.spinner("Generating specification... Please wait."):
+                    # Clear previous design data when generating a new spec
+                    st.session_state.design_data = None
+                    # Generate specification
+                    spec_data = self.controller.generate_specification(st.session_state.user_description)
+                    if spec_data:
+                        st.session_state.spec_data = spec_data
+                        st.success("Specification generated successfully!")
+                        # Automatically trigger display update
+                        st.rerun()
+                    else:
+                        # Error message is handled by the model/controller via st.error
+                        st.error("Failed to generate specification. Check logs if errors persist.")
+                        st.session_state.spec_data = None # Clear potentially partial data
+
+        st.markdown("---") # Separator
+
+        # --- Display Specification Area ---
+        if st.session_state.spec_data:
+            st.subheader("2. Generated Specification")
+            self.display_specification_data(st.session_state.spec_data)
+
+            # --- Generate Design Button (appears only after spec is generated) ---
+            if st.button("Generate Design from Specification", use_container_width=True, key="gen_design_btn"):
+                with st.spinner("Generating design... This may take a moment."):
+                    design_data = self.controller.generate_design_specification(st.session_state.spec_data)
+                    if design_data:
+                        st.session_state.design_data = design_data
+                        st.success("Design generated successfully!")
+                        # Automatically trigger display update
+                        st.rerun()
+                    else:
+                        st.error("Failed to generate design. Check logs if errors persist.")
+                        st.session_state.design_data = None # Clear potentially partial data
+
+            st.markdown("---") # Separator
+
+        # --- Display Design Area ---
+        if st.session_state.design_data:
+            st.subheader("3. Generated Design")
+            self.display_design_data(st.session_state.design_data)
+
+
+    def display_specification_data(self, spec_data):
+        if not spec_data or not isinstance(spec_data, dict):
+            st.warning("No specification data available to display.")
+            return
+
+        # Display project name and overview
+        overview = spec_data.get("project_Overview", {})
+        st.markdown(f"#### {overview.get('project_Name', 'Unnamed Project')}")
+        with st.expander("Project Overview", expanded=False):
+            st.markdown(f"**Purpose:** {overview.get('project_Purpose', 'N/A')}")
+            st.markdown(f"**Scope:** {overview.get('product_Scope', 'N/A')}")
+
+        # Create tabs for different sections
+        spec_tabs = st.tabs([
+            "Functional Req.",
+            "Non-Functional Req.",
+            "Interfaces",
+            "Tech Stack",
+            "Data Storage",
+            "Assumptions",
+            "Raw JSON"
+        ])
+
+        # Functional Requirements
+        with spec_tabs[0]:
+            reqs = spec_data.get("functional_Requirements", [])
+            if reqs:
+                for req in reqs:
+                    with st.expander(f"{req.get('id', 'FR')} - {req.get('title', 'Requirement')}"):
+                        st.markdown(f"**Description:** {req.get('description', 'N/A')}")
+                        st.markdown(f"**Priority:** {req.get('priority', 'N/A')}")
+                        criteria = req.get('acceptance_criteria', [])
+                        if criteria:
+                            st.markdown("**Acceptance Criteria:**")
+                            for criterion in criteria:
+                                st.markdown(f"- {criterion}")
+            else:
+                st.info("No functional requirements found.")
+
+        # Non-Functional Requirements
+        with spec_tabs[1]:
+            reqs = spec_data.get("non_Functional_Requirements", [])
+            if reqs:
+                for req in reqs:
+                    with st.expander(f"{req.get('id', 'NFR')} - {req.get('category', 'Requirement')}"):
+                        st.markdown(f"**Description:** {req.get('description', 'N/A')}")
+                        criteria = req.get('acceptance_criteria', [])
+                        if criteria:
+                            st.markdown("**Acceptance Criteria:**")
+                            for criterion in criteria:
+                                st.markdown(f"- {criterion}")
+            else:
+                st.info("No non-functional requirements found.")
+
+        # External Interfaces
+        with spec_tabs[2]:
+            interfaces = spec_data.get("external_Interface_Requirements", {})
+            if interfaces:
+                st.markdown("**User Interfaces:**")
+                st.markdown("\n".join([f"- {ui}" for ui in interfaces.get("user_Interfaces", ["N/A"])]))
+                st.markdown("**Hardware Interfaces:**")
+                st.markdown("\n".join([f"- {hi}" for hi in interfaces.get("hardware_Interfaces", ["N/A"])]))
+                st.markdown("**Software Interfaces:**")
+                st.markdown("\n".join([f"- {si}" for si in interfaces.get("software_Interfaces", ["N/A"])]))
+                st.markdown("**Communication Interfaces:**")
+                st.markdown("\n".join([f"- {ci}" for ci in interfaces.get("communication_Interfaces", ["N/A"])]))
+            else:
+                st.info("No external interface requirements found.")
+
+        # Technology Stack
+        with spec_tabs[3]:
+            tech_stack = spec_data.get("technology_Stack", {})
+            if tech_stack:
+                backend = tech_stack.get("backend", {})
+                frontend = tech_stack.get("frontend", {})
+                st.markdown("**Backend:**")
+                st.markdown(f"- Language: {backend.get('language', 'N/A')}")
+                st.markdown(f"- Framework: {backend.get('framework', 'N/A')}")
+                st.markdown(f"- API Arch: {backend.get('api_Architecture', 'N/A')}")
+                st.markdown("**Frontend:**")
+                st.markdown(f"- Language: {frontend.get('language', 'N/A')}")
+                st.markdown(f"- Framework: {frontend.get('framework', 'N/A')}")
+                st.markdown(f"- Responsive: {frontend.get('responsive_Design', 'N/A')}")
+            else:
+                st.info("No technology stack found.")
+
+        # Data Storage
+        with spec_tabs[4]:
+            storage = spec_data.get("data_Storage", {})
+            if storage:
+                st.markdown(f"**Storage Type:** {storage.get('storage_Type', 'N/A')}")
+                st.markdown(f"**Database Type:** {storage.get('database_Type', 'N/A')}")
+                models = storage.get("data_models", [])
+                if models:
+                    st.markdown("**Data Models (Key Attributes):**")
+                    for model in models:
+                         if isinstance(model, dict):
+                             st.markdown(f"- **{model.get('entity_name', 'Unknown Entity')}:** {', '.join(model.get('key_attributes', []))}")
+                         else: # Handle old string format if necessary
+                             st.markdown(f"- {model}")
+
+            else:
+                st.info("No data storage information found.")
+
+        # Assumptions
+        with spec_tabs[5]:
+             assumptions = spec_data.get("assumptions_Made", [])
+             if assumptions:
+                 st.markdown("\n".join([f"- {a}" for a in assumptions]))
+             else:
+                 st.info("No assumptions listed.")
+
+        # Raw JSON
+        with spec_tabs[6]:
+            st.json(spec_data)
+
+    def display_design_data(self, design_data):
+        if not design_data or not isinstance(design_data, dict):
+            st.warning("No design data available to display.")
+            return
+
+        # Create tabs for different sections
+        design_tabs = st.tabs([
+            "Architecture",
+            "Data Design",
+            "Interfaces (API)",
+            "Workflows",
+            "Folder Structure",
+            "Dependencies",
+            "Raw JSON"
+        ])
+
+        # System Architecture
+        with design_tabs[0]:
+            arch = design_data.get("system_Architecture", {})
+            if arch:
+                st.markdown(f"**Description:** {arch.get('description', 'N/A')}")
+                st.markdown("**Components:**")
+                for comp in arch.get("components", []):
+                    with st.expander(f"{comp.get('name', 'Component')}"):
+                        st.markdown(f"**Description:** {comp.get('description', 'N/A')}")
+                        st.markdown(f"**Technologies:** {', '.join(comp.get('technologies', ['N/A']))}")
+                        st.markdown(f"**Inputs:** {', '.join(comp.get('inputs', ['N/A']))}")
+                        st.markdown(f"**Outputs:** {', '.join(comp.get('outputs', ['N/A']))}")
+            else:
+                st.info("No architecture information found.")
+
+        # Data Design
+        with design_tabs[1]:
+            data = design_data.get("data_Design", {})
+            if data:
+                st.markdown(f"**Data Flow:** {data.get('data_Flow_Description', 'N/A')}")
+                st.markdown(f"**Storage Type:** {data.get('storage_Type', 'N/A')}")
+                st.markdown(f"**Database Type:** {data.get('database_Type', 'N/A')}")
+                st.markdown("**Data Models:**")
+                for model in data.get("data_Models", []):
+                    with st.expander(f"{model.get('model_Name', 'Model')}"):
+                         st.markdown(f"**Description:** {model.get('description', 'N/A')}")
+                         st.markdown(f"**Storage:** {model.get('storage_Location', 'N/A')}")
+                         st.markdown("**Fields:**")
+                         for field in model.get("fields", []):
+                             constraints = ', '.join(field.get('constraints', []))
+                             st.markdown(f"- **{field.get('name', 'field')}** ({field.get('type', 'N/A')}): {field.get('description', 'N/A')} {f'[{constraints}]' if constraints else ''}")
+                         st.markdown("**Relationships:**")
+                         for rel in model.get("relationships", []):
+                             st.markdown(f"- Field `{rel.get('field_Name', '?')}` relates to `{rel.get('related_Model', '?')}` ({rel.get('relationship_Type', '?')}). Notes: {rel.get('implementation_Notes', 'N/A')}")
+
+            else:
+                st.info("No data design information found.")
+
+        # Interface Design (API)
+        with design_tabs[2]:
+            interface = design_data.get("interface_Design", {})
+            if interface:
+                st.markdown(f"**UI Interaction Notes:** {interface.get('ui_Interaction_Notes', 'N/A')}")
+                st.markdown("**API Specifications:**")
+                for api in interface.get("api_Specifications", []):
+                     with st.expander(f"{api.get('method', '?')} {api.get('endpoint', '/?')} {'[Auth]' if api.get('authentication_Required') else ''}"):
+                         st.markdown(f"**Description:** {api.get('description', 'N/A')}")
+                         req = api.get('request_Format', {})
+                         res = api.get('response_Format', {})
+                         st.markdown(f"**Request:** Params: `{', '.join(req.get('params',[])) or 'None'}`, Query: `{', '.join(req.get('query',[])) or 'None'}`, Body: `{req.get('body_Schema', {}).get('description', 'N/A')}`")
+                         st.markdown(f"**Response:** Success (`{res.get('success_Status', '?')}`): `{res.get('success_Schema', {}).get('description', 'N/A')}`, Error (`{', '.join(map(str, res.get('error_Status',[]))) or '?'}`): `{res.get('error_Schema', {}).get('description', 'N/A')}`")
+                         st.markdown(f"**Related NFRs:** {', '.join(api.get('related_NFRs', ['N/A']))}")
+            else:
+                st.info("No interface design information found.")
+
+        # Workflows
+        with design_tabs[3]:
+            workflows = design_data.get("workflow_Interaction", [])
+            if workflows:
+                for wf in workflows:
+                    with st.expander(f"{wf.get('workflow_Name', 'Workflow')}"):
+                        st.markdown(f"**Description:** {wf.get('description', 'N/A')}")
+                        st.markdown(f"**Related Requirements:** {', '.join(wf.get('related_Requirements', ['N/A']))}")
+            else:
+                st.info("No workflow information found.")
+
+        # Folder Structure
+        with design_tabs[4]:
+            folder = design_data.get("folder_Structure", {})
+            if folder:
+                st.markdown(f"**Description:** {folder.get('description', 'N/A')}")
+                st.markdown("**Structure:**")
+                for item in folder.get("structure", []):
+                    st.markdown(f"- `{item.get('path', '?')}`: {item.get('description', 'N/A')}")
+            else:
+                st.info("No folder structure information found.")
+
+        # Dependencies
+        with design_tabs[5]:
+            deps = design_data.get("dependencies", {})
+            if deps:
+                st.markdown("**Backend:**")
+                st.markdown(f"`{', '.join(deps.get('backend', ['N/A']))}`")
+                st.markdown("**Frontend:**")
+                st.markdown(f"`{', '.join(deps.get('frontend', ['N/A']))}`")
+            else:
+                st.info("No dependency information found.")
+
+        # Raw JSON
+        with design_tabs[6]:
+            st.json(design_data)
