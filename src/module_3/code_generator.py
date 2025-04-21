@@ -15,19 +15,10 @@ logger = logging.getLogger(__name__)
 
 class CodeGenerator:
     def __init__(self, design_filepath, output_base_dir="generated_code", model_name="gemini-1.5-flash"):
-        """
-        Initializes the CodeGenerator.
-
-        Args:
-            design_filepath (str): Path to the design specification JSON file.
-            output_base_dir (str): The base directory where generated code will be saved.
-            model_name (str): Name of the Gemini model to use.
-        """
-        self.design_filepath = Path(design_filepath)
-        self.output_base_dir = Path(output_base_dir)
+        self.design_filepath = Path(design_filepath) # folder lưu file đặc tảtả
+        self.output_base_dir = Path(output_base_dir) # folder để lưu code gen ra từ LLM
         self.design_data = self._load_design()
         try:
-            # Initialize the actual Gemini model via config
             self.model = get_gemini_model(model_name)
         except Exception as e:
             logger.error(f"Failed to initialize LLM model: {e}")
