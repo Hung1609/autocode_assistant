@@ -22,7 +22,6 @@ class CodeGenerator:
             self.model = get_gemini_model(model_name)
         except Exception as e:
             logger.error(f"Failed to initialize LLM model: {e}")
-            # Decide how to handle this - maybe raise the error or set model to None
             self.model = None
             raise # Re-raise the exception to prevent proceeding without a model
 
