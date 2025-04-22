@@ -18,6 +18,82 @@ Context:
 Code for {file_path}:
 """
 
+# --- Dependency File Prompts ---
+
+PYTHON_REQUIREMENTS_PROMPT = """
+Generate the content for a Python `requirements.txt` file based *only* on the provided context.
+The file path is '{file_path}'.
+List the necessary Python packages based on the `technology_stack` (backend and potentially frontend if relevant, e.g., for build tools) and `project_overview` provided in the context.
+Include common packages associated with the specified framework (e.g., Flask, SQLAlchemy for Flask; Django; Express requires package.json instead).
+Use standard `package_name==version` format if versions are specified or inferrable, otherwise just list package names. Assume latest stable versions if not specified.
+Output *only* the raw text content for the file. Do not include explanations or markdown.
+
+Context:
+```json
+{context}
+```
+
+Content for {file_path}:
+"""
+
+NODE_PACKAGE_JSON_PROMPT = """
+Generate the content for a Node.js `package.json` file based *only* on the provided context.
+The file path is '{file_path}'.
+Create a standard `package.json` structure including `name`, `version` (default to 1.0.0), `description`, `main` (e.g., index.js or app.js), `scripts` (e.g., start, test), `dependencies`, and `devDependencies`.
+Populate `dependencies` and `devDependencies` based on the `technology_stack` (backend framework like Express, frontend framework like React, database clients like mongoose) and `project_overview`.
+Infer common packages associated with the stack (e.g., express, mongoose, react, react-dom, nodemon).
+Use standard `"package_name": "^version"` format. Assume latest stable versions if not specified.
+Output *only* the raw JSON content for the file. Do not include explanations or markdown.
+
+Context:
+```json
+{context}
+```
+
+Content for {file_path}:
+"""
+
+# --- Configuration File Prompts ---
+
+DOCKERFILE_PROMPT = """
+Generate a plausible `Dockerfile` for the application described in the context.
+The file path is '{file_path}'.
+Base the Dockerfile on the `technology_stack` (language, framework, database).
+Include steps to:
+- Select an appropriate base image (e.g., `python:3.9-slim`, `node:18-alpine`).
+- Set a working directory.
+- Copy necessary files (e.g., `requirements.txt` or `package.json`).
+- Install dependencies (e.g., `pip install -r requirements.txt`, `npm install`).
+- Copy the application code.
+- Expose the application port (infer from framework defaults if not specified, e.g., 5000 for Flask, 3000 for Node/Express).
+- Define the command to run the application (e.g., `CMD ["python", "app.py"]`, `CMD ["npm", "start"]`).
+Follow Docker best practices (e.g., use `.dockerignore` implicitly, minimize layers).
+Output *only* the raw Dockerfile content. Do not include explanations or markdown.
+
+Context:
+```json
+{context}
+```
+
+Content for {file_path}:
+"""
+
+GENERIC_CONFIG_PROMPT = """
+Generate placeholder content for the configuration file '{file_path}' based *only* on the provided context.
+Consider the file type (e.g., `.env`, `.yaml`, `.ini`, `.json`) suggested by the path and the `technology_stack`.
+Include common configuration keys relevant to the stack (e.g., `DATABASE_URL`, `SECRET_KEY`, `API_ENDPOINT`, `PORT`).
+Use placeholder values (e.g., `YOUR_DATABASE_URL_HERE`, `generate_a_secret_key`, `3000`).
+Format the output according to the inferred file type.
+Output *only* the raw configuration content. Do not include explanations or markdown.
+
+Context:
+```json
+{context}
+```
+
+Content for {file_path}:
+"""
+
 # --- Backend Model/Schema Prompts ---
 
 # Example for Python/Flask/SQLAlchemy (or similar ORM)
@@ -207,6 +283,21 @@ def select_prompt_for_file(file_info, tech_stack):
              return REACT_COMPONENT_PROMPT
         # Add conditions for Vue, Angular, Svelte etc.
 
+    # Dependency Files
+    elif path.endswith("requirements.txt"):
+        if backend_lang == "python":
+            logger.debug(f"Selected PYTHON_REQUIREMENTS_PROMPT for {path}")
+            return PYTHON_REQUIREMENTS_PROMPT
+    elif path.endswith("package.json"):
+        if backend_lang == "node.js" or frontend_fw in ["react", "vue", "angular", "svelte"]: # Node is common for frontend builds too
+             logger.debug(f"Selected NODE_PACKAGE_JSON_PROMPT for {path}")
+             return NODE_PACKAGE_JSON_PROMPT
+
+    # Dockerfile
+    elif "dockerfile" in path:
+         logger.debug(f"Selected DOCKERFILE_PROMPT for {path}")
+         return DOCKERFILE_PROMPT
+
     # Basic HTML/CSS
     elif path.endswith(".html"):
         logger.debug(f"Selected HTML_PROMPT for {path}")
@@ -214,6 +305,13 @@ def select_prompt_for_file(file_info, tech_stack):
     elif path.endswith(".css"):
          logger.debug(f"Selected CSS_PROMPT for {path}")
          return CSS_PROMPT
+
+    # Generic Config files (as a lower priority match)
+    elif path.endswith((".yaml", ".yml", ".json", ".ini", ".toml")) or ".env" in path:
+         # Avoid matching design spec files if they end in .json
+         if not (path.endswith(".design.json") or path.endswith(".spec.json")):
+              logger.debug(f"Selected GENERIC_CONFIG_PROMPT for {path}")
+              return GENERIC_CONFIG_PROMPT
 
     # Fallback
     logger.warning(f"No specific prompt matched for {path}. Using GENERIC_CODE_PROMPT.")
