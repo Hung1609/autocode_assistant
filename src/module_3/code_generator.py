@@ -59,9 +59,6 @@ class CodeGenerator:
             raise
 
     def generate_codebase(self):
-        """
-        Generates the full codebase based on the loaded design specification.
-        """
         if not self.model:
              logger.error("LLM Model not initialized. Cannot generate codebase.")
              return
