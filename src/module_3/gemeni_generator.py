@@ -8,11 +8,12 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Load environment variables from .env file
 # --- Configuration ---
-SPEC_FILE = os.path.join('outputs', 'flashcard_application_20250422.spec.json')
-DESIGN_FILE = os.path.join('outputs', 'flashcard_application_20250422.design.json')
-OUTPUT_DIR = 'generated_project_code' # Directory to save the generated code
+BASE_DIR = Path(__file__).parent.parent.parent  # Get the project root directory
+SPEC_FILE = BASE_DIR / 'outputs' / 'flashcard_application_20250422.spec.json'
+DESIGN_FILE = BASE_DIR / 'outputs' / 'flashcard_application_20250422.design.json'
+OUTPUT_DIR = BASE_DIR / 'generated_project_code' # Directory to save the generated code
 API_KEY_ENV_VAR = 'GEMINI_API_KEY'
-MODEL_NAME = "gemini-1.5-flash" # Use the same model as generation for consistency
+MODEL_NAME = "gemini-2.5-pro-exp-03-25" # Use the same model as generation for consistency
 
 # --- Helper Functions ---
 
@@ -110,7 +111,6 @@ Instructions:
     return prompt
 
 def clean_code_response(response_text):
-    """Removes potential markdown fences and leading/trailing whitespace."""
     # Regex to find code blocks fenced by ``` possibly followed by a language identifier
     match = re.search(r"```(?:\w*\n)?(.*?)```", response_text, re.DOTALL | re.IGNORECASE)
     if match:
@@ -172,11 +172,22 @@ def save_code(logical_path, code, base_output_dir):
         print(f"   An unexpected error occurred during file save: {e}")
         return False
 
+def setup_project_directories():
+    """Ensures all required project directories exist."""
+    directories = [
+        BASE_DIR / 'outputs',
+        OUTPUT_DIR,
+    ]
+    for directory in directories:
+        directory.mkdir(parents=True, exist_ok=True)
+        print(f"Directory ensured: {directory}")
+
 # --- Main Execution ---
 
 if __name__ == "__main__":
     print("Starting Code Generation Agent...")
 
+    setup_project_directories()  # Ensure output directories exist
     # 1. Load API Key
     api_key = os.getenv(API_KEY_ENV_VAR)
     if not api_key:
@@ -195,9 +206,9 @@ if __name__ == "__main__":
 
     # 3. Load Specification and Design
     print(f"Loading specification from: {SPEC_FILE}")
-    spec_data = load_json(SPEC_FILE)
+    spec_data = load_json(str(SPEC_FILE))
     print(f"Loading design from: {DESIGN_FILE}")
-    design_data = load_json(DESIGN_FILE)
+    design_data = load_json(str(DESIGN_FILE))
     print("Specification and Design files loaded.")
 
     # 4. Create Base Output Directory
@@ -230,7 +241,7 @@ if __name__ == "__main__":
         # b. Create Prompt
         print("   Creating prompt...")
         prompt = create_prompt(context_str, logical_path, design_data)
-        # print(f"DEBUG: Prompt for {logical_path}:\n{prompt[:500]}...\n") # Optional: Print start of prompt for debugging
+        print(f"DEBUG: Prompt for {logical_path}:\n{prompt[:500]}...\n") # Optional: Print start of prompt for debugging
 
         # c. Generate Code
         generated_code = generate_code(model, prompt)
@@ -245,8 +256,7 @@ if __name__ == "__main__":
             print(f"   Skipping save for {logical_path} due to generation error.")
             failed_files_count += 1
 
-        # Optional: Add a small delay between API calls to avoid rate limits
-        time.sleep(2) # Adjust as needed
+        time.sleep(5)
 
     print("\n--- Code Generation Complete ---")
     print(f"Successfully generated: {generated_files_count} files.")

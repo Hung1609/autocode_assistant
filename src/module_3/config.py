@@ -21,7 +21,7 @@ def configure_genai():
         logger.error(f"Error configuring Gemini API: {e}")
         return False
 
-def get_gemini_model(model_name="gemini-1.5-flash"):
+def get_gemini_model(model_name="gemini-2.5-pro-exp-03-25"):
     load_environment()
     if not configure_genai():
         raise ValueError("Gemini API Key not configured. Cannot get model.")

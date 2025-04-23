@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class CodeGenerator:
-    def __init__(self, design_filepath, output_base_dir="generated_code", model_name="gemini-1.5-flash"):
+    def __init__(self, design_filepath, output_base_dir="generated_code", model_name="gemini-2.5-pro-exp-03-25"):
         self.design_filepath = Path(design_filepath) # folder lưu file đặc tảtả
         self.output_base_dir = Path(output_base_dir) # folder để lưu code gen ra từ LLM
         self.design_data = self._load_design()
