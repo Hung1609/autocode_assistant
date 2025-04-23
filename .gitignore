@@ -1,3 +1,4 @@
 foxconn_env/
-__pycache__/
-.env
+**/__pycache__/
+**/.env
+**/logs/
