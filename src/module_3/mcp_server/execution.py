@@ -1,3 +1,5 @@
+# file định dạng các tools: create_file, read_file, list_files, create_directory, edit_file
+
 import os
 from pathlib import Path
 import logging
@@ -41,3 +43,123 @@ def _resolve_and_validate_path(base_dir_str, relative_path_str):
         # Các lỗi liên quan trong quá trình xử lý đường dẫn
         logging.error(f"Invalid path calculation for base='{base_dir_str}', relative='{relative_path_str}': {e}")
         raise ValueError(f"Invalid path '{relative_path_str}': {e}")
+
+# Tool tạo file
+def create_file(base_dir_str, relative_path_str, content):
+    logging.info(f"Attempting to create file '{relative_path_str}' in base directory '{base_dir_str}'")
+    try:
+        target_path = _resolve_and_validate_path(base_dir_str, relative_path_str)
+        target_path.parent.mkdir(parents=True, exist_ok=True) # tạo các thư mục cha nếu chưa tồn tại
+        with open(target_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        logging.info(f"File created successfully at {target_path}")
+        return {"status": "success", "message": f"File '{relative_path_str}' created successfully."}
+
+    except (ValueError, SecurityError) as e: # Lỗi liên quan đến bảo mật
+        logging.error(f"Error creating file '{relative_path_str}': {e}")
+        return {"status": "error", "message": str(e)}
+    except OSError as e: # Lỗi liên quan đến OS
+        logging.error(f"OS Error creating file '{relative_path_str}': {e}")
+        return {"status": "error", "message": f"Could not create file '{relative_path_str}': {e}"}
+    except Exception as e: #  Các lỗi khác
+        logging.exception(f"Unexpected error creating file '{relative_path_str}': {e}")
+        return {"status": "error", "message": "An unexpected server error occurred."}
+
+# Tool đọc file
+def read_file(base_dir_str, relative_path_str):
+    logging.info(f"Attempting to read file '{relative_path_str}' in base '{base_dir_str}'")
+    try:
+        target_path = _resolve_and_validate_path(base_dir_str, relative_path_str)
+        if not target_path.is_file():
+            logging.warning(f"File not found for reading: {target_path}")
+            return {"status": "error", "message": f"File not found: '{relative_path_str}'"}
+
+        content = target_path.read_text(encoding='utf-8')
+        logging.info(f"File read successfully: {target_path}")
+        return {"status": "success", "content": content}
+
+    except (ValueError, SecurityError) as e:
+        logging.error(f"Error reading file '{relative_path_str}': {e}")
+        return {"status": "error", "message": str(e)}
+    except OSError as e:
+        logging.error(f"OS Error reading file '{relative_path_str}': {e}")
+        return {"status": "error", "message": f"Could not read file '{relative_path_str}': {e}"}
+    except Exception as e:
+        logging.exception(f"Unexpected error reading file '{relative_path_str}': {e}")
+        return {"status": "error", "message": "An unexpected server error occurred."}
+
+# Tool liệt kê các file
+def list_files(base_dir_str, relative_path_str=""):
+    logging.info(f"Attempting to list files in '{relative_path_str or '.'}' within base '{base_dir_str}'")
+    try:
+        target_dir_path = _resolve_and_validate_path(base_dir_str, relative_path_str)
+        if not target_dir_path.is_dir():
+            logging.warning(f"Directory not found for listing: {target_dir_path}")
+            return {"status": "error", "message": f"Directory not found: '{relative_path_str}'"}
+
+        items = []
+        for item in target_dir_path.iterdir():
+            items.append({
+                "name": item.name,
+                "type": "directory" if item.is_dir() else "file"
+            })
+        logging.info(f"Successfully listed directory contents: {target_dir_path}")
+        return {"status": "success", "items": items}
+
+    except (ValueError, SecurityError) as e:
+        logging.error(f"Validation/Security Error listing files in '{relative_path_str}': {e}")
+        return {"status": "error", "message": str(e)}
+    except OSError as e:
+        logging.error(f"OS Error listing files in '{relative_path_str}': {e}")
+        return {"status": "error", "message": f"Could not list directory '{relative_path_str}': {e}"}
+    except Exception as e:
+        logging.exception(f"Unexpected error listing files in '{relative_path_str}': {e}")
+        return {"status": "error", "message": "An unexpected server error occurred."}
+
+# Tool tạo đường dẫn thư mục
+def create_directory(base_dir_str, relative_path_str):
+    logging.info(f"Attempting to create directory '{relative_path_str}' in base '{base_dir_str}'")
+    if not relative_path_str: 
+         return {"status": "error", "message": "Directory path cannot be empty."}
+    try:
+        target_path = _resolve_and_validate_path(base_dir_str, relative_path_str)
+        target_path.mkdir(parents=True, exist_ok=True)
+
+        logging.info(f"Successfully ensured directory exists: {target_path}")
+        return {"status": "success", "message": f"Directory '{relative_path_str}' created or already exists."}
+
+    except (ValueError, SecurityError) as e:
+        logging.error(f"Validation/Security Error creating directory '{relative_path_str}': {e}")
+        return {"status": "error", "message": str(e)}
+    except OSError as e:
+        logging.error(f"OS Error creating directory '{relative_path_str}': {e}")
+        return {"status": "error", "message": f"Could not create directory '{relative_path_str}': {e}"}
+    except Exception as e:
+        logging.exception(f"Unexpected error creating directory '{relative_path_str}': {e}")
+        return {"status": "error", "message": "An unexpected server error occurred."}
+
+# Tool chỉnh sửa file (tạm thời không cần)
+def edit_file(base_dir_str, relative_path_str, changes_description):
+    logging.info(f"Attempting to edit file '{relative_path_str}' in base '{base_dir_str}' with changes: '{changes_description[:50]}...'")
+    try:
+        target_path = _resolve_and_validate_path(base_dir_str, relative_path_str)
+        if not target_path.is_file():
+            logging.warning(f"File not found for editing: {target_path}")
+            return {"status": "error", "message": f"File not found: '{relative_path_str}'"}
+
+        # Đổi toàn bộ content cũ bằng content mới chứ không phải sửa đổi(cần chỉnh sửa thêm)
+        new_content = changes_description
+        with open(target_path, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+        logging.info(f"Successfully edited (overwritten) file: {target_path}")
+        return {"status": "success", "message": f"File '{relative_path_str}' edited successfully."}
+
+    except (ValueError, SecurityError) as e:
+        logging.error(f"Validation/Security Error editing file '{relative_path_str}': {e}")
+        return {"status": "error", "message": str(e)}
+    except OSError as e:
+        logging.error(f"OS Error editing file '{relative_path_str}': {e}")
+        return {"status": "error", "message": f"Could not edit file '{relative_path_str}': {e}"}
+    except Exception as e:
+        logging.exception(f"Unexpected error editing file '{relative_path_str}': {e}")
+        return {"status": "error", "message": "An unexpected server error occurred."}
