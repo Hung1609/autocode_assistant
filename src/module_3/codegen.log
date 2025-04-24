@@ -1,0 +1,59 @@
+2025-04-25 01:49:50,578 - INFO - Gemini API configured successfully.
+2025-04-25 01:49:50,581 - INFO - Creating project structure in test_code_generated_result.
+2025-04-25 01:49:50,581 - ERROR - Failed to create output directory test_code_generated_result: Permission denied
+2025-04-25 01:49:50,583 - INFO - Creating project structure in test_code_generated_result.
+2025-04-25 01:49:50,584 - INFO - Created output directory: test_code_generated_result
+2025-04-25 01:49:50,585 - INFO - Created directory: test_code_generated_result
+2025-04-25 01:49:50,585 - ERROR - Failed to create file test_code_generated_result\file1.txt: Cannot open file
+2025-04-25 01:49:50,590 - INFO - Creating project structure in test_code_generated_result.
+2025-04-25 01:49:50,594 - INFO - Created output directory: test_code_generated_result
+2025-04-25 01:49:50,594 - INFO - Created directory: test_code_generated_result\dir1
+2025-04-25 01:49:50,594 - INFO - Created directory: test_code_generated_result
+2025-04-25 01:49:50,594 - INFO - Created file: test_code_generated_result\dir1/file1.txt
+2025-04-25 01:49:50,596 - INFO - Created file: test_code_generated_result\file2.py
+2025-04-25 01:49:50,599 - INFO - Generating code for file: test_code_generated_result\backend/main.py
+2025-04-25 01:49:50,599 - INFO - Using model: gemini-2.5-pro-exp-03-25
+2025-04-25 01:49:50,600 - ERROR - Failed to generate code for test_code_generated_result\backend/main.py: API Error
+2025-04-25 01:49:50,602 - INFO - Generating code for file: test_code_generated_result\backend/main.py
+2025-04-25 01:49:50,603 - INFO - Using model: gemini-2.5-pro-exp-03-25
+2025-04-25 01:49:50,608 - INFO - Generating code for file: test_code_generated_result\frontend/package.json
+2025-04-25 01:49:50,609 - INFO - Using model: gemini-2.5-pro-exp-03-25
+2025-04-25 01:49:50,612 - INFO - Generating code for file: test_code_generated_result\backend/requirements.txt
+2025-04-25 01:49:50,613 - INFO - Using model: gemini-2.5-pro-exp-03-25
+2025-04-25 01:49:50,617 - INFO - Generating code for file: path
+2025-04-25 01:49:50,617 - ERROR - Invalid inputs: json_design and json_spec must be dicts, file_path must be str.
+2025-04-25 01:49:50,618 - INFO - Generating code for file: path
+2025-04-25 01:49:50,618 - ERROR - Invalid inputs: json_design and json_spec must be dicts, file_path must be str.
+2025-04-25 01:49:50,618 - INFO - Generating code for file: 123
+2025-04-25 01:49:50,619 - ERROR - Invalid inputs: json_design and json_spec must be dicts, file_path must be str.
+2025-04-25 01:49:50,624 - INFO - Generating code for file: test_code_generated_result\backend/main.py
+2025-04-25 01:49:50,625 - WARNING - Failed to initialize model gemini-2.5-pro-exp-03-25: Model init failed
+2025-04-25 01:49:50,625 - WARNING - Failed to initialize model gemini-1.5-pro: Model init failed
+2025-04-25 01:49:50,626 - WARNING - Failed to initialize model gemini-1.5-flash: Model init failed
+2025-04-25 01:49:50,626 - ERROR - No supported Gemini models available.
+2025-04-25 01:49:50,656 - INFO - Generating scaffold plan from JSON design file.
+2025-04-25 01:49:50,656 - ERROR - Missing required field: folder_Structure
+2025-04-25 01:49:50,658 - INFO - Generating scaffold plan from JSON design file.
+2025-04-25 01:49:50,659 - INFO - Scaffold plan generated successfully.
+2025-04-25 01:49:50,665 - INFO - Starting code generation pipeline for dummy.json.
+2025-04-25 01:49:50,665 - ERROR - Pipeline failed: Create failed
+2025-04-25 01:49:50,670 - INFO - Starting code generation pipeline for dummy.json.
+2025-04-25 01:49:50,671 - ERROR - Pipeline failed: Generate failed
+2025-04-25 01:49:50,673 - INFO - Starting code generation pipeline for dummy.json.
+2025-04-25 01:49:50,674 - ERROR - Pipeline failed: Parsing failed
+2025-04-25 01:49:50,679 - INFO - Starting code generation pipeline for dummy_design.json.
+2025-04-25 01:49:50,680 - INFO - Code generation pipeline completed successfully.
+2025-04-25 01:49:50,684 - INFO - Starting code generation pipeline for dummy.json.
+2025-04-25 01:49:50,685 - ERROR - Pipeline failed: Write failed
+2025-04-25 01:49:50,688 - ERROR - Each folder_Structure item must have a 'path'
+2025-04-25 01:49:50,691 - ERROR - folder_Structure.structure must be a list
+2025-04-25 01:49:50,695 - ERROR - dependencies must contain 'backend' and 'frontend'
+2025-04-25 01:49:50,696 - ERROR - dependencies must contain 'backend' and 'frontend'
+2025-04-25 01:49:50,698 - ERROR - Missing required field: data_Design
+2025-04-25 01:49:50,703 - ERROR - Missing required field in spec: functional_Requirements
+2025-04-25 01:49:50,708 - INFO - Writing code to file: test_code_generated_result\subdir/test.py
+2025-04-25 01:49:50,708 - ERROR - Failed to write to test_code_generated_result\subdir/test.py: Cannot create dir
+2025-04-25 01:49:50,711 - INFO - Writing code to file: test_code_generated_result\subdir/test.py
+2025-04-25 01:49:50,712 - ERROR - Failed to write to test_code_generated_result\subdir/test.py: Cannot write
+2025-04-25 01:49:50,716 - INFO - Writing code to file: test_code_generated_result\subdir/test.py
+2025-04-25 01:49:50,718 - INFO - Successfully wrote to test_code_generated_result\subdir/test.py
