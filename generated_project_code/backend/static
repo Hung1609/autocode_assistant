@@ -1,1 +1,0 @@
-# This file is intentionally left empty.  The Flask application's static files (e.g., CSS, JavaScript, images) would typically reside here, but this specification indicates that static files are handled elsewhere.  A standard Flask application would have subfolders within this directory (e.g., 'css', 'js', 'img') to organize the static content.
