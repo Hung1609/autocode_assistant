@@ -5,6 +5,7 @@ import requests
 import json
 import argparse
 import logging
+from copy import deepcopy
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -80,6 +81,7 @@ def call_mcp_tool(tool_name, parameters, workspace_path):
          logging.error(f"Could not decode JSON response from MCP server tool '{tool_name}'. Response text: {response.text[:100]}...")
          return {"status": "error", "message": "Received an invalid response from the tool execution server."} 
 
+# Agent logic
 def run_agent_turn(user_prompt, workspace_path):
     """Runs a single turn of the conversation with the Gemini model."""
     logging.info(f"Starting agent turn. Workspace: '{workspace_path}', Prompt: '{user_prompt[:100]}...'")
@@ -89,39 +91,70 @@ def run_agent_turn(user_prompt, workspace_path):
          return "Error: Invalid or inaccessible workspace path provided. Please ensure the path exists and is accessible."
 
     try:
-        # Start a chat session (maintains context implicitly if needed, though tool calls reset it somewhat)
-        convo = model.start_chat(enable_automatic_function_calling=False) # We handle calls manually
+        logging.debug("Sending initial prompt to model.generate_content")
+        response = model.generate_content(
+            contents=history,
+            generation_config=genai.types.GenerationConfig(
+                temperature=1,
+                max_output_tokens=10000,
+                top_p=0.95
+            )
+        )
+        logging.debug("Model response received.")
 
-        # Send the user prompt
-        response = convo.send_message(user_prompt)
-        logging.debug("Initial response received from Gemini.")
+        response_part = response.candidates[0].content.parts[0]
 
-        # Loop to handle potential multiple function calls
-        while response.candidates[0].content.parts[0].function_call.name:
-            function_call = response.candidates[0].content.parts[0].function_call
+        while hasattr(response_part, 'function_call') and response_part.function_call.name:
+            function_call = response_part.function_call
             tool_name = function_call.name
-            tool_args = {key: value for key, value in function_call.args.items()} # Convert FunctionCall args to dict
+            # Ensure args are serializable if needed later, dict is fine for MCP call
+            tool_args = {key: value for key, value in function_call.args.items()}
 
             logging.info(f"Gemini requested tool: '{tool_name}' with args: {tool_args}")
+
+            # *** Append the model's function call to history ***
+            # Use deepcopy to avoid modifying the response object directly if needed elsewhere
+            history.append(deepcopy(response.candidates[0].content)) # Append the whole model content part
 
             # Call the MCP server
             api_result = call_mcp_tool(tool_name, tool_args, workspace_path)
 
-            # Send the tool result back to Gemini
-            logging.debug(f"Sending tool result back to Gemini: {api_result}")
-            response = convo.send_message(
-                genai.types.FunctionResponse(name=tool_name, response=api_result)
-            )
-            logging.debug("Response received after sending tool result.")
+            # *** Append the function *response* to history ***
+            history.append({
+                "role": "user", # Function responses are sent as if from the 'user' role in the API context
+                "parts": [{
+                    "function_response": {
+                        "name": tool_name,
+                        "response": api_result,
+                    }
+                }]
+            })
 
-        # Once the loop finishes, the response should be the final text answer
-        final_text_response = response.text
-        logging.info(f"Agent turn finished. Final Response: '{final_text_response[:100]}...'")
-        return final_text_response
+            # --- Make the NEXT call to LLM with updated history ---
+            logging.debug("Sending function response back to model.generate_content")
+            response = model.generate_content(contents=history)
+            logging.debug("Response received after sending tool result.")
+            response_part = response.candidates[0].content.parts[0]
+            # End of loop iteration, check the new response_part for another function call
+
+        # --- No more function calls ---
+        # The final response should be text
+        if hasattr(response_part, 'text'):
+            final_text_response = response_part.text
+            logging.info(f"Agent turn finished. Final Response: '{final_text_response[:100]}...'")
+            return final_text_response
+        else:
+            # Should not happen if the loop exited correctly, but handle defensively
+            logging.error("Loop exited but final response part is not text.")
+            logging.debug(f"Final response part: {response_part}")
+            return "Sorry, I received an unexpected final response structure from the AI."
+
 
     except Exception as e:
         logging.exception("An unexpected error occurred during the agent turn.")
-        # Provide a user-friendly error message
+        # Check for specific API errors if possible
+        if hasattr(e, 'message'):
+             return f"Sorry, an API error occurred: {e.message}"
         return f"Sorry, an unexpected error occurred while processing your request: {e}"
 
 # --- Command-Line Execution for Testing ---
