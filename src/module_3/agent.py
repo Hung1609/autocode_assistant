@@ -2,10 +2,53 @@ import json
 import google.generativeai as genai
 import os
 import subprocess
+from dotenv import load_dotenv
 
+load_dotenv()
+
+API_KEY = os.getenv("GEMINI_API_KEY")
+
+def get_gemini_model(model_name="gemini-2.5-pro-exp-03-25"):
+    if not API_KEY:
+        raise ValueError("GEMINI_API_KEY not found in environment variables.")
+    try:
+        genai.configure(api_key=API_KEY)
+        model = genai.GenerativeModel(model_name)
+        return model
+    except Exception as e:
+        raise ValueError(f"Failed to initialize Gemini model '{model_name}': {e}")
 
 def parse_json_and_generate_scaffold_plan(json_data):
-    
+    prompt = f""""
+    You are a code generation agent.
+
+    You will receive a JSON specification describing a software application (web, mobile, backend, frontend, etc.).  
+    Your task is to:
+    1. Understand the structure and components.
+    2. Generate:
+    - Shell commands to create the folder structure and empty files
+    - A dictionary of file paths (only keys, no code inside)
+
+    Format output:
+    {{
+    "shell": ["mkdir backend", "touch backend/app.py", ...],
+    "files": {{
+        "backend/app.py": "",
+        "frontend/src/App.js": "",
+        ...
+    }}
+    }}
+
+    Only include filenames in "files". Do not output the file contents.
+
+    Here is the spec:
+    {json.dumps(json_data, indent=2)}
+    """
+
+    response = genai.generate_text(prompt)
+    if response.error:
+        raise ValueError(f"Error generating scaffold plan: {response.error}")
+
 
 # import os
 # from dotenv import load_dotenv
