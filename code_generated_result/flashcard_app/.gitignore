@@ -1,0 +1,54 @@
+# Bytecode generated .pyc files
+*.pyc
+
+# Compiled files
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages
+# It's better to unpack these files, but if you have dependencies or other reasons to keep them packed,
+# add them here
+*.egg
+*.whl
+*.zip
+
+# Logs and databases
+logs
+*.log
+*.sql
+*.sqlite
+*.db
+instance/*
+!instance/.gitkeep
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Virtual environment
+venv/
+.venv/
+
+# Editor/IDE-specific files
+.idea/
+.vscode/
+*.swp
+*~
+tmp/
+tmp/*
+*.tmp
+.sass-cache/
+.hg/
+.tox/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Upload configuration
+.pypirc

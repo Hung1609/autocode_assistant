@@ -1,0 +1,24 @@
+{
+  "name": "flashcard-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for a simple flashcard web application.",
+  "main": "index.html",
+  "scripts": {
+    "start": "npm run serve",
+    "serve": "live-server --port=5500",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "flashcard",
+    "frontend",
+    "html",
+    "css",
+    "javascript"
+  ],
+  "author": "AI Code Generator",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.1"
+  },
+  "dependencies": {}
+}

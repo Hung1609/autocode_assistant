@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if card %}Edit Flashcard{% else %}Create Flashcard{% endif %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>{% if card %}Edit Flashcard{% else %}Create Flashcard{% endif %}</h1>
+
+        <form action="" method="post">
+            <label for="front_content">Front Content:</label>
+            <textarea id="front_content" name="front_content" required>{{ card.front_content if card else '' }}</textarea>
+
+            <label for="back_content">Back Content:</label>
+            <textarea id="back_content" name="back_content" required>{{ card.back_content if card else '' }}</textarea>
+
+            <button type="submit">{% if card %}Update{% else %}Create{% endif %} Flashcard</button>
+            <a href="{{ url_for('index') }}">Cancel</a>
+        </form>
+    </div>
+</body>
+</html>

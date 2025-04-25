@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Flashcards</h1>
+
+    <a href="/flashcards/new">Create New Flashcard</a>
+
+    <ul id="flashcard-list">
+        {% for card in flashcards %}
+            <li class="flashcard" data-card-id="{{ card.id }}">
+                <div class="flashcard-front">
+                    {{ card.front_content }}
+                </div>
+                <div class="flashcard-back hidden">
+                    {{ card.back_content }}
+                </div>
+                <div class="flashcard-actions">
+                    <a href="/flashcards/{{ card.id }}/edit">Edit</a>
+                    <form action="/flashcards/{{ card.id }}/delete" method="post" style="display: inline;">
+                        <button type="submit">Delete</button>
+                    </form>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <script>
+        const flashcards = document.querySelectorAll('.flashcard');
+
+        flashcards.forEach(card => {
+            card.addEventListener('click', () => {
+                const front = card.querySelector('.flashcard-front');
+                const back = card.querySelector('.flashcard-back');
+
+                front.classList.toggle('hidden');
+                back.classList.toggle('hidden');
+            });
+        });
+    </script>
+</body>
+</html>
