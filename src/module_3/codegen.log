@@ -12,14 +12,14 @@
 2025-04-25 01:49:50,594 - INFO - Created file: test_code_generated_result\dir1/file1.txt
 2025-04-25 01:49:50,596 - INFO - Created file: test_code_generated_result\file2.py
 2025-04-25 01:49:50,599 - INFO - Generating code for file: test_code_generated_result\backend/main.py
-2025-04-25 01:49:50,599 - INFO - Using model: gemini-2.5-pro-exp-03-25
+2025-04-25 01:49:50,599 - INFO - Using model: gemini-2.0-flash
 2025-04-25 01:49:50,600 - ERROR - Failed to generate code for test_code_generated_result\backend/main.py: API Error
 2025-04-25 01:49:50,602 - INFO - Generating code for file: test_code_generated_result\backend/main.py
-2025-04-25 01:49:50,603 - INFO - Using model: gemini-2.5-pro-exp-03-25
+2025-04-25 01:49:50,603 - INFO - Using model: gemini-2.0-flash
 2025-04-25 01:49:50,608 - INFO - Generating code for file: test_code_generated_result\frontend/package.json
-2025-04-25 01:49:50,609 - INFO - Using model: gemini-2.5-pro-exp-03-25
+2025-04-25 01:49:50,609 - INFO - Using model: gemini-2.0-flash
 2025-04-25 01:49:50,612 - INFO - Generating code for file: test_code_generated_result\backend/requirements.txt
-2025-04-25 01:49:50,613 - INFO - Using model: gemini-2.5-pro-exp-03-25
+2025-04-25 01:49:50,613 - INFO - Using model: gemini-2.0-flash
 2025-04-25 01:49:50,617 - INFO - Generating code for file: path
 2025-04-25 01:49:50,617 - ERROR - Invalid inputs: json_design and json_spec must be dicts, file_path must be str.
 2025-04-25 01:49:50,618 - INFO - Generating code for file: path
@@ -27,7 +27,7 @@
 2025-04-25 01:49:50,618 - INFO - Generating code for file: 123
 2025-04-25 01:49:50,619 - ERROR - Invalid inputs: json_design and json_spec must be dicts, file_path must be str.
 2025-04-25 01:49:50,624 - INFO - Generating code for file: test_code_generated_result\backend/main.py
-2025-04-25 01:49:50,625 - WARNING - Failed to initialize model gemini-2.5-pro-exp-03-25: Model init failed
+2025-04-25 01:49:50,625 - WARNING - Failed to initialize model gemini-2.0-flash: Model init failed
 2025-04-25 01:49:50,625 - WARNING - Failed to initialize model gemini-1.5-pro: Model init failed
 2025-04-25 01:49:50,626 - WARNING - Failed to initialize model gemini-1.5-flash: Model init failed
 2025-04-25 01:49:50,626 - ERROR - No supported Gemini models available.
@@ -57,3 +57,7 @@
 2025-04-25 01:49:50,712 - ERROR - Failed to write to test_code_generated_result\subdir/test.py: Cannot write
 2025-04-25 01:49:50,716 - INFO - Writing code to file: test_code_generated_result\subdir/test.py
 2025-04-25 01:49:50,718 - INFO - Successfully wrote to test_code_generated_result\subdir/test.py
+2025-04-25 10:28:35,080 - INFO - Gemini API configured successfully.
+2025-04-25 10:28:35,083 - ERROR - File not found: [Errno 2] No such file or directory: 'outputs/flashcard_application_20250422.design.json'
+2025-04-25 10:29:32,924 - INFO - Gemini API configured successfully.
+2025-04-25 10:29:32,925 - ERROR - File not found: [Errno 2] No such file or directory: 'src/outputs/flashcard_application_20250422.design.json'

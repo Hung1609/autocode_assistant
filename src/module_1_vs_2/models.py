@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class SpecificationGenerator:
     # Use a more capable model if needed for complex JSON generation
-    def __init__(self, model_name='gemini-2.5-pro-exp-03-25'): 
+    def __init__(self, model_name='gemini-2.0-flash'): 
         self.model = get_gemini_model(model_name)
         self.model_name = model_name
 

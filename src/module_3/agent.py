@@ -2,6 +2,7 @@ import json
 import os
 import argparse
 import logging
+import time
 from google.generativeai import GenerativeModel, configure
 from dotenv import load_dotenv
 
@@ -19,6 +20,8 @@ logging.basicConfig(
     ]
 )
 
+API_CALL_DELAY_SECONDS = 5
+
 # Move API configuration to module level
 try:
     api_key = os.getenv('GEMINI_API_KEY')
@@ -31,8 +34,8 @@ except Exception as e:
     raise
 
 # Supported Gemini models
-SUPPORTED_MODELS = ['gemini-1.5-pro', 'gemini-1.5-flash']
-DEFAULT_MODEL = 'gemini-2.5-pro-exp-03-25'
+SUPPORTED_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash']
+DEFAULT_MODEL = 'gemini-2.0-flash'
 
 OUTPUT_DIR = 'code_generated_result'
 
@@ -294,6 +297,10 @@ def generate_code_for_each_file(json_design, json_spec, file_path):
     {json.dumps(json_spec, indent=2)}
     """
 
+    if API_CALL_DELAY_SECONDS > 0:
+        logger.info(f"Waiting for {API_CALL_DELAY_SECONDS} seconds before API call for {os.path.basename(file_path)}...")
+        time.sleep(API_CALL_DELAY_SECONDS)
+
     try:
         response = model.generate_content(prompt)
         generated_text = response.text.strip()
@@ -378,3 +385,5 @@ if __name__ == "__main__":
     except json.JSONDecodeError as e:
         logger.error(f"Invalid JSON file: {e}")
         raise
+
+# Run file in C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant> python src/module_3/agent.py <design.json> <spec.json> VD: python src/module_3/agent.py outputs/flashcard_web_application_20250425.design.json outputs/flashcard_web_application_20250425.spec.json

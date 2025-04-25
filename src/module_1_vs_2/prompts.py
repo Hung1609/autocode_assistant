@@ -426,24 +426,31 @@ Do not include any introductory text, explanations, code comments, or markdown f
       // Additional workflows...
   ],
   "folder_Structure": {{
-    "description": "Proposed folder structure based on chosen frameworks (e.g., Standard Express structure, Create React App structure). Adapt based on project scale or specific features.",
+    "description": "Proposed folder structure based on chosen frameworks (e.g., Standard Express structure, Create React App structure). Adapt based on project scale or specific features. **IMPORTANT RULE:** For each item in the `structure` array below, if the `path` represents a directory (a folder containing other files or folders), its `description` **MUST** include the word 'directory' (case-insensitive). If the `path` represents a specific file (like `server.js` or `App.js`), its `description` should describe the file's purpose and **MUST NOT** contain the word 'directory'. This is critical for the code generation script.",
     "structure": [
-      {{ "path": "/backend/src", "description": "Backend source code directory" }},
-      {{ "path": "/backend/src/config", "description": "Configuration files (db connection, env variables)" }},
-      {{ "path": "/backend/src/controllers", "description": "Request handling logic" }},
-      {{ "path": "/backend/src/models", "description": "Database models/schemas" }},
-      {{ "path": "/backend/src/routes", "description": "API route definitions" }},
-      {{ "path": "/backend/src/services", "description": "Business logic" }},
-      {{ "path": "/backend/src/middlewares", "description": "Request processing middleware (auth, validation)" }},
-      {{ "path": "/backend/server.js", "description": "Main application entry point" }},
-      {{ "path": "/frontend/public", "description": "Static assets" }},
-      {{ "path": "/frontend/src", "description": "Frontend source code directory" }},
-      {{ "path": "/frontend/src/components", "description": "Reusable UI components" }},
-      {{ "path": "/frontend/src/pages", "description": "Page-level components" }},
-      {{ "path": "/frontend/src/services", "description": "API call functions" }},
-      {{ "path": "/frontend/src/App.js", "description": "Main application component" }},
-      {{ "path": "/frontend/src/index.js", "description": "Frontend entry point" }}
-      // Adjust based on actual tech stack (e.g., different folders for Next.js, Vue, Angular, Python/Django/Flask)
+      // --- Backend ---
+      {{ "path": "/backend/src", "description": "Backend source code directory" }}, // OK
+      {{ "path": "/backend/src/config", "description": "Configuration files directory (db connection, env variables)" }}, // Added 'directory'
+      {{ "path": "/backend/src/controllers", "description": "Request handling logic directory" }}, // Added 'directory'
+      {{ "path": "/backend/src/models", "description": "Database models/schemas directory" }}, // Added 'directory'
+      {{ "path": "/backend/src/routes", "description": "API route definitions directory" }}, // Added 'directory'
+      {{ "path": "/backend/src/services", "description": "Business logic directory" }}, // Added 'directory'
+      {{ "path": "/backend/src/middlewares", "description": "Request processing middleware directory (auth, validation)" }}, // Added 'directory'
+      {{ "path": "/backend/server.js", "description": "Main application entry point file" }}, // Clarified 'file'
+
+      // --- Frontend ---
+      {{ "path": "/frontend/public", "description": "Static assets directory" }}, // Added 'directory'
+      {{ "path": "/frontend/src", "description": "Frontend source code directory" }}, // OK
+      {{ "path": "/frontend/src/components", "description": "Reusable UI components directory" }}, // Added 'directory'
+      {{ "path": "/frontend/src/pages", "description": "Page-level components directory" }}, // Added 'directory'
+      {{ "path": "/frontend/src/services", "description": "API call functions directory" }}, // Added 'directory'
+      {{ "path": "/frontend/src/App.js", "description": "Main React application component file" }}, // Clarified 'file'
+      {{ "path": "/frontend/src/index.js", "description": "Frontend entry point file" }} // Clarified 'file'
+
+      // --- General ---
+      // Remember to adjust based on actual tech stack (e.g., different folders for Next.js, Vue, Angular, Python/Django/Flask).
+      // Ensure all directory paths have 'directory' in their description.
+      // Ensure all file paths DO NOT have 'directory' in their description.
     ]
   }},
   "dependencies": {{

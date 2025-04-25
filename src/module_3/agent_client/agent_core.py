@@ -13,7 +13,7 @@ from tools_definition import get_tool_definitions
 dotenv.load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://127.0.0.1:5100")
-MODEL_NAME = "gemini-2.5-pro-exp-03-25"
+MODEL_NAME = "gemini-2.0-flash"
 
 if not API_KEY:
     logging.error("GEMINI_API_KEY not found in .env file.")
