@@ -99,7 +99,7 @@
   "metadata": {
     "generation_step": "specification",
     "timestamp": "2025-04-21T09:43:26.892335",
-    "model_used": "gemini-2.5-pro-exp-03-25",
+    "model_used": "gemini-2.0-flash",
     "original_description": "create for me a to-do web app"
   }
 }

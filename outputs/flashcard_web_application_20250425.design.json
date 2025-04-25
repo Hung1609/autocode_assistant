@@ -1,0 +1,442 @@
+{
+  "system_Architecture": {
+    "description": "A standard Client-Server architecture where the client is a web browser rendering HTML/CSS/JavaScript served by the backend, and the server is a Flask application handling business logic and data persistence.",
+    "components": [
+      {
+        "name": "Web Frontend",
+        "description": "Renders the user interface for viewing, creating, updating, and deleting flashcards. Interacts with the user and communicates with the Backend API.",
+        "technologies": [
+          "HTML",
+          "CSS",
+          "JavaScript"
+        ],
+        "inputs": [
+          "User interactions (clicks, form submissions)",
+          "API responses from Backend API"
+        ],
+        "outputs": [
+          "Rendered UI (HTML/CSS)",
+          "API requests to Backend API"
+        ]
+      },
+      {
+        "name": "Backend API (Flask Application)",
+        "description": "Handles incoming HTTP requests from the Web Frontend. Contains business logic for CRUD operations on flashcards. Interacts with the Database for data persistence. Serves frontend assets and renders HTML templates.",
+        "technologies": [
+          "Python",
+          "Flask",
+          "RESTful"
+        ],
+        "inputs": [
+          "HTTP requests from Web Frontend"
+        ],
+        "outputs": [
+          "HTTP responses (HTML pages, JSON data, status codes)",
+          "Database queries (SQL)"
+        ]
+      },
+      {
+        "name": "Database",
+        "description": "Persists flashcard data. Stores, retrieves, updates, and deletes flashcard records based on requests from the Backend API.",
+        "technologies": [
+          "SQLite",
+          "SQL"
+        ],
+        "inputs": [
+          "Data read/write requests (SQL queries) from Backend API"
+        ],
+        "outputs": [
+          "Stored flashcard data",
+          "Query results"
+        ]
+      }
+    ]
+  },
+  "data_Design": {
+    "data_Flow_Description": "1. Read: User navigates to the flashcard list page -> Frontend requests data via JS/page load -> Backend API receives GET request -> Backend queries Database for all flashcards -> Database returns records -> Backend formats response (likely renders template with data) -> Frontend displays the list. User clicks a card -> Frontend JS reveals back content (client-side) or potentially fetches detail via API (if implemented). 2. Create: User fills the 'create' form -> Frontend sends POST request with form data to Backend API -> Backend validates data -> Backend executes INSERT SQL query on Database -> Database confirms insertion -> Backend sends success response/redirects -> Frontend displays confirmation/refreshes list. 3. Update: User edits a flashcard form -> Frontend sends PUT request with updated data to Backend API -> Backend validates data -> Backend executes UPDATE SQL query on Database -> Database confirms update -> Backend sends success response/redirects -> Frontend displays confirmation/refreshes list. 4. Delete: User clicks delete button -> Frontend sends DELETE request to Backend API -> Backend executes DELETE SQL query on Database -> Database confirms deletion -> Backend sends success response/redirects -> Frontend removes card from list/refreshes.",
+    "storage_Type": "SQL",
+    "database_Type": "SQLite",
+    "data_Models": [
+      {
+        "model_Name": "Flashcard",
+        "storage_Location": "SQLite table named 'flashcards'",
+        "description": "Represents a single flashcard with front and back content.",
+        "fields": [
+          {
+            "name": "id",
+            "type": "INTEGER",
+            "description": "Unique identifier for the flashcard.",
+            "constraints": [
+              "primary_key: true",
+              "autoincrement: true"
+            ]
+          },
+          {
+            "name": "front_content",
+            "type": "TEXT",
+            "description": "The text content displayed on the front of the flashcard (e.g., question, term).",
+            "constraints": [
+              "required",
+              "nullable: false"
+            ]
+          },
+          {
+            "name": "back_content",
+            "type": "TEXT",
+            "description": "The text content displayed on the back of the flashcard (e.g., answer, definition).",
+            "constraints": [
+              "required",
+              "nullable: false"
+            ]
+          },
+          {
+            "name": "created_at",
+            "type": "DATETIME",
+            "description": "Timestamp when the flashcard was created.",
+            "constraints": [
+              "default: CURRENT_TIMESTAMP",
+              "nullable: false"
+            ]
+          },
+          {
+            "name": "updated_at",
+            "type": "DATETIME",
+            "description": "Timestamp when the flashcard was last updated.",
+            "constraints": [
+              "default: CURRENT_TIMESTAMP",
+              "nullable: false"
+            ]
+          }
+        ],
+        "relationships": []
+      }
+    ]
+  },
+  "interface_Design": {
+    "api_Specifications": [
+      {
+        "endpoint": "/flashcards",
+        "method": "GET",
+        "description": "Retrieves a list of all flashcards. (May be handled directly by template rendering rather than a pure API endpoint in a simple Flask app).",
+        "request_Format": {
+          "params": [],
+          "query": [],
+          "body_Schema": {
+            "description": "No request body needed."
+          }
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "HTML page rendered with a list of flashcards, or potentially JSON: { data: [ { id, front_content, back_content, created_at, updated_at }, ... ] }"
+          },
+          "error_Status": [
+            500
+          ],
+          "error_Schema": {
+            "description": "HTML error page or JSON: { error: 'Error message description' }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "NFR-002"
+        ]
+      },
+      {
+        "endpoint": "/flashcards/new",
+        "method": "GET",
+        "description": "Displays the form to create a new flashcard. (Handled by template rendering).",
+        "request_Format": {
+          "params": [],
+          "query": [],
+          "body_Schema": {
+            "description": "No request body needed."
+          }
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "HTML page containing the 'create flashcard' form."
+          },
+          "error_Status": [],
+          "error_Schema": {
+            "description": "N/A"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "NFR-001"
+        ]
+      },
+      {
+        "endpoint": "/flashcards",
+        "method": "POST",
+        "description": "Creates a new flashcard based on submitted form data.",
+        "request_Format": {
+          "params": [],
+          "query": [],
+          "body_Schema": {
+            "description": "Form data containing { front_content: String, back_content: String }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 302,
+          "success_Schema": {
+            "description": "Redirects to the flashcard list view upon successful creation."
+          },
+          "error_Status": [
+            400,
+            500
+          ],
+          "error_Schema": {
+            "description": "HTML error page or re-render form with errors, or JSON: { error: 'Error message description' }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "FR-001",
+          "NFR-002"
+        ]
+      },
+      {
+        "endpoint": "/flashcards/<int:card_id>/edit",
+        "method": "GET",
+        "description": "Displays the form to edit an existing flashcard. (Handled by template rendering).",
+        "request_Format": {
+          "params": [
+            "card_id"
+          ],
+          "query": [],
+          "body_Schema": {
+            "description": "No request body needed."
+          }
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "HTML page containing the 'edit flashcard' form, pre-populated with card data."
+          },
+          "error_Status": [
+            404
+          ],
+          "error_Schema": {
+            "description": "HTML 404 error page."
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "NFR-001"
+        ]
+      },
+      {
+        "endpoint": "/flashcards/<int:card_id>/update",
+        "method": "POST",
+        "description": "Updates an existing flashcard based on submitted form data. (Note: Using POST for simplicity with HTML forms, though PUT/PATCH is RESTfully correct).",
+        "request_Format": {
+          "params": [
+            "card_id"
+          ],
+          "query": [],
+          "body_Schema": {
+            "description": "Form data containing { front_content: String, back_content: String }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 302,
+          "success_Schema": {
+            "description": "Redirects to the flashcard list view upon successful update."
+          },
+          "error_Status": [
+            400,
+            404,
+            500
+          ],
+          "error_Schema": {
+            "description": "HTML error page or re-render form with errors, or JSON: { error: 'Error message description' }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "FR-003",
+          "NFR-002"
+        ]
+      },
+      {
+        "endpoint": "/flashcards/<int:card_id>/delete",
+        "method": "POST",
+        "description": "Deletes a specific flashcard. (Note: Using POST for simplicity with HTML forms, though DELETE is RESTfully correct).",
+        "request_Format": {
+          "params": [
+            "card_id"
+          ],
+          "query": [],
+          "body_Schema": {
+            "description": "No request body needed (confirmation might be handled client-side or via a confirmation page)."
+          }
+        },
+        "response_Format": {
+          "success_Status": 302,
+          "success_Schema": {
+            "description": "Redirects to the flashcard list view upon successful deletion."
+          },
+          "error_Status": [
+            404,
+            500
+          ],
+          "error_Schema": {
+            "description": "HTML error page or JSON: { error: 'Error message description' }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "FR-004",
+          "NFR-002"
+        ]
+      }
+    ],
+    "ui_Interaction_Notes": "The primary UI involves a list view of flashcards (showing front content), a form for creating/editing (with fields for front/back content), buttons/links for edit and delete actions, and potentially a client-side JavaScript interaction to reveal the back content of a card on click within the list view. Navigation between list, create, and edit views is handled via standard links and redirects."
+  },
+  "workflow_Interaction": [
+    {
+      "workflow_Name": "Create Flashcard",
+      "description": "1. User navigates to the 'Create Flashcard' page (e.g., via a link). 2. Backend API (Flask route for GET /flashcards/new) renders the create form template. 3. Frontend displays the HTML form. 4. User enters front and back content and clicks 'Submit'. 5. Frontend sends a POST request to /flashcards with the form data. 6. Backend API (Flask route for POST /flashcards) receives the request. 7. Backend validates the input data (front/back content present). 8. Backend executes an INSERT SQL command against the SQLite Database. 9. Database saves the new flashcard record and returns success. 10. Backend sends an HTTP 302 Redirect response to the Frontend, pointing to the flashcard list page. 11. Frontend follows the redirect, requesting the list page. 12. Backend retrieves all flashcards (including the new one) from the Database and renders the list template. 13. Frontend displays the updated flashcard list.",
+      "related_Requirements": [
+        "FR-001",
+        "NFR-001",
+        "NFR-002"
+      ]
+    },
+    {
+      "workflow_Name": "View Flashcards",
+      "description": "1. User navigates to the main flashcard list page. 2. Frontend sends a GET request to /flashcards (or the root path). 3. Backend API (Flask route for GET /flashcards) receives the request. 4. Backend executes a SELECT SQL query to fetch all flashcard records from the SQLite Database. 5. Database returns the list of flashcards. 6. Backend renders the list template, embedding the flashcard data (likely just front content initially). 7. Backend sends the rendered HTML page as the HTTP response. 8. Frontend browser renders the HTML, displaying the list. 9. (Optional: Reveal Back) User clicks on a specific flashcard. 10. Frontend JavaScript handles the click event, revealing the back content associated with that card (data might be stored in data attributes or fetched via a separate minimal API call if needed).",
+      "related_Requirements": [
+        "FR-002",
+        "NFR-001",
+        "NFR-002"
+      ]
+    },
+    {
+      "workflow_Name": "Update Flashcard",
+      "description": "1. User clicks the 'Edit' link/button for a specific flashcard in the list view. 2. Frontend sends a GET request to /flashcards/<card_id>/edit. 3. Backend API (Flask route for GET /flashcards/<id>/edit) receives the request. 4. Backend queries the Database for the specific flashcard data using the card_id. 5. Database returns the flashcard record. 6. Backend renders the edit form template, pre-populating the fields with the fetched data. 7. Frontend displays the pre-filled HTML edit form. 8. User modifies the front and/or back content and clicks 'Save'. 9. Frontend sends a POST request (or PUT if using JS fetch) to /flashcards/<card_id>/update with the updated form data. 10. Backend API (Flask route for POST /flashcards/<id>/update) receives the request. 11. Backend validates the input data. 12. Backend executes an UPDATE SQL command against the SQLite Database for the specified card_id. 13. Database updates the record and returns success. 14. Backend sends an HTTP 302 Redirect response to the Frontend, pointing to the flashcard list page. 15. Frontend follows the redirect, displaying the updated list.",
+      "related_Requirements": [
+        "FR-003",
+        "NFR-001",
+        "NFR-002"
+      ]
+    },
+    {
+      "workflow_Name": "Delete Flashcard",
+      "description": "1. User clicks the 'Delete' link/button for a specific flashcard in the list view. 2. (Optional: Frontend JavaScript displays a confirmation dialog). 3. If confirmed, Frontend sends a POST request (or DELETE if using JS fetch) to /flashcards/<card_id>/delete. 4. Backend API (Flask route for POST /flashcards/<id>/delete) receives the request. 5. Backend executes a DELETE SQL command against the SQLite Database for the specified card_id. 6. Database deletes the record and returns success. 7. Backend sends an HTTP 302 Redirect response to the Frontend, pointing to the flashcard list page. 8. Frontend follows the redirect, requesting the list page. 9. Backend retrieves the remaining flashcards from the Database and renders the list template. 10. Frontend displays the updated flashcard list without the deleted card.",
+      "related_Requirements": [
+        "FR-004",
+        "NFR-001",
+        "NFR-002"
+      ]
+    }
+  ],
+  "folder_Structure": {
+    "description": "Proposed folder structure for a standard Flask application serving templates and static files.",
+    "structure": [
+      {
+        "path": "/flashcard_app",
+        "description": "Root project directory"
+      },
+      {
+        "path": "/flashcard_app/app",
+        "description": "Main application package directory"
+      },
+      {
+        "path": "/flashcard_app/app/__init__.py",
+        "description": "Application factory and initialization file"
+      },
+      {
+        "path": "/flashcard_app/app/routes.py",
+        "description": "Defines application routes (view functions)"
+      },
+      {
+        "path": "/flashcard_app/app/models.py",
+        "description": "Defines database models (e.g., using Flask-SQLAlchemy)"
+      },
+      {
+        "path": "/flashcard_app/app/forms.py",
+        "description": "Optional: Defines forms (e.g., using Flask-WTF)"
+      },
+      {
+        "path": "/flashcard_app/app/templates",
+        "description": "HTML templates directory (Jinja2)"
+      },
+      {
+        "path": "/flashcard_app/app/templates/base.html",
+        "description": "Base HTML template file"
+      },
+      {
+        "path": "/flashcard_app/app/templates/index.html",
+        "description": "Template file for listing flashcards"
+      },
+      {
+        "path": "/flashcard_app/app/templates/create_edit_card.html",
+        "description": "Template file for create/edit form"
+      },
+      {
+        "path": "/flashcard_app/app/static",
+        "description": "Static assets directory (CSS, JS, Images)"
+      },
+      {
+        "path": "/flashcard_app/app/static/css",
+        "description": "CSS stylesheets directory"
+      },
+      {
+        "path": "/flashcard_app/app/static/css/style.css",
+        "description": "Main CSS file"
+      },
+      {
+        "path": "/flashcard_app/app/static/js",
+        "description": "JavaScript files directory"
+      },
+      {
+        "path": "/flashcard_app/app/static/js/main.js",
+        "description": "Main JavaScript file for client-side interactions"
+      },
+      {
+        "path": "/flashcard_app/instance",
+        "description": "Instance configuration directory (e.g., SQLite database file location)"
+      },
+      {
+        "path": "/flashcard_app/instance/flashcards.db",
+        "description": "SQLite database file (should be gitignored)"
+      },
+      {
+        "path": "/flashcard_app/run.py",
+        "description": "Script to run the Flask development server file"
+      },
+      {
+        "path": "/flashcard_app/config.py",
+        "description": "Configuration settings file (database URI, secret key, etc.)"
+      },
+      {
+        "path": "/flashcard_app/requirements.txt",
+        "description": "Python dependencies file"
+      },
+      {
+        "path": "/flashcard_app/.gitignore",
+        "description": "Specifies intentionally untracked files that Git should ignore"
+      }
+    ]
+  },
+  "dependencies": {
+    "backend": [
+      "Flask",
+      "Flask-SQLAlchemy (recommended ORM for interacting with SQLite)",
+      "python-dotenv (for managing environment variables/config)"
+    ],
+    "frontend": [
+      "None specific. Utilizes standard browser capabilities for HTML, CSS, and JavaScript."
+    ]
+  },
+  "metadata": {
+    "generation_step": "design",
+    "timestamp": "2025-04-25T11:08:24.869242",
+    "model_used": "gemini-2.0-flash",
+    "source_specification_timestamp": "2025-04-25T11:00:08.207334"
+  }
+}
