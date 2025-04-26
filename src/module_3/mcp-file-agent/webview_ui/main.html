@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+        Use a content security policy to only allow loading images from https or from our extension directory,
+        and only allow scripts that have a specific nonce.
+        Additionally, restrict styles to those inline or loaded from our extension directory.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}'; img-src ${webview.cspSource} https:;">
+    <link href="${stylesUri}" rel="stylesheet">
+    <title>MCP File Agent Chat</title>
+</head>
+<body>
+    <div class="chat-container">
+        <div id="message-list" class="message-list">
+            <!-- Messages will be added here by JavaScript -->
+            <div class="message agent">Welcome! Ask me to perform file operations in your workspace.</div>
+        </div>
+        <div class="input-area">
+            <textarea id="user-input" rows="3" placeholder="E.g., Create a file named 'app.js' with content 'console.log(\"Hello\")'"></textarea>
+            <button id="send-button" title="Send Message">Send</button>
+        </div>
+    </div>
+
+    <!-- The script URI is injected by the extension -->
+    <script nonce="${nonce}" src="${scriptUri}"></script>
+</body>
+</html>
+
+<!-- The ${stylesUri}, ${scriptUri}, and ${nonce} are placeholders. Our extension.ts code (specifically the getWebviewContent function we'll write later) will replace these with the actual URIs and a security nonce when loading the HTML into the Webview.>
