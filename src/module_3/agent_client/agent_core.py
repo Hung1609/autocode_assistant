@@ -21,7 +21,7 @@ if not API_KEY:
     exit(1)
 try:
     genai.configure(api_key=API_KEY)
-    TOOL_DEFINITIONS = get_tool_definitions() # định dạng này không hỗ trợ cho SDK của google
+    TOOL_DEFINITIONS = get_tool_definitions()
     # cần improve prompt này sau
     SYSTEM_INSTRUCTION = """You are an AI assistant integrated into a development environment.
     Your primary function is to help users by interacting with their project files using the available tools.
@@ -87,8 +87,9 @@ def run_agent_turn(user_prompt, workspace_path):
     logging.info(f"Starting agent turn. Workspace: '{workspace_path}', Prompt: '{user_prompt[:100]}...'")
     if not workspace_path or not os.path.isdir(workspace_path):
          logging.error(f"Invalid workspace path provided: '{workspace_path}'")
-         # Return error directly if workspace isn't valid before calling LLM
          return "Error: Invalid or inaccessible workspace path provided. Please ensure the path exists and is accessible."
+    
+    history = [{"role": "user", "parts": [user_prompt]}]
 
     try:
         logging.debug("Sending initial prompt to model.generate_content")
@@ -107,52 +108,59 @@ def run_agent_turn(user_prompt, workspace_path):
         while hasattr(response_part, 'function_call') and response_part.function_call.name:
             function_call = response_part.function_call
             tool_name = function_call.name
-            # Ensure args are serializable if needed later, dict is fine for MCP call
             tool_args = {key: value for key, value in function_call.args.items()}
 
             logging.info(f"Gemini requested tool: '{tool_name}' with args: {tool_args}")
 
-            # *** Append the model's function call to history ***
-            # Use deepcopy to avoid modifying the response object directly if needed elsewhere
-            history.append(deepcopy(response.candidates[0].content)) # Append the whole model content part
-
             # Call the MCP server
             api_result = call_mcp_tool(tool_name, tool_args, workspace_path)
 
-            # *** Append the function *response* to history ***
+            # Append the function call and response to history with correct roles
             history.append({
-                "role": "user", # Function responses are sent as if from the 'user' role in the API context
+                "role": "model",
                 "parts": [{
-                    "function_response": {
+                    "function_call": {
                         "name": tool_name,
-                        "response": api_result,
+                        "args": tool_args
                     }
                 }]
             })
 
-            # --- Make the NEXT call to LLM with updated history ---
+            history.append({
+                "role": "user",
+                "parts": [{
+                    "function_response": {
+                        "name": tool_name,        # The name of the function that was called
+                        "response": api_result,   # The actual dictionary returned by call_mcp_tool
+                    }
+                }]
+            })
+
+            # Make the next call to LLM with updated history
             logging.debug("Sending function response back to model.generate_content")
-            response = model.generate_content(contents=history)
+            response = model.generate_content(
+                contents=history,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=1,
+                    max_output_tokens=10000,
+                    top_p=0.95
+                )
+            )
             logging.debug("Response received after sending tool result.")
             response_part = response.candidates[0].content.parts[0]
-            # End of loop iteration, check the new response_part for another function call
 
-        # --- No more function calls ---
-        # The final response should be text
+        # No more function calls
         if hasattr(response_part, 'text'):
             final_text_response = response_part.text
             logging.info(f"Agent turn finished. Final Response: '{final_text_response[:100]}...'")
             return final_text_response
         else:
-            # Should not happen if the loop exited correctly, but handle defensively
             logging.error("Loop exited but final response part is not text.")
             logging.debug(f"Final response part: {response_part}")
             return "Sorry, I received an unexpected final response structure from the AI."
 
-
     except Exception as e:
         logging.exception("An unexpected error occurred during the agent turn.")
-        # Check for specific API errors if possible
         if hasattr(e, 'message'):
              return f"Sorry, an API error occurred: {e.message}"
         return f"Sorry, an unexpected error occurred while processing your request: {e}"
