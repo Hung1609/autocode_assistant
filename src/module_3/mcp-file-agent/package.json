@@ -11,11 +11,15 @@
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
+  "activationEvents": [
+    "onCommand: mcp-file-agent.startChat"
+  ],
   "contributes": {
     "commands": [
       {
         "command": "mcp-file-agent.helloWorld",
-        "title": "Hello World"
+        "title": "Start MCP File Agent Chat",
+        "category": "MCP Agent"
       }
     ]
   },

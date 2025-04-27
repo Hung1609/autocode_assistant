@@ -254,27 +254,57 @@ function handleWebviewMessage(message: any, panel: vscode.WebviewPanel, context:
             }
             return; // End of 'userMessage' case
     }
+} // 27/4
+
+function killAgentClientProcess() {
+    if (agentClientProcess)
+        try {
+            console.log(`Attempting to kill agent client process (PID: ${agentClientProcess.pid})...`);
+            // Use SIGTERM first, might need SIGKILL on some OS or stubborn processes
+            const killed = agentClientProcess.kill('SIGTERM');
+            if (killed) {
+                 console.log("Agent client process killed successfully.");
+            } else {
+                 console.warn("Agent client process kill command returned false (process might have already exited?).");
+            }
+        } catch (error) {
+            console.error("Error attempting to kill agent client process:", error);
+        } finally {
+            agentClientProcess = undefined; // Clear the process variable
+        }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+    console.log("Deactivating MCP File Agent extension.");
+    // Clean up processes when the extension is deactivated
+    killAgentClientProcess();
+    // killMcpServerProcess(); // If managed by extension
+    if (webviewPanel) {
+        webviewPanel.dispose();
+    }
+}
+
+// --- MCP Server Management Functions (Placeholders for Option B) ---
+// function startMcpServer(context: vscode.ExtensionContext) {
+//     // Implementation needed:
+//     // 1. Define path to mcp_server/server.py and its venv python
+//     // 2. Check if already running (e.g., check port or PID file)
+//     // 3. Spawn the server process using child_process.spawn
+//     // 4. Store the process handle in mcpServerProcess
+//     // 5. Handle its stdout/stderr for logging
+//     // 6. Handle its 'close' and 'error' events
+//     console.log("MCP Server auto-start not implemented yet.");
+// }
+
+// function killMcpServerProcess() {
+//     // Implementation needed:
+//     // 1. Check if mcpServerProcess exists and is running
+//     // 2. Send SIGTERM (or SIGKILL)
+//     // 3. Clear mcpServerProcess variable
+//     if (mcpServerProcess) {
+//          console.log("Attempting to kill MCP server process...");
+//          // mcpServerProcess.kill...
+//          mcpServerProcess = undefined;
+//     }
+// }
