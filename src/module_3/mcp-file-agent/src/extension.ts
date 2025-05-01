@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function createOrShowWebviewPanel(context: vscode.ExtensionContext) {
-	const column = vscode.window.activateTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
+	const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 	// if we have a panel, show it
 	if (webviewPanel) {
 		webviewPanel.reveal(column);
@@ -54,7 +54,7 @@ function createOrShowWebviewPanel(context: vscode.ExtensionContext) {
 	webviewPanel.webview.html = getWebViewContent(webviewPanel.webview, context.extensionUri);
 	// Handle messages from the webview
 	webviewPanel.webview.onDidReceiveMessage(
-		message =? handleWebviewMessage(message, webviewPanel as vscode.WebviewPannel, context),
+		message => handleWebviewMessage(message, webviewPanel as vscode.WebviewPanel, context),
 		undefined,
 		context.subscriptions
 	);
@@ -76,7 +76,7 @@ function createOrShowWebviewPanel(context: vscode.ExtensionContext) {
 function getWebViewOptions(extensionUri:vscode.Uri): vscode.WebviewOptions {
 	return {
 		enableScripts: true, // Enable JavaScript in the webview
-		loacalResourceRoots: [vscode.Uri.joinPath(extensionUri, 'webview_ui')], // restrict to only loading content from our extension's webview_ui directory
+		localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'webview_ui')], // restrict to only loading content from our extension's webview_ui directory
 	};
 }
 
@@ -91,9 +91,9 @@ function getNonce() {
 }
 
 function getWebViewContent(webview: vscode.Webview, extensionUri: vscode.Uri): string {
-	const scriptPath = vscode.Uri.joinPath(extensionUri, 'webview-ui', 'main.js');
-    const stylesPath = vscode.Uri.joinPath(extensionUri, 'webview-ui', 'style.css');
-    const htmlPath = vscode.Uri.joinPath(extensionUri, 'webview-ui', 'main.html');
+	const scriptPath = vscode.Uri.joinPath(extensionUri, 'webview_ui', 'main.js');
+    const stylesPath = vscode.Uri.joinPath(extensionUri, 'webview_ui', 'style.css');
+    const htmlPath = vscode.Uri.joinPath(extensionUri, 'webview_ui', 'main.html');
 
     // Convert file paths to URIs consumable by the webview
     const scriptUri = webview.asWebviewUri(scriptPath);
@@ -123,7 +123,7 @@ function handleWebviewMessage(message: any, panel: vscode.WebviewPanel, context:
         case 'userMessage':
             const userPrompt = message.text;
             console.log(`Received user prompt: ${userPrompt}`);
-            if (!userPrompt) return;
+            if (!userPrompt) {return;}
 
             // Get current workspace folder path
             const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -143,7 +143,7 @@ function handleWebviewMessage(message: any, panel: vscode.WebviewPanel, context:
             // --- Execute the Python Agent Client ---
             try {
                 // ** IMPORTANT: Define the correct paths relative to the *extension's* location **
-                context.extensionPath = "AUTOCODE_ASSISTANT/src/module_3/";
+                //context.extensionPath = "AUTOCODE_ASSISTANT/src/module_3/"; // xóa tạm vì ko cần thiết
                 // We need to go UP one level from extensionPath to reach module_3, then into agent_client
 
                 // Determine Python executable path based on OS (adjust 'Scripts' vs 'bin')
@@ -152,7 +152,7 @@ function handleWebviewMessage(message: any, panel: vscode.WebviewPanel, context:
 
                 const agentClientBasePath = path.join(context.extensionPath, '..', 'agent_client'); // Path to agent_client folder
                 const agentClientScriptPath = path.join(agentClientBasePath, 'agent_core.py');
-                const agentClientVenvPythonPath = path.join(agentClientBasePath, 'venv', venvDirName, pythonExecutable);
+                const agentClientVenvPythonPath = path.join(agentClientBasePath, 'agent_env', venvDirName, pythonExecutable);
 
                 console.log(`Agent client Python path: ${agentClientVenvPythonPath}`);
                 console.log(`Agent client script path: ${agentClientScriptPath}`);
@@ -192,7 +192,7 @@ function handleWebviewMessage(message: any, panel: vscode.WebviewPanel, context:
                         cwd: agentClientBasePath,
                         // Ensure stdio streams use utf8 encoding
                         stdio: ['pipe', 'pipe', 'pipe'], // stdin, stdout, stderr
-                        encoding: 'utf8'
+                        // encoding: 'utf8'
                     }
                 );
 
@@ -257,7 +257,7 @@ function handleWebviewMessage(message: any, panel: vscode.WebviewPanel, context:
 } // 27/4
 
 function killAgentClientProcess() {
-    if (agentClientProcess)
+    if (agentClientProcess){
         try {
             console.log(`Attempting to kill agent client process (PID: ${agentClientProcess.pid})...`);
             // Use SIGTERM first, might need SIGKILL on some OS or stubborn processes
@@ -272,6 +272,7 @@ function killAgentClientProcess() {
         } finally {
             agentClientProcess = undefined; // Clear the process variable
         }
+    }
 }
 
 // This method is called when your extension is deactivated
