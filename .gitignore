@@ -22,6 +22,8 @@ build/
 *.egg
 
 .vscode/
+!.vscode/launch.json
+!.vscode/tasks.json
 
 # Runtime files
 *.pid
