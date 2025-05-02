@@ -78,5 +78,41 @@ def get_tool_definitions():
                 },
                 "required": ["path", "changes_description"]
             }
+        },
+        {
+            "name": "generate_specification_json",
+            "description": "Use this tool ONLY when the user provides a textual description or requirements for a NEW software project and asks to generate the initial SPECIFICATION document. Takes the user's text description as input and generates a JSON specification file (ending in .spec.json). Returns the relative path to the created specification file.",
+            "parameters": {
+                "type": "OBJECT",
+                "properties": {
+                    "project_description": { 
+                        "type": "STRING",    
+                        "description": "The user's detailed natural language description of the software requirements, purpose, scope, features, etc. This description MUST be extracted directly from the user's prompt or recent messages." # Refined description
+                    },
+                    "output_filename_base": {
+                         "type": "STRING",
+                         "description": "Optional. A base name (like 'my_project' or 'todo_app') to use for the output filename, often derived from the project description or user's request. If omitted, a default name will be generated."
+                     }
+                },
+                "required": ["project_description"] 
+            }
+        },
+        {
+            "name": "generate_design_json",
+            "description": "Use this tool ONLY when the user provides the path to an EXISTING specification JSON file (usually ending in .spec.json) and asks to generate the technical DESIGN document based on it. Takes the path to the specification file as input and generates a JSON design file (ending in .design.json). Returns the relative path to the created design file.",
+            "parameters": {
+                "type": "OBJECT",
+                "properties": {
+                    "spec_file_path": {
+                        "type": "STRING",
+                        "description": "The relative path (within the project workspace) to the existing '.spec.json' file to be used as input for generating the design."
+                    },
+                    "output_filename_base": {
+                        "type": "STRING",
+                        "description": "Optional. A base name (like 'my_project' or 'todo_app') to use for the output file. If omitted, a default name based on project description or 'specification' will be used."
+                    }
+                },
+                "required": ["spec_file_path"]
+            }
         }
     ]

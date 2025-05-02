@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 from tools_definition import get_tool_definitions
 
 dotenv.load_dotenv()
-API_KEY = os.getenv("GEMINI_API_KEY")
+API_KEY = os.getenv("GOOGLE_API_KEY")
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://127.0.0.1:5100")
 MODEL_NAME = "gemini-2.0-flash"
 
@@ -25,8 +25,11 @@ try:
     # cần improve prompt này sau
     SYSTEM_INSTRUCTION = """You are an AI assistant integrated into a development environment.
     Your primary function is to help users by interacting with their project files using the available tools.
-    You can create files, read files, list directory contents, create directories, and edit files within the user's designated project workspace.
-    Always use the provided tools when a file system operation is required.
+    You can create files, read files, list directory contents, create directories, edit files, generate specification files, and generate design files within the user's designated project workspace.
+    Always use the provided tools when a file system or generation operation is required.
+    **IMPORTANT: When calling a tool, carefully extract the required parameter values directly from the user's most recent request or conversation history. Do not guess or hallucinate parameter values.**
+        - For `generate_specification_json`, the `project_description` parameter MUST contain the user's actual textual requirements.
+        - For `generate_design_json`, the `spec_file_path` parameter MUST be a relative path to an *existing* '.spec.json' file mentioned by the user or previously generated.
     When listing files, present the results clearly.
     When editing files, remember that the current implementation replaces the entire file content.
     Confirm successful operations concisely. If an operation fails, report the error message provided.
