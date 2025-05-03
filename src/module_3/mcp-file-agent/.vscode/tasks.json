@@ -1,0 +1,109 @@
+// See https://go.microsoft.com/fwlink/?LinkId=733558
+// for the documentation about the tasks.json format
+// {
+// 	"version": "2.0.0",
+// 	"tasks": [
+// 		{
+//             "label": "watch",
+//             "dependsOn": [
+//                 "npm: watch:tsc",
+//                 "npm: watch:esbuild"
+//             ],
+//             "presentation": {
+//                 "reveal": "never"
+//             },
+//             "group": {
+//                 "kind": "build",
+//                 "isDefault": true
+//             }
+//         },
+//         {
+//             "type": "npm",
+//             "script": "watch:esbuild",
+//             "group": "build",
+//             "problemMatcher": "$esbuild-watch",
+//             "isBackground": true,
+//             "label": "npm: watch:esbuild",
+//             "presentation": {
+//                 "group": "watch",
+//                 "reveal": "never"
+//             }
+//         },
+// 		{
+//             "type": "npm",
+//             "script": "watch:tsc",
+//             "group": "build",
+//             "problemMatcher": "$tsc-watch",
+//             "isBackground": true,
+//             "label": "npm: watch:tsc",
+//             "presentation": {
+//                 "group": "watch",
+//                 "reveal": "never"
+//             }
+//         },
+// 		{
+// 			"type": "npm",
+// 			"script": "watch-tests",
+// 			"problemMatcher": "$tsc-watch",
+// 			"isBackground": true,
+// 			"presentation": {
+// 				"reveal": "never",
+// 				"group": "watchers"
+// 			},
+// 			"group": "build"
+// 		},
+// 		{
+// 			"label": "tasks: watch-tests",
+// 			"dependsOn": [
+// 				"npm: watch",
+// 				"npm: watch-tests"
+// 			],
+// 			"problemMatcher": []
+// 		}
+// 	]
+// }
+
+
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "npm: compile", // Label matching your preLaunchTask
+            "type": "npm", // Specifies this is an npm script task
+            "script": "compile", // The npm script to run ("compile" from package.json)
+            "path": "./", // Run npm in the root of mcp-file-agent folder
+            "group": {
+                "kind": "build",
+                "isDefault": true // Makes this the default build task (Ctrl+Shift+B)
+            },
+            "problemMatcher": [
+                // Use the standard matcher provided by the esbuild extension
+                // Often referenced simply as '$esbuild' for non-watch builds
+                "$esbuild"
+                // If '$esbuild' doesn't work, try removing this line completely
+                // OR try "$tsc" if esbuild output is TSC-compatible enough
+            ],
+            "detail": "Runs eslint and esbuild for a production build.",
+             "presentation": {
+                 "reveal": "silent", // Don't automatically show the terminal unless errors occur
+                 "clear": true      // Clear terminal before running
+             }
+        },
+         {
+             "label": "npm: watch", // Optional: Define watch task if needed separately
+             "type": "npm",
+             "script": "watch",
+             "path": "./",
+             "group": "build", // Add to build group but not default
+             "problemMatcher": [
+                 // Watch mode typically uses $esbuild-watch
+                 "$esbuild-watch"
+             ],
+             "isBackground": true, // Watch tasks run in the background
+             "detail": "Runs esbuild in watch mode.",
+             "presentation": {
+                 "reveal": "always"
+             }
+         }
+    ]
+}
