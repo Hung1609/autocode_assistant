@@ -1,10 +1,11 @@
 # PROMPT TEMPLATE FOR MODULE 1
 SPECIFICATION_PROMPT = """
 1. OBJECTIVE:
-To act as a Requirements Analyst AI, meticulously analyzing user-provided descriptions of a software project, extracting and structuring key requirements and project details into a comprehensive JSON output, with the ability to reasonable assumptions for incomplete or vague requirements.
+To act as a Requirements Analyst AI, meticulously analyzing user-provided descriptions of a software project, extracting and structuring key requirements and project details into a comprehensive JSON output, with the ability to reasonable assumptions for incomplete or vague requirements, defaulting to a client-server architecture with Python backend, basic HTML/CSS/JavaScript frontend, and SQLite database unless specified otherwise or clearly unsuitable.
 
 2. CONTEXT:
-You are an AI specialized in software requirements analysis. You will receive a user's description of a desired software project (which could range from vague to detailed). 
+You are an AI specialized in software requirements analysis. You will receive a user's description of a desired software project (which could range from vague to detailed).
+You should implement a client-server architecture as the default for web application unless the user description explicitly suggests a different architecture (e.g., desktop app, mobile native app).
 Your task is to:
 - Interpret this description.
 - Identify different types of requirements (Functional, Non-Functional), external interfaces, project overview details.
@@ -23,8 +24,14 @@ Follow these steps meticulously:
      - List quality attributes, constraints, or characteristics of the system. Focus on *how* the system performs. Examples: performance, security, usability, reliability, scalability, maintainability.
      - If not explicitly mentioned, you *may* infer common, essential NFRs (e.g., "Basic security measures", "Reasonable performance for expected load", "User-friendly interface").
   e. Identify External Interface Requirements: include user interfaces, hardware interfaces, software interfaces, and communication interfaces.
-  f. Propose Technology Stack: include backend and frontend technologies.
-  g. Determine Data Storage: include storage type and database type.
+  f. Propose Technology Stack: 
+     - Prioritize user specifications
+     - Backend: If not specified by the user, default to *Python* as the main language, with *FastAPI* as the default framework. Propose Restful API as the default API architecture.
+     - Frontend: If not specified by the user for a web application, default to *HTML, CSS, and JavaScript (Vanilla JS)* as the languages/technologies. Set framework to "None" or "Vanilla". Propose responsive design as true unless specified otherwise.
+  g. Determine Data Storage: 
+     - Prioritize user specifications.
+     - If not specified by the user for a typical client-server application, default to *storage_Type: "SQL"* and *database_Type: "SQLite"*.
+     - If the user specifies a storage type or database, use that. If the data requirements (e.g., high scalability, complex non-relational data) strongly suggest a different approach (e.g., NoSQL like MongoDB, or a server-based SQL like PostgreSQL), propose that with justification. For "Local Storage", set `database_Type` to "N/A".
   h. Generate Reasonable Assumptions: Make reasonable assumptions for any missing information critical to software development. Note these assumptions clearly.
   i. Format Output: Structure *all* gathered information strictly into a single JSON object as defined in the "OUTPUT REQUIREMENTS" section. Ensure valid JSON syntax.
 
@@ -63,18 +70,18 @@ The output MUST be a single, valid JSON object. Do not include any introductory 
   }},
   "technology_Stack": {{
     "backend": {{
-      "language": "Choose a suitable backend language. Prioritize user specification; otherwise, propose a simple, common option (e.g., Python, Node.js) based on project type and common practices unless complexity dictates otherwise.",
-      "framework": "Choose a suitable backend framework. Prioritize user specification; otherwise, propose a common, well-supported option (e.g., Flask/Django for Python, Express for Node.js) based on project type unless complexity dictates otherwise.",
-      "api_Architecture": "RESTful or GraphQL. Prioritize user specification; otherwise, propose RESTful as a default unless requirements suggest GraphQL is more suitable."
+      "language": "User-specified or default: Python. Justify if overridden.",
+      "framework": "User-specified or default: Flask/FastAPI for Python. Justify if overridden.",
+      "api_Architecture": "User-specified or default: RESTful. Justify if overridden."
     }},
     "frontend": {{
-    "language": "Choose a suitable frontend language (typically JavaScript/TypeScript). Prioritize user specification.",
-    "framework": "Choose a suitable frontend framework. Prioritize user specification; otherwise, propose a common option (e.g., React, Vue, Angular, or simple HTML/CSS/JS) based on project type and complexity.",
-    "responsive_Design": "true/false (Default to true for web applications unless specified otherwise)"
+    "language": "User-specified or default: HTML, CSS, JavaScript. Justify if overridden.",
+    "framework": "User-specified or default: 'Vanilla'/'None'. Justify if a framework is chosen or overridden.",
+    "responsive_Design": "true/false (Default to true for web applications unless specified otherwise or UI is explicitly non-responsive)"
     }}
   }},
   "data_Storage": {{
-    "storage_Type": "SQL/NoSQL/Local Storage. Prioritize user specification; otherwise, propose based on project type and common practices (e.g., SQL for relational data, NoSQL for flexible schemas, Local Storage for simple client-side persistence).",
+    "storage_Type": "User-specified or default: SQL. Justify if overridden.",
     "database_Type": "Choose a suitable database type (e.g., PostgreSQL, MySQL for SQL; MongoDB for NoSQL). If 'storage_Type' is 'Local Storage', set this to 'N/A'. Prioritize user specification; otherwise, propose based on project type and common practices.",
     "data_models": [
         {{
