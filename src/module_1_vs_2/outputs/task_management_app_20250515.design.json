@@ -1,0 +1,602 @@
+{
+  "system_Architecture": {
+    "description": "A client-server architecture where the frontend (HTML, CSS, JavaScript) interacts with a backend API (Python/FastAPI) to manage tasks, projects, and user data stored in a SQLite database.",
+    "components": [
+      {
+        "name": "Web Frontend",
+        "description": "Provides the user interface for interacting with the task management application. Handles user input, displays data, and communicates with the backend API.",
+        "technologies": [
+          "HTML",
+          "CSS",
+          "JavaScript",
+          "Vanilla"
+        ],
+        "inputs": [
+          "User interactions (button clicks, form submissions)",
+          "API responses (data from the backend)"
+        ],
+        "outputs": [
+          "API requests (to the backend)",
+          "Rendered UI (dynamic content updates)"
+        ]
+      },
+      {
+        "name": "Backend API",
+        "description": "Handles business logic, data validation, authentication, and database interactions. Exposes RESTful endpoints for the frontend to consume.",
+        "technologies": [
+          "Python",
+          "FastAPI",
+          "RESTful"
+        ],
+        "inputs": [
+          "HTTP requests from Frontend (user actions, data updates)"
+        ],
+        "outputs": [
+          "HTTP responses (data, status codes)",
+          "Database queries (CRUD operations)"
+        ]
+      },
+      {
+        "name": "Database",
+        "description": "Stores and manages persistent application data, including user accounts, projects, tasks, and team member associations.",
+        "technologies": [
+          "SQL",
+          "SQLite"
+        ],
+        "inputs": [
+          "Data read/write requests from Backend API (queries, updates)"
+        ],
+        "outputs": [
+          "Stored data (tables, rows)",
+          "Query results (data retrieval)"
+        ]
+      }
+    ]
+  },
+  "data_Design": {
+    "data_Flow_Description": "User interacts with the HTML/JS frontend, triggering API calls to the Python/FastAPI backend. The backend validates the request, interacts with the SQLite database for CRUD operations on Users, Projects, Tasks, and Project_User, and returns responses to the frontend. HTTPS ensures secure data transfer.",
+    "storage_Type": "SQL",
+    "database_Type": "SQLite",
+    "data_Models": [
+      {
+        "model_Name": "User",
+        "description": "Represents a registered user of the application.",
+        "fields": [
+          {
+            "name": "user_id",
+            "type": "INTEGER",
+            "description": "Unique identifier for the user.",
+            "constraints": [
+              "primary_key: true",
+              "autoincrement: true"
+            ]
+          },
+          {
+            "name": "username",
+            "type": "VARCHAR(255)",
+            "description": "User's chosen username.",
+            "constraints": [
+              "required",
+              "unique",
+              "indexed"
+            ]
+          },
+          {
+            "name": "email",
+            "type": "VARCHAR(255)",
+            "description": "User's email address.",
+            "constraints": [
+              "required",
+              "unique",
+              "indexed"
+            ]
+          },
+          {
+            "name": "password_hash",
+            "type": "VARCHAR(255)",
+            "description": "Hashed password for user authentication.",
+            "constraints": [
+              "required"
+            ]
+          },
+          {
+            "name": "created_at",
+            "type": "DATETIME",
+            "description": "Timestamp when the user account was created.",
+            "constraints": [
+              "default: CURRENT_TIMESTAMP"
+            ]
+          }
+        ],
+        "relationships": []
+      },
+      {
+        "model_Name": "Project",
+        "description": "Represents a project created by a user.",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "INTEGER",
+            "description": "Unique identifier for the project.",
+            "constraints": [
+              "primary_key: true",
+              "autoincrement: true"
+            ]
+          },
+          {
+            "name": "user_id",
+            "type": "INTEGER",
+            "description": "Foreign key linking to the User who created the project.",
+            "constraints": [
+              "required",
+              "indexed"
+            ]
+          },
+          {
+            "name": "project_name",
+            "type": "VARCHAR(255)",
+            "description": "Name of the project.",
+            "constraints": [
+              "required"
+            ]
+          },
+          {
+            "name": "description",
+            "type": "TEXT",
+            "description": "Optional description of the project.",
+            "constraints": [
+              "nullable: true"
+            ]
+          },
+          {
+            "name": "created_at",
+            "type": "DATETIME",
+            "description": "Timestamp when the project was created.",
+            "constraints": [
+              "default: CURRENT_TIMESTAMP"
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "field_Name": "user_id",
+            "type": "Many-to-one",
+            "related_Model": "User",
+            "foreign_Field": "user_id",
+            "description": "Each project belongs to one user.",
+            "implementation_Notes": "FOREIGN KEY (user_id) REFERENCES User(user_id)",
+            "on_Delete": "CASCADE"
+          }
+        ]
+      },
+      {
+        "model_Name": "Task",
+        "description": "Represents a task within a project.",
+        "fields": [
+          {
+            "name": "task_id",
+            "type": "INTEGER",
+            "description": "Unique identifier for the task.",
+            "constraints": [
+              "primary_key: true",
+              "autoincrement: true"
+            ]
+          },
+          {
+            "name": "project_id",
+            "type": "INTEGER",
+            "description": "Foreign key linking to the Project the task belongs to.",
+            "constraints": [
+              "required",
+              "indexed"
+            ]
+          },
+          {
+            "name": "task_name",
+            "type": "VARCHAR(255)",
+            "description": "Name of the task.",
+            "constraints": [
+              "required"
+            ]
+          },
+          {
+            "name": "description",
+            "type": "TEXT",
+            "description": "Description of the task.",
+            "constraints": [
+              "nullable: true"
+            ]
+          },
+          {
+            "name": "deadline",
+            "type": "DATETIME",
+            "description": "Deadline for the task.",
+            "constraints": [
+              "nullable: true"
+            ]
+          },
+          {
+            "name": "is_completed",
+            "type": "BOOLEAN",
+            "description": "Indicates whether the task is completed.",
+            "constraints": [
+              "required",
+              "default: false"
+            ]
+          },
+          {
+            "name": "created_at",
+            "type": "DATETIME",
+            "description": "Timestamp when the task was created.",
+            "constraints": [
+              "default: CURRENT_TIMESTAMP"
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "field_Name": "project_id",
+            "type": "Many-to-one",
+            "related_Model": "Project",
+            "foreign_Field": "project_id",
+            "description": "Each task belongs to one project.",
+            "implementation_Notes": "FOREIGN KEY (project_id) REFERENCES Project(project_id)",
+            "on_Delete": "CASCADE"
+          }
+        ]
+      },
+      {
+        "model_Name": "Project_User",
+        "description": "Represents the many-to-many relationship between projects and users, indicating which users are collaborators on which projects.",
+        "fields": [
+          {
+            "name": "project_id",
+            "type": "INTEGER",
+            "description": "Foreign key linking to the Project.",
+            "constraints": [
+              "required",
+              "indexed"
+            ]
+          },
+          {
+            "name": "user_id",
+            "type": "INTEGER",
+            "description": "Foreign key linking to the User.",
+            "constraints": [
+              "required",
+              "indexed"
+            ]
+          },
+          {
+            "name": "created_at",
+            "type": "DATETIME",
+            "description": "Timestamp when the user was added to the project.",
+            "constraints": [
+              "default: CURRENT_TIMESTAMP"
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "field_Name": "project_id",
+            "type": "Many-to-one",
+            "related_Model": "Project",
+            "foreign_Field": "project_id",
+            "description": "Links a user to a project they are collaborating on.",
+            "implementation_Notes": "FOREIGN KEY (project_id) REFERENCES Project(project_id)",
+            "on_Delete": "CASCADE"
+          },
+          {
+            "field_Name": "user_id",
+            "type": "Many-to-one",
+            "related_Model": "User",
+            "foreign_Field": "user_id",
+            "description": "Links a project to a user collaborating on it.",
+            "implementation_Notes": "FOREIGN KEY (user_id) REFERENCES User(user_id)",
+            "on_Delete": "CASCADE"
+          }
+        ]
+      }
+    ]
+  },
+  "interface_Design": {
+    "api_Specifications": [
+      {
+        "endpoint": "/api/users/register",
+        "method": "POST",
+        "description": "Registers a new user account.",
+        "request_Format": {
+          "body_Schema": {
+            "description": "{ username: String (required), email: String (required), password: String (required) }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 201,
+          "success_Schema": {
+            "description": "Returns the created user object."
+          },
+          "error_Status": [
+            400,
+            409,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message describing registration failure' }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "NFR-002",
+          "NFR-001"
+        ]
+      },
+      {
+        "endpoint": "/api/users/login",
+        "method": "POST",
+        "description": "Logs in an existing user.",
+        "request_Format": {
+          "body_Schema": {
+            "description": "{ email: String (required), password: String (required) }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "Returns a JWT token for authentication."
+          },
+          "error_Status": [
+            400,
+            401,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message describing login failure' }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "NFR-002",
+          "NFR-001"
+        ]
+      },
+      {
+        "endpoint": "/api/projects",
+        "method": "POST",
+        "description": "Creates a new project.",
+        "request_Format": {
+          "body_Schema": {
+            "description": "{ project_name: String (required), description: String (optional) }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 201,
+          "success_Schema": {
+            "description": "Returns the created project object."
+          },
+          "error_Status": [
+            400,
+            401,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message describing project creation failure' }"
+          }
+        },
+        "authentication_Required": true,
+        "related_NFRs": [
+          "NFR-001",
+          "NFR-002"
+        ]
+      },
+      {
+        "endpoint": "/api/projects/{project_id}",
+        "method": "GET",
+        "description": "Retrieves a specific project by ID.",
+        "request_Format": {
+          "params": [
+            "{project_id}"
+          ]
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "Returns the project object."
+          },
+          "error_Status": [
+            401,
+            404,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message describing project retrieval failure' }"
+          }
+        },
+        "authentication_Required": true,
+        "related_NFRs": [
+          "NFR-001"
+        ]
+      },
+      {
+        "endpoint": "/api/projects/{project_id}/tasks",
+        "method": "POST",
+        "description": "Adds a new task to a specific project.",
+        "request_Format": {
+          "params": [
+            "{project_id}"
+          ],
+          "body_Schema": {
+            "description": "{ task_name: String (required), description: String (optional), deadline: Date (optional) }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 201,
+          "success_Schema": {
+            "description": "Returns the created task object."
+          },
+          "error_Status": [
+            400,
+            401,
+            404,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message describing task creation failure' }"
+          }
+        },
+        "authentication_Required": true,
+        "related_NFRs": [
+          "NFR-001",
+          "NFR-002"
+        ]
+      },
+      {
+        "endpoint": "/api/projects/{project_id}/invite",
+        "method": "POST",
+        "description": "Invites a user to collaborate on a project.",
+        "request_Format": {
+          "params": [
+            "{project_id}"
+          ],
+          "body_Schema": {
+            "description": "{ email: String (required) }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "Returns a confirmation message."
+          },
+          "error_Status": [
+            400,
+            401,
+            404,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message describing invitation failure' }"
+          }
+        },
+        "authentication_Required": true,
+        "related_NFRs": [
+          "NFR-002"
+        ]
+      }
+    ],
+    "ui_Interaction_Notes": "The frontend dashboard displays the user's projects, which are fetched via GET /api/projects.  Creating a new project triggers a POST request to /api/projects. Adding a task to a project triggers a POST request to /api/projects/{project_id}/tasks. Inviting a team member triggers a POST request to /api/projects/{project_id}/invite."
+  },
+  "workflow_Interaction": [
+    {
+      "workflow_Name": "User Registration Process",
+      "description": "1. User fills registration form on Frontend. 2. Frontend sends POST request to /api/users/register on Backend API. 3. Backend API validates data. 4. Backend API hashes password. 5. Backend API saves user data to SQLite Database. 6. Database confirms save. 7. Backend API sends success response (user object) to Frontend. 8. Frontend displays success message or redirects to login page.",
+      "related_Requirements": [
+        "FR-004",
+        "NFR-002",
+        "NFR-003"
+      ]
+    },
+    {
+      "workflow_Name": "Create Project Process",
+      "description": "1. User clicks 'Create Project' button on the Frontend. 2. A modal/page is displayed with a form for project name and description. 3. The user submits the form. 4. The Frontend sends a POST request to /api/projects with the project data in the request body. 5. The Backend API validates the project data. 6. The Backend API saves the project data to the SQLite Database, associating it with the currently logged-in user. 7. The Database confirms the save. 8. The Backend API sends a success response (the newly created project object) to the Frontend. 9. The Frontend updates the project list to display the new project.",
+      "related_Requirements": [
+        "FR-001",
+        "NFR-001",
+        "NFR-003"
+      ]
+    }
+  ],
+  "folder_Structure": {
+    "description": "Proposed folder structure for FastAPI backend and Vanilla JS frontend.",
+    "structure": [
+      {
+        "path": "/backend",
+        "description": "Root directory for the backend application directory"
+      },
+      {
+        "path": "/backend/app",
+        "description": "Main application directory for backend directory"
+      },
+      {
+        "path": "/backend/app/main.py",
+        "description": "FastAPI application entry point file"
+      },
+      {
+        "path": "/backend/app/models.py",
+        "description": "SQLAlchemy ORM models file"
+      },
+      {
+        "path": "/backend/app/schemas.py",
+        "description": "Pydantic schemas for request/response validation file"
+      },
+      {
+        "path": "/backend/app/crud.py",
+        "description": "CRUD operations functions file"
+      },
+      {
+        "path": "/backend/app/routers",
+        "description": "API routers directory"
+      },
+      {
+        "path": "/backend/app/routers/projects.py",
+        "description": "Router for project-related endpoints file"
+      },
+      {
+        "path": "/backend/app/routers/tasks.py",
+        "description": "Router for task-related endpoints file"
+      },
+      {
+        "path": "/backend/app/routers/users.py",
+        "description": "Router for user-related endpoints file"
+      },
+      {
+        "path": "/backend/requirements.txt",
+        "description": "Python dependencies file"
+      },
+      {
+        "path": "/frontend",
+        "description": "Root directory for the frontend application directory"
+      },
+      {
+        "path": "/frontend/index.html",
+        "description": "Main HTML file for the frontend"
+      },
+      {
+        "path": "/frontend/css",
+        "description": "CSS styles directory"
+      },
+      {
+        "path": "/frontend/css/style.css",
+        "description": "Main stylesheet file"
+      },
+      {
+        "path": "/frontend/js",
+        "description": "JavaScript files directory"
+      },
+      {
+        "path": "/frontend/js/app.js",
+        "description": "Main JavaScript application logic file"
+      },
+      {
+        "path": "/frontend/js/api.js",
+        "description": "JavaScript functions for API calls file"
+      }
+    ]
+  },
+  "dependencies": {
+    "backend": [
+      "fastapi",
+      "uvicorn[standard]",
+      "sqlalchemy",
+      "pydantic",
+      "python-jose[cryptography]",
+      "passlib[bcrypt]",
+      "python-dotenv"
+    ],
+    "frontend": []
+  },
+  "metadata": {
+    "generation_step": "design",
+    "timestamp": "2025-05-15T16:25:28.318596",
+    "model_used": "gemini-2.0-flash",
+    "source_specification_timestamp": "2025-05-15T16:24:40.309949"
+  }
+}

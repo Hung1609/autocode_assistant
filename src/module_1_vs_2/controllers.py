@@ -77,7 +77,7 @@ class SpecificationController:
         markdown_content = []
     
         # Project Overview
-        if "project_Overview" in spec_data:
+        if "project_Overview" in spec_data and isinstance(spec_data["project_Overview"], dict):
             overview = spec_data["project_Overview"]
             markdown_content.extend([
                 f"# {overview.get('project_Name', 'Unnamed Project')}",
@@ -89,139 +89,134 @@ class SpecificationController:
             ])
 
         # Functional Requirements
-        if "functional_Requirements" in spec_data:
+        if "functional_Requirements" in spec_data and isinstance(spec_data["functional_Requirements"], list):
             markdown_content.extend([
                 "## Functional Requirements",
                 ""
             ])
             for req in spec_data["functional_Requirements"]:
                 markdown_content.extend([
-                    f"### {req.get('id')} - {req.get('title')}",
-                    f"**Description:** {req.get('description')}",
-                    f"**Priority:** {req.get('priority')}",
-                    "",
-                    "**Acceptance Criteria:**"
+                    f"### {req.get('id', 'FR-XXX')} - {req.get('title', 'N/A')}",
+                    f"**Description:** {req.get('description', 'N/A')}",
+                    f"**Priority:** {req.get('priority', 'N/A')}",
+                    ""
                 ])
-                for criterion in req.get('acceptance_criteria', []):
-                    markdown_content.append(f"- {criterion}")
+                if "acceptance_criteria" in req and isinstance(req["acceptance_criteria"], list):
+                    markdown_content.append("**Acceptance Criteria:**")
+                    for criterion in req.get('acceptance_criteria', []):
+                        markdown_content.append(f"- {criterion}")
                 markdown_content.append("")
             
         # Non-Functional Requirements
-        if "non_Functional_Requirements" in spec_data:
+        if "non_Functional_Requirements" in spec_data and isinstance(spec_data["non_Functional_Requirements"], list):
             markdown_content.extend([
                 "## Non-Functional Requirements",
                 ""
             ])
             for req in spec_data["non_Functional_Requirements"]:
                 markdown_content.extend([
-                    f"### {req.get('id')} - {req.get('category')}",
+                    f"### {req.get('id', 'NFR-XXX')} - {req.get('category', 'N/A')}",
                     f"**Description:** {req.get('description')}",
-                    "",
-                    "**Acceptance Criteria:**"
+                    ""
                 ])
-                for criterion in req.get('acceptance_criteria', []):
-                    markdown_content.append(f"- {criterion}")
+                if "acceptance_criteria" in req and isinstance(req["acceptance_criteria"], list):
+                    markdown_content.append("**Acceptance Criteria:**")
+                    for criterion in req.get('acceptance_criteria', []):
+                        markdown_content.append(f"- {criterion}")
                 markdown_content.append("")
 
         # External Interface Requirements
-        if "external_Interface_Requirements" in spec_data:
+        if "external_Interface_Requirements" in spec_data and isinstance(spec_data["external_Interface_Requirements"], dict):
+            interfaces = spec_data["external_Interface_Requirements"]
             markdown_content.extend([
                 "## External Interface Requirements",
                 ""
             ])
-            interfaces = spec_data["external_Interface_Requirements"]
-            
-            # User Interfaces
-            if interfaces.get("user_Interfaces"):
-                markdown_content.extend([
-                    "### User Interfaces",
-                    ""
-                ])
-                for ui in interfaces["user_Interfaces"]:
-                    markdown_content.append(f"- {ui}")
+            ui_list = interfaces.get("user_Interfaces", [])
+            if ui_list and isinstance(ui_list, list):
+                markdown_content.append("### User Interfaces")
+                for ui in ui_list: markdown_content.append(f"- {ui}")
                 markdown_content.append("")
             
-            # Hardware Interfaces
-            if interfaces.get("hardware_Interfaces"):
-                markdown_content.extend([
-                    "### Hardware Interfaces",
-                    ""
-                ])
-                for hi in interfaces["hardware_Interfaces"]:
-                    markdown_content.append(f"- {hi}")
+            hw_list = interfaces.get("hardware_Interfaces", [])
+            if hw_list and isinstance(hw_list, list):
+                markdown_content.append("### Hardware Interfaces")
+                for hi in hw_list: markdown_content.append(f"- {hi}")
                 markdown_content.append("")
             
-            # Software Interfaces
-            if interfaces.get("software_Interfaces"):
-                markdown_content.extend([
-                    "### Software Interfaces",
-                    ""
-                ])
-                for si in interfaces["software_Interfaces"]:
-                    markdown_content.append(f"- {si}")
+            sw_list = interfaces.get("software_Interfaces", [])
+            if sw_list and isinstance(sw_list, list):
+                markdown_content.append("### Software Interfaces")
+                for si in sw_list: markdown_content.append(f"- {si}")
                 markdown_content.append("")
             
-            # Communication Interfaces
-            if interfaces.get("communication_Interfaces"):
-                markdown_content.extend([
-                    "### Communication Interfaces",
-                    ""
-                ])
-                for ci in interfaces["communication_Interfaces"]:
-                    markdown_content.append(f"- {ci}")
+            comm_list = interfaces.get("communication_Interfaces", [])
+            if comm_list and isinstance(comm_list, list):
+                markdown_content.append("### Communication Interfaces")
+                for ci in comm_list: markdown_content.append(f"- {ci}")
                 markdown_content.append("")
 
         # Technology Stack
-        if "technology_Stack" in spec_data:
+        if "technology_Stack" in spec_data and isinstance(spec_data["technology_Stack"], dict):
+            tech_stack = spec_data["technology_Stack"]
             markdown_content.extend([
                 "## Technology Stack",
                 ""
             ])
-            tech_stack = spec_data["technology_Stack"]
             
-            # Backend
-            if "backend" in tech_stack:
+            if "backend" in tech_stack and isinstance(tech_stack["backend"], dict):
+                backend = tech_stack["backend"]
                 markdown_content.extend([
-                    "### Backend",
-                    "",
-                    f"- **Language:** {tech_stack['backend'].get('language', 'N/A')}",
-                    f"- **Framework:** {tech_stack['backend'].get('framework', 'N/A')}",
-                    f"- **API Architecture:** {tech_stack['backend'].get('api_Architecture', 'N/A')}",
-                    ""
+                    "### Backend", "",
+                    f"- **Language:** {backend.get('language', 'N/A')}",
+                    f"- **Framework:** {backend.get('framework', 'N/A')}",
+                    f"- **API Architecture:** {backend.get('api_Architecture', 'N/A')}", ""
                 ])
             
-            # Frontend
-            if "frontend" in tech_stack:
+            if "frontend" in tech_stack and isinstance(tech_stack["frontend"], dict):
+                frontend = tech_stack["frontend"]
                 markdown_content.extend([
-                    "### Frontend",
-                    "",
-                    f"- **Language:** {tech_stack['frontend'].get('language', 'N/A')}",
-                    f"- **Framework:** {tech_stack['frontend'].get('framework', 'N/A')}",
-                    f"- **Responsive Design:** {str(tech_stack['frontend'].get('responsive_Design', 'N/A'))}",
-                    ""
+                    "### Frontend", "",
+                    f"- **Language:** {frontend.get('language', 'N/A')}",
+                    f"- **Framework:** {frontend.get('framework', 'N/A')}",
+                    f"- **Responsive Design:** {str(frontend.get('responsive_Design', 'N/A'))}", ""
                 ])
 
         # Data Storage
-        if "data_Storage" in spec_data:
+        if "data_Storage" in spec_data and isinstance(spec_data["data_Storage"], dict):
+            storage = spec_data["data_Storage"]
             markdown_content.extend([
-                "## Data Storage",
-                "",
-                f"**Storage Type:** {spec_data['data_Storage'].get('storage_Type', 'N/A')}",
-                f"**Database Type:** {spec_data['data_Storage'].get('database_Type', 'N/A')}",
-                "",
-                "### Data Models"
+                "## Data Storage", "",
+                f"**Storage Type:** {storage.get('storage_Type', 'N/A')}",
+                f"**Database Type:** {storage.get('database_Type', 'N/A')}", ""
             ])
-            for model in spec_data['data_Storage'].get('data_models', []):
-                markdown_content.append(f"- {model}")
-            markdown_content.append("")
+            if "data_models" in storage and isinstance(storage["data_models"], list):
+                markdown_content.append("### Data Models (Key Attributes)")
+                for model in storage.get('data_models', []):
+                    if isinstance(model, dict):
+                        entity_name = model.get('entity_name', 'Unnamed Entity')
+                        key_attrs = ", ".join(model.get('key_attributes', ['N/A']))
+                        markdown_content.append(f"- **{entity_name}:** {key_attrs}")
+                markdown_content.append("")
+
+        # Assumptions Made
+        if "assumptions_Made" in spec_data and isinstance(spec_data["assumptions_Made"], list):
+            assumptions = spec_data.get("assumptions_Made", [])
+            if assumptions:
+                markdown_content.extend(["## Assumptions Made", ""])
+                for assumption in assumptions:
+                    markdown_content.append(f"- {assumption}")
+                markdown_content.append("")
 
         # Metadata (if present)
-        if "metadata" in spec_data:
+        if "metadata" in spec_data and isinstance(spec_data["metadata"], dict):
+            metadata = spec_data["metadata"]
             markdown_content.extend([
-                "## Generation Metadata",
-                "",
-                f"- **Generated At:** {spec_data['metadata'].get('timestamp', 'N/A')}",
-                f"- **Model Used:** {spec_data['metadata'].get('chosen_model', 'N/A')}",
+                "## Generation Metadata", "",
+                f"- **Generated At:** {metadata.get('timestamp', 'N/A')}",
+                # --- CHANGE HERE ---
+                f"- **Model Used:** {metadata.get('model_used', 'N/A')}", # Changed from 'chosen_model'
+                f"- **Generation Step:** {metadata.get('generation_step', 'N/A')}", # Added for clarity
                 ""
             ])
 
