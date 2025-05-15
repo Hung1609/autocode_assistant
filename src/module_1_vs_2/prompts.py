@@ -63,26 +63,26 @@ The output MUST be a single, valid JSON object. Do not include any introductory 
     // Additional non-functional requirements...
   ],
   "external_Interface_Requirements": {{
-    "user_Interfaces": ["Description of UI components and interactions"],
-    "hardware_Interfaces": ["Required hardware connections/specifications"],
-    "software_Interfaces": ["Required integrations with other software"],
-    "communication_Interfaces": ["Protocols, authentication methods"]
+    "user_Interfaces": ["Description of UI components and interactions, descripe as specifically as possible with layout structure, specific elements and their positions."],
+    "hardware_Interfaces": ["List any specific hardware specifications or connectivity requirements if applicable. If there are no special requirements, write 'No specific hardware requirements, assuming standard computer/mobile device hardware.'"],
+    "software_Interfaces": ["Describe integration requirements with other software systems. If it is a standalone web application, write 'Requires a modern web browser on the client side."],
+    "communication_Interfaces": ["Identify the communication protocols that will be used between system components or with external systems. Include authentication methods if applicable."]
   }},
   "technology_Stack": {{
     "backend": {{
       "language": "User-specified or default: Python. Justify if overridden.",
-      "framework": "User-specified or default: Flask/FastAPI for Python. Justify if overridden.",
+      "framework": "User-specified or default: FastAPI for Python. Justify if overridden.",
       "api_Architecture": "User-specified or default: RESTful. Justify if overridden."
     }},
     "frontend": {{
     "language": "User-specified or default: HTML, CSS, JavaScript. Justify if overridden.",
-    "framework": "User-specified or default: 'Vanilla'/'None'. Justify if a framework is chosen or overridden.",
+    "framework": "User-specified or default: 'Vanilla'. Justify if a framework is chosen or overridden.",
     "responsive_Design": "true/false (Default to true for web applications unless specified otherwise or UI is explicitly non-responsive)"
     }}
   }},
   "data_Storage": {{
     "storage_Type": "User-specified or default: SQL. Justify if overridden.",
-    "database_Type": "Choose a suitable database type (e.g., PostgreSQL, MySQL for SQL; MongoDB for NoSQL). If 'storage_Type' is 'Local Storage', set this to 'N/A'. Prioritize user specification; otherwise, propose based on project type and common practices.",
+    "database_Type": "User-specified or default: SQLite for SQL. If 'storage_Type' is 'Local Storage', set this to 'N/A'. Justify if overridden.",
     "data_models": [
         {{
             "entity_name": "ExampleEntity",
@@ -92,7 +92,7 @@ The output MUST be a single, valid JSON object. Do not include any introductory 
     ]
   }},
   "assumptions_Made": [
-      "List any significant assumptions made about requirements, scope, or technology choices due to missing information."
+      "List any significant assumptions made about requirements, scope, or technology choices due to missing information. E.g., 'Defaulted to Python/Flask backend, HTML/CSS/JS frontend, and SQLite database as no specific technologies were requested by the user.'"
   ]
 }}
 ```
@@ -230,41 +230,42 @@ Ensure all string values are properly enclosed in double quotes. Lists should co
   ],
   "external_Interface_Requirements": {{
     "user_Interfaces": [
-      "Web-based graphical user interface (GUI) accessible via standard desktop browsers. Key components include login/registration forms, task list display, task creation input, task status toggles, and filtering controls."
+      "Main interface after login will be a task management dashboard. This dashboard will display a list of tasks. Each task item should show its name, due date (if any), and a checkbox to mark as complete. There should be a button or form to 'Create New Task' (requiring fields for task name and optional due date). Filtering options (e.g., dropdown for 'All', 'Active', 'Completed') should be present to filter the task list.",
+      "The login page features a central form with 'Email' and 'Password' input fields, and a 'Login' button. A separate registration page (or link) will be available.",
+      // Additional specification ...
     ],
     "hardware_Interfaces": [
-      "None specified. Standard user computer hardware (desktop/laptop) is assumed."
+      "No specific hardware requirements, assuming standard computer/mobile device hardware."
     ],
     "software_Interfaces": [
-      "Requires a standard modern web browser on the client-side.",
-      "May require interaction with an email service if features like password reset are implemented (out of initial scope)."
+      "Requires a modern web browser on the client side."
     ],
     "communication_Interfaces": [
-      "HTTPS for secure communication between client browser and web server.",
-      "RESTful API likely used for client-server data exchange."
+      "HTTPS for secure communication between client browser and web server via a RESTful API."
     ]
   }},
   "technology_Stack": {{
     "backend": {{
-      "language": "Node.js",
-      "framework": "Express",
+      "language": "Python",
+      "framework": "FastAPI",
       "api_Architecture": "RESTful"
     }},
     "frontend": {{
-      "language": "JavaScript",
-      "framework": "React",
-      "responsive_Design": false
+      "language": "HTML, CSS, JavaScript",
+      "framework": "Vanilla",
+      "responsive_Design": true
     }}
   }},
   "data_Storage": {{
-    "storage_Type": "NoSQL",
-    "database_Type": "MongoDB",
+    "storage_Type": "SQL",
+    "database_Type": "SQLite",
       "data_models": [
-        {{"entity_name": "User", "key_attributes": ["user_id", "email", "password"]}},
-        {{"entity_name": "Task", "key_attributes": ["task_id", "user_id", "name", "dueDate", "isComplete"]}}
+        {{"entity_name": "User", "key_attributes": ["user_id", "email", "password_hash", "created_at"]}},
+        {{"entity_name": "Task", "key_attributes": ["task_id", "user_id", "name", "due_date", "is_complete", "created_at", "updated_at"]}}
       ]
     }},
     "assumptions_Made": [
+      "Defaulted to Python/Flask backend, HTML/CSS/JS frontend, and SQLite database as no specific technologies were requested by the user.",
       "Assuming standard security practices like password hashing are required even if not explicitly stated.",
       "Assuming the primary target is desktop browsers based on the description."
     ]
@@ -366,25 +367,25 @@ Do not include any introductory text, explanations, code comments, or markdown f
     "data_Models": [
       {{
         "model_Name": "Name of the data model (e.g., User, Task)",
-        "storage_Location": "Specify where this model is stored (e.g., MongoDB collection, SQL table, Frontend Local Storage)",
         "description": "Purpose of this data entity.", 
         "fields": [
           {{
-            "name": "field_name",
-            "type": "Data type appropriate for storage_Type (e.g., String, Integer, Boolean, Date, Array, ObjectId, VARCHAR(255), INT, TEXT, PrimaryKey, ForeignKey, etc.)",
+            "name": "Name of this specific attribute/column within the model",
+            "type": "Data type appropriate for storage_Type (e.g., String, Integer, Boolean, Date, Array, ObjectId, VARCHAR(255), INT, TEXT, PrimaryKey.)",
             "description": "Description of the field.",
-            "constraints": ["List constraints: e.g., required, unique, default: value, indexed, nullable: false, primary_key: true, foreign_key: {{references: 'other_model', on_delete: 'CASCADE' }}"]
+            "constraints": ["List constraints: e.g., required, unique, default: value, indexed, nullable: false, primary_key: true."]
           }}
           // Additional fields for this model...
         ],
-        "relationships": [ // Renamed from "relationship" to "relationships" for clarity as it's a list
+        "relationships": [ 
           {{
             "field_Name": "The field name in this model used for the association (e.g., userId)",
+            "type": "One-to-one / One-to-many / Many-to-many / Many-to-one (Infer based on descriptions, e.g., 'a user has many tasks' implies one-to-many from User to Task)",
             "related_Model": "Name of the related model (e.g., User)",
-            "relationship_Type": "One-to-one / One-to-many / Many-to-many / Many-to-one (Infer based on descriptions, e.g., 'a user has many tasks' implies one-to-many from User to Task)",
+            "foreign_Field": "The name of the field in related_Model that field_Name references (e.g., _id, id). Usually the primary key of related_Model.",
             "description": "Brief description of the relationship (e.g., 'Each task belongs to one user', 'One user can have many tasks')",
-            "implementation_Notes": "How the relationship is implemented (e.g., 'userId field in Task references User _id' for NoSQL, 'FOREIGN KEY constraint on userId column' for SQL)",
-            "on_Delete": "CASCADE / SET NULL / RESTRICT (Optional, mainly for SQL, specify if applicable)"
+            "implementation_Notes": "How the relationship is implemented (e.g., 'userId field in Task references User _id' for NoSQL, 'FOREIGN KEY (userId) REFERENCES User(id)' for SQL)",
+            "on_Delete": "CASCADE / SET NULL / RESTRICT / NO ACTION (Optional, mainly for SQL, specify if applicable)"
           }}
           // Add more relationships if identified
         ]
@@ -433,7 +434,7 @@ Do not include any introductory text, explanations, code comments, or markdown f
       // Additional workflows...
   ],
   "folder_Structure": {{
-    "description": "Proposed folder structure based on chosen frameworks (e.g., Standard Express structure, Create React App structure). Adapt based on project scale or specific features. **IMPORTANT RULE:** For each item in the `structure` array below, if the `path` represents a directory (a folder containing other files or folders), its `description` **MUST** include the word 'directory' (case-insensitive). If the `path` represents a specific file (like `server.js` or `App.js`), its `description` should describe the file's purpose and **MUST NOT** contain the word 'directory'. This is critical for the code generation script.",
+    "description": "Proposed folder structure based on chosen frameworks (e.g., Standard Express structure, Create React App structure). Adapt based on project scale or specific features. **The specific paths and file names listed in the 'structure' array below are examples; they MUST be adapted to the actual technology_Stack provided in Agent 1's input.** **IMPORTANT RULE:** For each item in the `structure` array below, if the `path` represents a directory (a folder containing other files or folders), its `description` **MUST** include the word 'directory' (case-insensitive). If the `path` represents a specific file (like `server.js` or `App.js`), its `description` should describe the file's purpose and **MUST NOT** contain the word 'directory'. This is critical for the code generation script.",
     "structure": [
       // --- Backend ---
       {{ "path": "/backend/src", "description": "Backend source code directory" }}, // OK
@@ -470,13 +471,16 @@ PARTIAL INPUT:
 {{
   // ... other fields ...
   "technology_Stack": {{
-    "backend": {{ "language": "Node.js", "framework": "Express", "api_Architecture": "RESTful" }},
-    "frontend": {{ "language": "JavaScript", "framework": "React", "responsive_Design": false }}
+    "backend": {{ "language": "Python", "framework": "FastAPI", "api_Architecture": "RESTful" }},
+    "frontend": {{ "language": "HTML, CSS, JavaScript", "framework": "Vanilla", "responsive_Design": true }}
   }},
   "data_Storage": {{
-    "storage_Type": "NoSQL",
-    "database_Type": "MongoDB",
-    "data_models": [ "User (user_id, username/email, hashed_password)", "Task (task_id, user_id, task_name, due_date (optional), is_complete_status, created_at, updated_at)" ]
+    "storage_Type": "SQL",
+    "database_Type": "SQLite",
+    "data_models": [
+      {{ "entity_name": "User", "key_attributes": ["user_id", "email", "hashed_password"] }},
+      {{ "entity_name": "Task", "key_attributes": ["task_id", "user_id", "name", "due_date", "is_complete_status"] }}
+    ]
   }}
 }}
 
@@ -484,36 +488,71 @@ PARTIAL EXPECTED OUTPUT:
 {{
   // ... system_Architecture ...
   "data_Design": {{
-    "data_Flow_Description": "User interacts with React frontend, triggering API calls to Express backend. Backend validates, interacts with MongoDB for CRUD operations on Users and Tasks, and returns responses to frontend.",
-    "storage_Type": "NoSQL",
-    "database_Type": "MongoDB",
+    "data_Flow_Description": "User interacts with HTML/JS frontend, triggering API calls to Python/FastAPI backend. Backend validates, interacts with SQLite database for CRUD operations on Users and Tasks, and returns responses to frontend.",
+    "storage_Type": "SQL",
+    "database_Type": "SQLite",
     "data_Models": [
       {{
         "model_Name": "User",
-        "description": "Represents an application user.",
+        "description": "Represents an application user and their credentials.",
         "fields": [
-          {{ "name": "_id", "type": "ObjectId", "description": "Unique identifier (automatically generated by MongoDB)", "constraints": ["primary_key: true"] }},
+          {{ "name": "id", "type": "Integer", "description": "Primary key for the user.", "constraints": ["primary_key: true", "autoincrement: true"] }},
           {{ "name": "email", "type": "String", "description": "User's email address, used for login.", "constraints": ["required", "unique", "indexed"] }},
-          {{ "name": "password", "type": "String", "description": "Hashed user password.", "constraints": ["required"] }},
-          {{ "name": "createdAt", "type": "Date", "description": "Timestamp of user creation.", "constraints": ["default: Date.now"] }},
-          {{ "name": "updatedAt", "type": "Date", "description": "Timestamp of last user update.", "constraints": ["default: Date.now"]}}
-        ]
+          {{ "name": "password_hash", "type": "String", "description": "Hashed user password.", "constraints": ["required"] }},
+          {{ "name": "created_at", "type": "DateTime", "description": "Timestamp of user creation.", "constraints": ["default: func.now()"]}}
+        ],
+        "relationships": []
       }},
       {{
         "model_Name": "Task",
-        "description": "Represents a user task.",
+        "description": "Represents a user task with details and completion status.",
         "fields": [
-          {{ "name": "_id", "type": "ObjectId", "description": "Unique identifier (automatically generated by MongoDB)", "constraints": ["primary_key: true"] }},
-          {{ "name": "userId", "type": "ObjectId", "description": "Reference to the User who owns this task.", "constraints": ["required", "indexed", "foreign_key: {{references: 'User'}}"] }},
+          {{ "name": "id", "type": "Integer", "description": "Primary key for the task.", "constraints": ["primary_key: true", "autoincrement: true"] }},
+          {{ "name": "user_id", "type": "Integer", "description": "Foreign key linking to the User who owns this task.", "constraints": ["required", "indexed"] }},
           {{ "name": "name", "type": "String", "description": "The name or title of the task.", "constraints": ["required"] }},
-          {{ "name": "dueDate", "type": "Date", "description": "Optional due date for the task.", "constraints": ["nullable: true"] }},
-          {{ "name": "isComplete", "type": "Boolean", "description": "Status of the task.", "constraints": ["required", "default: false", "indexed"] }},
-          {{ "name": "createdAt", "type": "Date", "description": "Timestamp of task creation.", "constraints": ["default: Date.now"] }},
-          {{ "name": "updatedAt", "type": "Date", "description": "Timestamp of last task update.", "constraints": ["default: Date.now"]}}
+          {{ "name": "due_date", "type": "Date", "description": "Optional due date for the task.", "constraints": ["nullable: true"] }},
+          {{ "name": "is_complete", "type": "Boolean", "description": "Status of the task.", "constraints": ["required", "default: false"] }},
+          {{ "name": "created_at", "type": "DateTime", "description": "Timestamp of task creation.", "constraints": ["default: func.now()"] }},
+          {{ "name": "updated_at", "type": "DateTime", "description": "Timestamp of last task update.", "constraints": ["default: func.now()", "onupdate: func.now()"] }}
+        ],
+        "relationships": [
+          {{
+            "field_Name": "user_id",
+            "type": "Many-to-one",
+            "related_Model": "User",
+            "foreign_Field": "id",
+            "description": "Each task belongs to one user.",
+            "implementation_Notes": "FOREIGN KEY (user_id) REFERENCES users(id)",
+            "on_Delete": "CASCADE"
+          }}
         ]
       }}
     ]
   }},
-  // ... interface_Design, workflow_Interaction, folder_Structure, dependencies ...
+  "folder_Structure": {{
+    "description": "Proposed folder structure for Python/FastAPI backend and Vanilla JS frontend.",
+    "structure": [
+      {{ "path": "/backend/app", "description": "Main backend application directory" }},
+      {{ "path": "/backend/app/main.py", "description": "FastAPI application entry point file" }},
+      {{ "path": "/backend/app/models.py", "description": "SQLAlchemy ORM models file" }},
+      {{ "path": "/backend/app/schemas.py", "description": "Pydantic schemas for request/response validation file" }},
+      {{ "path": "/backend/app/crud.py", "description": "CRUD operations functions file" }},
+      {{ "path": "/backend/app/routers", "description": "API routers directory" }},
+      {{ "path": "/backend/app/routers/tasks.py", "description": "Router for task-related endpoints file" }},
+      {{ "path": "/backend/app/routers/auth.py", "description": "Router for authentication endpoints file" }},
+      {{ "path": "/backend/requirements.txt", "description": "Python dependencies file" }},
+      {{ "path": "/frontend/index.html", "description": "Main HTML file for the frontend" }},
+      {{ "path": "/frontend/css", "description": "CSS styles directory" }},
+      {{ "path": "/frontend/css/style.css", "description": "Main stylesheet file" }},
+      {{ "path": "/frontend/js", "description": "JavaScript files directory" }},
+      {{ "path": "/frontend/js/app.js", "description": "Main JavaScript application logic file" }},
+      {{ "path": "/frontend/js/api.js", "description": "JavaScript functions for API calls file" }}
+    ]
+  }},
+  "dependencies": {{
+    "backend": ["fastapi", "uvicorn[standard]", "sqlalchemy", "pydantic", "python-jose[cryptography]", "passlib[bcrypt]"],
+    "frontend": [] // Since using Vanilla JS, no additional dependencies needed
+  }},
+  // ... interface_Design, workflow_Interaction...
 }}
 """
