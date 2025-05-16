@@ -1,6 +1,13 @@
 import streamlit as st
 import json
 from controllers import SpecificationController
+import re
+
+def slugify(text):
+    text = text.lower()
+    text = re.sub(r'\s+', '_', text)
+    text = re.sub(r'[^\w_]', '', text)
+    return text
 
 class SpecificationView:
     def __init__(self):
@@ -27,7 +34,7 @@ class SpecificationView:
                 "Describe your software requirements:",
                 value=st.session_state.user_description,
                 height=150,
-                key="user_input_area", # Added key for better state management if needed
+                key="user_input_area",
                 placeholder="E.g., Create a task management app where users can create projects, add tasks with deadlines, and invite team members to collaborate"
             )
 
@@ -36,18 +43,15 @@ class SpecificationView:
                     st.warning("Please enter a description first.")
                 else:
                     with st.spinner("Generating specification... Please wait."):
-                        st.session_state.design_data = None # Clear previous design
-                        st.session_state.spec_markdown = "" # Clear previous markdown
+                        st.session_state.design_data = None
+                        st.session_state.spec_markdown = ""
 
-                        # Controller now returns None on failure, error messages are in st.error from model/controller
                         spec_data_result = self.controller.generate_specification(st.session_state.user_description)
                         if spec_data_result:
                             st.session_state.spec_data = spec_data_result
                             st.session_state.spec_markdown = self.controller.export_to_markdown(spec_data_result)
                             st.success("Specification generated successfully!")
-                            # No explicit rerun needed, Streamlit handles updates on button press and state change.
                         else:
-                            # Error message already displayed by st.error in controller/model
                             st.session_state.spec_data = None
             
             if st.session_state.spec_data:
@@ -58,7 +62,6 @@ class SpecificationView:
                             st.session_state.design_data = design_data_result
                             st.success("Design generated successfully!")
                         else:
-                             # Error message already displayed
                             st.session_state.design_data = None
 
 
@@ -321,12 +324,20 @@ class SpecificationView:
             folder = design_data.get("folder_Structure", {})
             if folder and isinstance(folder, dict):
                 st.markdown(f"**Description:** {folder.get('description', 'N/A')}")
+                root_dir_name = folder.get('root_Project_Directory_Name', 'project_root')
+                st.markdown(f"**Root Project Directory Name:** `{root_dir_name}`")
                 structure_items = folder.get("structure", [])
                 if structure_items and isinstance(structure_items, list):
-                    st.markdown("**Structure:**")
+                    st.markdown("**Structure (relative to `{root_dir_name}/`):**")
                     for item in structure_items:
                         if not isinstance(item, dict): continue
-                        st.markdown(f"- `{item.get('path', '?')}`: {item.get('description', 'N/A')}")
+                        path_display = item.get('path', '?') 
+                        description = item.get('description', 'N/A')
+                        is_directory = 'directory' in description.lower()
+                        if is_directory:
+                            st.markdown(f"- `{path_display}/` (Directory): {description}")
+                        else:
+                            st.markdown(f"- `{path_display}` (File): {description}")
                 else: st.markdown("**Structure:** N/A")
             else: st.info("No folder structure information found.")
 

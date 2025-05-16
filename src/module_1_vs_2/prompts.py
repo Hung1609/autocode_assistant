@@ -434,26 +434,36 @@ Do not include any introductory text, explanations, code comments, or markdown f
       // Additional workflows...
   ],
   "folder_Structure": {{
-    "description": "Proposed folder structure based on chosen frameworks (e.g., Standard Express structure, Create React App structure). Adapt based on project scale or specific features. **The specific paths and file names listed in the 'structure' array below are examples; they MUST be adapted to the actual technology_Stack provided in Agent 1's input.** **IMPORTANT RULE:** For each item in the `structure` array below, if the `path` represents a directory (a folder containing other files or folders), its `description` **MUST** include the word 'directory' (case-insensitive). If the `path` represents a specific file (like `server.js` or `App.js`), its `description` should describe the file's purpose and **MUST NOT** contain the word 'directory'. This is critical for the code generation script.",
+    "description": "Proposed folder structure for the the entire project. **All paths listed in the 'structure' array are relative to a root project directory whose name should be derived from the project_Name(e.g., if project_Name is 'Personal Task Management Web App', the root directory would be 'personal_task_management_web_app').** The structure should includes dependency files for the chosen languages/frameworks and main subdirectories (e.g., /backend, /frontend). Adapt based on the chosen frameworks, project scale, or specific featetures. **The specific paths and file names listed in the 'structure' array below are examples; they MUST be adapted to the actual technology_Stack provided in Agent 1's input.** **IMPORTANT RULE:** For each item in the 'structure' array below, if the `path` represents a directory (a folder containing other files or folders), its `description` **MUST** include the word 'directory' (case-insensitive). If the `path` represents a specific file (like `server.js` or `App.js`), its `description` should describe the file's purpose and **MUST NOT** contain the word 'directory'. This is critical for the code generation script.",
+    "root_Project_Directory_Name": "A slugified version of project_Name from Agent 1's input (e.g., 'personal_task_management_web_app'). This will be the name of the main project folder.",
     "structure": [
+      // --- Root Level Files ---
+      {{ "path": "requirements.txt", "description": "Python backend dependencies file (if Python is used)." }},
+      {{ "path": ".env", "description": "Environment variables file." }},
+      // ... (other root level and dependency files)
+
       // --- Backend ---
-      {{ "path": "/backend/src", "description": "Backend source code directory" }}, // OK
-      {{ "path": "/backend/src/config", "description": "Configuration files directory (db connection, env variables)" }}, // Added 'directory'
-      {{ "path": "/backend/src/controllers", "description": "Request handling logic directory" }}, // Added 'directory'
-      {{ "path": "/backend/src/models", "description": "Database models/schemas directory" }}, // Added 'directory'
-      {{ "path": "/backend/src/routes", "description": "API route definitions directory" }}, // Added 'directory'
-      {{ "path": "/backend/src/services", "description": "Business logic directory" }}, // Added 'directory'
-      {{ "path": "/backend/src/middlewares", "description": "Request processing middleware directory (auth, validation)" }}, // Added 'directory'
-      {{ "path": "/backend/server.js", "description": "Main application entry point file" }}, // Clarified 'file'
+      {{ "path": "backend", "description": "Backend application source code and related files directory." }},
+      {{ "path": "/backend/src", "description": "Backend source code directory" }},
+      {{ "path": "/backend/src/config", "description": "Configuration files directory (db connection, env variables)" }}, 
+      {{ "path": "/backend/src/controllers", "description": "Request handling logic directory" }}, 
+      {{ "path": "/backend/src/models", "description": "Database models/schemas directory" }}, 
+      {{ "path": "/backend/src/routes", "description": "API route definitions directory" }}, 
+      {{ "path": "/backend/src/services", "description": "Business logic directory" }}, 
+      {{ "path": "/backend/src/middlewares", "description": "Request processing middleware directory (auth, validation)" }}, 
+      {{ "path": "/backend/server.js", "description": "Main application entry point file" }},
+      // ... (other backend files/folders)
 
       // --- Frontend ---
-      {{ "path": "/frontend/public", "description": "Static assets directory" }}, // Added 'directory'
+      {{ "path": "frontend", "description": "Frontend application source code and related files directory." }},
+      {{ "path": "/frontend/public", "description": "Static assets directory" }}, 
       {{ "path": "/frontend/src", "description": "Frontend source code directory" }}, // OK
-      {{ "path": "/frontend/src/components", "description": "Reusable UI components directory" }}, // Added 'directory'
-      {{ "path": "/frontend/src/pages", "description": "Page-level components directory" }}, // Added 'directory'
-      {{ "path": "/frontend/src/services", "description": "API call functions directory" }}, // Added 'directory'
-      {{ "path": "/frontend/src/App.js", "description": "Main React application component file" }}, // Clarified 'file'
-      {{ "path": "/frontend/src/index.js", "description": "Frontend entry point file" }} // Clarified 'file'
+      {{ "path": "/frontend/src/components", "description": "Reusable UI components directory" }}, 
+      {{ "path": "/frontend/src/pages", "description": "Page-level components directory" }}, 
+      {{ "path": "/frontend/src/services", "description": "API call functions directory" }}, 
+      {{ "path": "/frontend/src/App.js", "description": "Main React application component file" }}, 
+      {{ "path": "/frontend/src/index.js", "description": "Frontend entry point file" }},
+      // ... (other frontend files/folders)
 
       // --- General ---
       // Remember to adjust based on actual tech stack (e.g., different folders for Next.js, Vue, Angular, Python/Django/Flask).
@@ -530,23 +540,31 @@ PARTIAL EXPECTED OUTPUT:
     ]
   }},
   "folder_Structure": {{
-    "description": "Proposed folder structure for Python/FastAPI backend and Vanilla JS frontend.",
+    "description": "Proposed folder structure for the entire project, including root-level files and main subdirectories for a Python/FastAPI backend and Vanilla JS frontend. All paths are relative to the root_Project_Directory_Name.",
+    "root_Project_Directory_Name": "personal_task_management_web_app",
     "structure": [
-      {{ "path": "/backend/app", "description": "Main backend application directory" }},
-      {{ "path": "/backend/app/main.py", "description": "FastAPI application entry point file" }},
-      {{ "path": "/backend/app/models.py", "description": "SQLAlchemy ORM models file" }},
-      {{ "path": "/backend/app/schemas.py", "description": "Pydantic schemas for request/response validation file" }},
-      {{ "path": "/backend/app/crud.py", "description": "CRUD operations functions file" }},
-      {{ "path": "/backend/app/routers", "description": "API routers directory" }},
-      {{ "path": "/backend/app/routers/tasks.py", "description": "Router for task-related endpoints file" }},
-      {{ "path": "/backend/app/routers/auth.py", "description": "Router for authentication endpoints file" }},
-      {{ "path": "/backend/requirements.txt", "description": "Python dependencies file" }},
-      {{ "path": "/frontend/index.html", "description": "Main HTML file for the frontend" }},
-      {{ "path": "/frontend/css", "description": "CSS styles directory" }},
-      {{ "path": "/frontend/css/style.css", "description": "Main stylesheet file" }},
-      {{ "path": "/frontend/js", "description": "JavaScript files directory" }},
-      {{ "path": "/frontend/js/app.js", "description": "Main JavaScript application logic file" }},
-      {{ "path": "/frontend/js/api.js", "description": "JavaScript functions for API calls file" }}
+      {{ "path": "requirements.txt", "description": "Python backend dependencies file." }},
+      {{ "path": ".env", "description": "Environment variables configuration file." }},
+      {{ "path": "backend", "description": "Backend application directory using Python/FastAPI." }},
+      {{ "path": "backend/app", "description": "Main application package directory for FastAPI." }},
+      {{ "path": "backend/app/main.py", "description": "FastAPI application instance and startup file." }},
+      {{ "path": "backend/app/config.py", "description": "Application configuration settings file." }},
+      {{ "path": "backend/app/database.py", "description": "Database connection and session setup file (SQLAlchemy)." }},
+      {{ "path": "backend/app/models.py", "description": "SQLAlchemy ORM models definition file." }},
+      {{ "path": "backend/app/schemas.py", "description": "Pydantic schemas for data validation and serialization file." }},
+      {{ "path": "backend/app/crud.py", "description": "CRUD (Create, Read, Update, Delete) database operations file." }},
+      {{ "path": "backend/app/routers", "description": "API routers (collections of endpoints) directory." }},
+      {{ "path": "backend/app/routers/auth.py", "description": "Authentication related API endpoints file." }},
+      {{ "path": "backend/app/routers/tasks.py", "description": "Task management API endpoints file." }},
+      {{ "path": "frontend", "description": "Frontend application directory using HTML, CSS, Vanilla JS." }},
+      {{ "path": "frontend/index.html", "description": "Main HTML file, entry point for the frontend." }},
+      {{ "path": "frontend/css", "description": "Directory for CSS stylesheets." }},
+      {{ "path": "frontend/css/style.css", "description": "Main application stylesheet file." }},
+      {{ "path": "frontend/js", "description": "Directory for JavaScript files." }},
+      {{ "path": "frontend/js/app.js", "description": "Main client-side JavaScript logic and initialization file." }},
+      {{ "path": "frontend/js/api.js", "description": "Functions for making API calls to the backend file." }}
+      {{ "path": "frontend/js/ui.js", "description": "Functions for DOM manipulation and UI updates file (optional)." }},
+      {{ "path": "frontend/assets", "description": "Static assets like images, fonts directory (optional)." }}
     ]
   }},
   "dependencies": {{

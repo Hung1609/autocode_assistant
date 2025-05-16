@@ -1,0 +1,303 @@
+{
+  "system_Architecture": {
+    "description": "A client-server architecture is used, where the frontend interacts with the backend API to manage to-do tasks. The backend interacts with the SQLite database for persistent storage.",
+    "components": [
+      {
+        "name": "Web Frontend",
+        "description": "Provides the user interface for managing to-do tasks. Handles user interactions and displays data.",
+        "technologies": [
+          "HTML",
+          "CSS",
+          "JavaScript",
+          "Vanilla"
+        ],
+        "inputs": [
+          "User interactions (button clicks, form submissions)",
+          "API responses from the Backend API"
+        ],
+        "outputs": [
+          "API requests to the Backend API",
+          "Rendered UI updates based on user interactions and API responses"
+        ]
+      },
+      {
+        "name": "Backend API",
+        "description": "Handles API requests from the frontend, interacts with the database, and returns responses. Implements the application logic.",
+        "technologies": [
+          "Python",
+          "FastAPI",
+          "RESTful"
+        ],
+        "inputs": [
+          "HTTP requests from the Frontend"
+        ],
+        "outputs": [
+          "HTTP responses to the Frontend",
+          "Database queries to the Database"
+        ]
+      },
+      {
+        "name": "Database",
+        "description": "Stores the to-do task data persistently.",
+        "technologies": [
+          "SQL",
+          "SQLite"
+        ],
+        "inputs": [
+          "Data read/write requests from the Backend"
+        ],
+        "outputs": [
+          "Stored to-do task data",
+          "Query results to the Backend"
+        ]
+      }
+    ]
+  },
+  "data_Design": {
+    "data_Flow_Description": "User interacts with the frontend (HTML/JS), creating, viewing, deleting, or completing tasks. These interactions trigger API calls to the FastAPI backend. The backend processes these requests, interacting with the SQLite database to persist the task data. The backend then sends responses back to the frontend, which updates the UI accordingly.",
+    "storage_Type": "SQL",
+    "database_Type": "SQLite",
+    "data_Models": [
+      {
+        "model_Name": "Task",
+        "description": "Represents a to-do task item.",
+        "fields": [
+          {
+            "name": "id",
+            "type": "INTEGER",
+            "description": "Primary key for the task.",
+            "constraints": [
+              "primary_key: true",
+              "autoincrement: true"
+            ]
+          },
+          {
+            "name": "description",
+            "type": "TEXT",
+            "description": "Description of the task.",
+            "constraints": [
+              "required"
+            ]
+          },
+          {
+            "name": "is_complete",
+            "type": "BOOLEAN",
+            "description": "Indicates whether the task is complete.",
+            "constraints": [
+              "default: false"
+            ]
+          }
+        ],
+        "relationships": []
+      }
+    ]
+  },
+  "interface_Design": {
+    "api_Specifications": [
+      {
+        "endpoint": "/tasks",
+        "method": "GET",
+        "description": "Retrieves all to-do tasks.",
+        "request_Format": {
+          "params": [],
+          "query": [],
+          "body_Schema": {
+            "description": "N/A"
+          }
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "Returns an array of task objects with 'id', 'description', and 'is_complete' fields."
+          },
+          "error_Status": [
+            400,
+            500
+          ],
+          "error_Schema": {
+            "description": "Returns an error message."
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "NFR-002"
+        ]
+      },
+      {
+        "endpoint": "/tasks",
+        "method": "POST",
+        "description": "Creates a new to-do task.",
+        "request_Format": {
+          "params": [],
+          "query": [],
+          "body_Schema": {
+            "description": "{ description: String (required) }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 201,
+          "success_Schema": {
+            "description": "Returns the newly created task object with 'id', 'description', and 'is_complete' fields."
+          },
+          "error_Status": [
+            400,
+            500
+          ],
+          "error_Schema": {
+            "description": "Returns an error message."
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "NFR-002"
+        ]
+      },
+      {
+        "endpoint": "/tasks/{task_id}",
+        "method": "DELETE",
+        "description": "Deletes a to-do task.",
+        "request_Format": {
+          "params": [
+            "{task_id}"
+          ],
+          "query": [],
+          "body_Schema": {
+            "description": "N/A"
+          }
+        },
+        "response_Format": {
+          "success_Status": 204,
+          "success_Schema": {
+            "description": "Returns no content."
+          },
+          "error_Status": [
+            400,
+            404,
+            500
+          ],
+          "error_Schema": {
+            "description": "Returns an error message."
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "NFR-002"
+        ]
+      },
+      {
+        "endpoint": "/tasks/{task_id}",
+        "method": "PUT",
+        "description": "Updates a to-do task (e.g., to mark as complete).",
+        "request_Format": {
+          "params": [
+            "{task_id}"
+          ],
+          "query": [],
+          "body_Schema": {
+            "description": "{ is_complete: Boolean (required) }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "Returns the updated task object with 'id', 'description', and 'is_complete' fields."
+          },
+          "error_Status": [
+            400,
+            404,
+            500
+          ],
+          "error_Schema": {
+            "description": "Returns an error message."
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "NFR-002"
+        ]
+      }
+    ],
+    "ui_Interaction_Notes": "The task list in the UI fetches data from GET /tasks on page load. Adding a task sends a POST request to /tasks. Deleting a task sends a DELETE request to /tasks/{task_id}. Marking a task complete sends a PUT request to /tasks/{task_id}."
+  },
+  "workflow_Interaction": [
+    {
+      "workflow_Name": "Task Creation Workflow",
+      "description": "1. User enters a task description in the frontend UI. 2. User clicks the 'Add Task' button. 3. Frontend sends a POST request to /tasks on the backend API, including the task description in the request body. 4. Backend receives the request, validates the data, and creates a new task record in the SQLite database. 5. Backend sends a success response back to the frontend, including the newly created task object. 6. Frontend receives the response and updates the UI to display the new task in the task list.",
+      "related_Requirements": [
+        "FR-001"
+      ]
+    },
+    {
+      "workflow_Name": "Task Deletion Workflow",
+      "description": "1. User selects a task to delete in the frontend UI. 2. User clicks the 'Delete' button for that task. 3. Frontend sends a DELETE request to /tasks/{task_id} on the backend API, including the task ID in the request URL. 4. Backend receives the request, validates the task ID, and deletes the corresponding task record from the SQLite database. 5. Backend sends a success response (204 No Content) back to the frontend. 6. Frontend receives the response and updates the UI to remove the deleted task from the task list.",
+      "related_Requirements": [
+        "FR-003"
+      ]
+    }
+  ],
+  "folder_Structure": {
+    "description": "Proposed folder structure for the to-do web app project, including both backend (FastAPI) and frontend (Vanilla JS) components. All paths are relative to the root_Project_Directory_Name.",
+    "root_Project_Directory_Name": "to_do_web_app",
+    "structure": [
+      {
+        "path": "requirements.txt",
+        "description": "Python dependencies file for the backend."
+      },
+      {
+        "path": ".env",
+        "description": "Environment variables file."
+      },
+      {
+        "path": "backend",
+        "description": "Backend application directory."
+      },
+      {
+        "path": "backend/main.py",
+        "description": "Main FastAPI application file."
+      },
+      {
+        "path": "backend/models.py",
+        "description": "Database models definition file using SQLAlchemy."
+      },
+      {
+        "path": "backend/routes.py",
+        "description": "API route definitions file."
+      },
+      {
+        "path": "backend/database.py",
+        "description": "Database connection and session management file."
+      },
+      {
+        "path": "frontend",
+        "description": "Frontend application directory."
+      },
+      {
+        "path": "frontend/index.html",
+        "description": "Main HTML file, the entry point for the frontend."
+      },
+      {
+        "path": "frontend/style.css",
+        "description": "CSS stylesheet file for the frontend."
+      },
+      {
+        "path": "frontend/app.js",
+        "description": "Main JavaScript file for the frontend application logic."
+      }
+    ]
+  },
+  "dependencies": {
+    "backend": [
+      "fastapi",
+      "uvicorn",
+      "SQLAlchemy",
+      "pydantic"
+    ],
+    "frontend": []
+  },
+  "metadata": {
+    "generation_step": "design",
+    "timestamp": "2025-05-16T15:48:38.453074",
+    "model_used": "gemini-2.0-flash",
+    "source_specification_timestamp": "2025-05-16T15:48:19.731891"
+  }
+}
