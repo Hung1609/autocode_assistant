@@ -6,54 +6,35 @@ import json
 import argparse
 import logging
 from copy import deepcopy
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 from tools_definition import get_tool_definitions
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 dotenv.load_dotenv()
-API_KEY = os.getenv("GOOGLE_API_KEY")
+
+API_KEY = os.getenv("GEMINI_API_KEY")
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://127.0.0.1:5100")
 MODEL_NAME = "gemini-2.0-flash"
 
-if not API_KEY:
-    logging.error("GEMINI_API_KEY not found in .env file.")
-    exit(1)
-try:
-    genai.configure(api_key=API_KEY)
-    TOOL_DEFINITIONS = get_tool_definitions()
-     # *** ADD THIS LOGGING ***
-    logger.info("--- Loaded Tool Definitions ---")
-    for tool_def in TOOL_DEFINITIONS:
-         logger.info(f"  Tool Name: {tool_def.get('name')}")
-         # Optional: Log parameters too for detailed check
-         # logger.info(f"    Params: {tool_def.get('parameters')}")
-    logger.info("-----------------------------")
-    # *** END LOGGING ***
-    # cần improve prompt này sau
-    SYSTEM_INSTRUCTION = """You are an AI assistant integrated into a development environment.
-    Your primary function is to help users by interacting with their project files using the available tools.
-    You can create files, read files, list directory contents, create directories, edit files, generate specification files, and generate design files within the user's designated project workspace.
-    Always use the provided tools when a file system or generation operation is required.
-    **IMPORTANT: When calling a tool, carefully extract the required parameter values directly from the user's most recent request or conversation history. Do not guess or hallucinate parameter values.**
-        - For `generate_specification_json`, the `project_description` parameter MUST contain the user's actual textual requirements.
-        - For `generate_design_json`, the `spec_file_path` parameter MUST be a relative path to an *existing* '.spec.json' file mentioned by the user or previously generated.
-    When listing files, present the results clearly.
-    When editing files, remember that the current implementation replaces the entire file content.
-    Confirm successful operations concisely. If an operation fails, report the error message provided.
-    Do not attempt operations outside the user's workspace.
-    Base all relative paths on the root of the user's provided workspace path.
-    """
+genai.configure(api_key=API_KEY)
+TOOL_DEFINITIONS = get_tool_definitions()
+# cần improve prompt này sau
+SYSTEM_INSTRUCTION = """You are an AI assistant integrated into a development environment.
+Your primary function is to help users by interacting with their project files using the available tools.
+You can create files, read files, list directory contents, create directories, and edit files within the user's designated project workspace.
+Always use the provided tools when a file system operation is required.
+When listing files, present the results clearly.
+When editing files, remember that the current implementation replaces the entire file content.
+Confirm successful operations concisely. If an operation fails, report the error message provided.
+Do not attempt operations outside the user's workspace.
+Base all relative paths on the root of the user's provided workspace path.
+"""
 
-    model = genai.GenerativeModel(
-        MODEL_NAME,
-        system_instruction=SYSTEM_INSTRUCTION,
-        tools=TOOL_DEFINITIONS
-    )
-    logging.info(f"Model '{MODEL_NAME}' configured with tools.")
-except Exception as e:
-    logging.exception(f"Error configuring model: {e}")
-    exit(1)
+model = genai.GenerativeModel(
+    MODEL_NAME,
+    system_instruction=SYSTEM_INSTRUCTION,
+    tools=TOOL_DEFINITIONS
+)
+logging.info(f"Model '{MODEL_NAME}' configured with tools.")
 
 def call_mcp_tool(tool_name, parameters, workspace_path):
     target_url = f"{MCP_SERVER_URL}/tools/{tool_name}"

@@ -78,20 +78,5 @@ def get_tool_definitions():
                 },
                 "required": ["path", "changes_description"]
             }
-        },
-                # Add to list in tools_definition.py
-        {
-            "name": "generate_very_simple_json",
-            "description": "Takes a short text description from the user and asks an AI model to generate a VERY simple JSON object containing only a 'summary' and a list of 'keywords' based on that description. The result is saved to a file named 'simple_output.json' in the workspace.",
-            "parameters": {
-                "type": "OBJECT",
-                "properties": {
-                    "description": {
-                        "type": "STRING",
-                        "description": "A short text description provided by the user to be summarized."
-                    }
-                },
-                "required": ["description"]
-            }
         }
     ]
