@@ -8,7 +8,7 @@ import logging
 from copy import deepcopy
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
+logger = logging.getLogger(__name__)
 from tools_definition import get_tool_definitions
 
 dotenv.load_dotenv()
@@ -22,6 +22,14 @@ if not API_KEY:
 try:
     genai.configure(api_key=API_KEY)
     TOOL_DEFINITIONS = get_tool_definitions()
+     # *** ADD THIS LOGGING ***
+    logger.info("--- Loaded Tool Definitions ---")
+    for tool_def in TOOL_DEFINITIONS:
+         logger.info(f"  Tool Name: {tool_def.get('name')}")
+         # Optional: Log parameters too for detailed check
+         # logger.info(f"    Params: {tool_def.get('parameters')}")
+    logger.info("-----------------------------")
+    # *** END LOGGING ***
     # cần improve prompt này sau
     SYSTEM_INSTRUCTION = """You are an AI assistant integrated into a development environment.
     Your primary function is to help users by interacting with their project files using the available tools.
