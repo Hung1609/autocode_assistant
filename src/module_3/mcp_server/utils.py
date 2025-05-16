@@ -44,14 +44,6 @@ def _resolve_and_validate_path(base_dir_str, relative_path_str):
         logging.error(f"Invalid path calculation for base='{base_dir_str}', relative='{relative_path_str}': {e}")
         raise ValueError(f"Invalid path '{relative_path_str}': {e}")
 
-def get_filename(project_name=None, extension="json"):
-    if project_name:
-        clean_name = "".join(c if c.isalnum() else "_" for c in project_name).lower()
-    else:
-        clean_name = "specification"
-    timestamp = datetime.now().strftime("%Y%m%d")
-    return f"{clean_name}_{timestamp}.{extension}"
-
 def save_data_to_json_file(data_to_save, base_dir_str, relative_filename):
     logging.info(f"Attempting to save data to '{relative_filename}' within base '{base_dir_str}'")
     try:
