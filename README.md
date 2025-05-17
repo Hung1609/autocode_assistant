@@ -17,3 +17,14 @@ Make sure to change the PowerShell Execution Policy to allow scripts to run:
 3. In the new Extension Development Host window, open the test workspace.
 4. Open Command Pallette(Ctrl+Shift+P)
 5. Type the command title: Start MCP File Agent Chat
+
+
+# Commit Convention
+1. feature: introduce new feature
+2. fix: fix error
+3. docs: change document like README, ...
+4. test: add or modify test
+5. style: changes related to format, indentation, not related to logic
+6. refactor: changes src code but not affect the logic, usually clean up or rename, ...
+7. performance: optimize performance
+8. revert: revert the previous commit
