@@ -1,4 +1,5 @@
-# các tool's name phải hợp với địa chỉ API
+# These tool's names must match the API addresses
+# This file defines the data structure for the tools which follows the Gemini specification.
 
 def get_tool_definitions():
     return [

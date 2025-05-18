@@ -1,4 +1,5 @@
-# file định dạng các tools: create_file, read_file, list_files, create_directory, edit_file
+# This file initializes the tools for file system operations, including create_file, read_file, list_files, create_directory, edit_file
+
 
 import os
 from pathlib import Path

@@ -205,6 +205,7 @@ def generate_code_for_each_file(json_design, json_spec, file_path, project_root_
     
     INTERNAL THOUGHT PROCESS (Follow these steps to build a comprehensive understanding before writing code):
     1.  **Analyze File Role**: Based on the path `{file_path}` and the JSON Design's `folder_Structure`, determine this file's specific purpose (e.g., API Router, Data Model, Service/Business Logic, UI Component, Configuration, Utility).
+        *   Specifically identify if this file appears to be a main executable file, application entry point, or server startup file by examining its location and name.
     2.  **Identify Key Requirements (from JSON Specification)**:
         *   Which Functional Requirements (FRs) must this file help implement?
         *   Which Non-Functional Requirements (NFRs, e.g., Security, Performance, Usability) must this file adhere to?
@@ -212,10 +213,15 @@ def generate_code_for_each_file(json_design, json_spec, file_path, project_root_
         *   Which API endpoints (`interface_Design`) does this file define or call?
         *   Which Data Models (`data_Design`) does this file define or use (CRUD)?
         *   Which Workflows (`workflow_Interaction`) does this file participate in?
+        *   Does the `workflow_Interaction` indicate which file initiates a workflow or starts the application?
     4.  **Plan Implementation & Patterns (Algorithm of Thoughts aspect)**:
         *   What is the high-level structure (Classes, Functions, Imports)?
         *   Based on the file's role and the project's Tech Stack ({backend_language_framework} / {frontend_language_framework}), what standard coding conventions, idioms, and design patterns (e.g., REST conventions, Repository, Service Layer, Error Handling, Async/Await, Component structure) should be applied?
         *   Which specific libraries listed in the `dependencies` section will be needed?
+    5.  **Determine Entry Point Requirements**:
+        *   Based on the technology stack and file purpose, determine if special entry point code is required.
+        *   Consider language-specific patterns for application entry points (e.g., Python's `if __name__ == "__main__":`, Java's `public static void main(String[] args)`, Node.js server startup patterns, etc.).
+        *   Look for clues in the JSON Design that might indicate this file's role in application startup or initialization.
 
     Instructions for Code Generation:
     1.  **Output Code Only**: Your response MUST be only the raw code for the file. Do NOT include any explanations, comments outside the code, or markdown formatting (like ```language ... ```).
@@ -232,8 +238,11 @@ def generate_code_for_each_file(json_design, json_spec, file_path, project_root_
             -   `non_Functional_Requirements`: Adhere to quality attributes like security (e.g., input validation, auth checks if applicable to the file), usability, performance.
     3.  **Infer Role from Path**: Deduce the file's purpose from its path and the overall project structure (e.g., a backend model, a frontend UI component, a utility script, a configuration file).
     4.  **Completeness**: Generate all necessary imports, class/function definitions, and logic to make the file functional in its context. For UI components, include basic HTML structure and styling if applicable.
-    5.  **Placeholder Comments**: If some complex logic is better handled by another file or is too extensive, you MAY include a clear comment like `// TODO: Implement [specific logic] here, interacting with [other component/module]` or `# TODO: ...`. However, strive for complete implementation where feasible.
-    6.  **Technology Specifics**: Use idiomatic code and conventions for the specified technologies (e.g., FastAPI/SQLAlchemy for Python backend, React/VanillaJS for frontend).
+    5.  **Implement Entry Points Correctly**: For files that serve as application entry points, include the appropriate language-specific entry point pattern:
+        -   Automatically identify if this file serves as an application entry point, main execution file, or server startup file based on its path, name, and role in the system architecture.
+        -   Generate fully executable code, including appropriate initialization code and language-specific entry point patterns (like `if __name__ == "__main__":`) for any file that serves as an application entry point or executable script without requiring explicit instructions.
+    6.  **Placeholder Comments**: If some complex logic is better handled by another file or is too extensive, you MAY include a clear comment like `// TODO: Implement [specific logic] here, interacting with [other component/module]` or `# TODO: ...`. However, strive for complete implementation where feasible.
+    7.  **Technology Specifics**: Use idiomatic code and conventions for the specified technologies (e.g., FastAPI/SQLAlchemy for Python backend, React/VanillaJS for frontend).
 
     Here is the design file in JSON format:
     ```json
@@ -244,8 +253,8 @@ def generate_code_for_each_file(json_design, json_spec, file_path, project_root_
     ```json
     {json.dumps(json_spec, indent=2)}
     ```
-
-    Now, generate the code for the file: `{file_path}`. Ensure it is complete and ready to be used in the project.
+    
+    Now, generate the code for the file: `{file_path}`. Ensure it is complete and ready to be used in the project. If any file should serve as an entry point or executable file, include the appropriate language-specific entry point code.
     """
 
     if API_CALL_DELAY_SECONDS > 0:

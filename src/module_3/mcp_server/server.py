@@ -1,3 +1,5 @@
+# This module is responsible for creating API endpoints for agent_core.py (client) to call and implement defined tools.
+
 from flask import Flask, request, jsonify, g
 import execution
 import logging

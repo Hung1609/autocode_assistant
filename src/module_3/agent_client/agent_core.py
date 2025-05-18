@@ -1,3 +1,5 @@
+# this file is responsible for the main logic of the agent: calling LLM, handling tool requests, and interacting with the MCP server.
+
 import google.generativeai as genai
 import os
 import dotenv
@@ -17,7 +19,9 @@ MODEL_NAME = "gemini-2.0-flash"
 
 genai.configure(api_key=API_KEY)
 TOOL_DEFINITIONS = get_tool_definitions()
-# cần improve prompt này sau
+# **NEED TO IMPROVE LATER, RIGHT NOW, THE CONTENT FOCUSES ON DIRECT THE AGENT TO INTERACT WITH FILE SYSTEM**
+# FUTURE IMPROVEMENTS NEED TO INCLUDE INSTRUCTIONS FOR CREATE JSON FILE AND GENEREATE CODE
+# ALSO NEED TO INSTRUCT THE AGENT HOW TO INTEPRET AND RESPOND ERROR FROM api_result TO THE USER IN A FRIENDLY WAY
 SYSTEM_INSTRUCTION = """You are an AI assistant integrated into a development environment.
 Your primary function is to help users by interacting with their project files using the available tools.
 You can create files, read files, list directory contents, create directories, and edit files within the user's designated project workspace.
@@ -74,8 +78,9 @@ def call_mcp_tool(tool_name, parameters, workspace_path):
          return {"status": "error", "message": "Received an invalid response from the tool execution server."} 
 
 # Agent logic
+# RIGHT NOW, THE AGENT IS DESIGNED TO RUN IN A SINGLE TURN ONLY --> NEED TO IMPROVE TO CALL TOOL MULTIPLE TIMES
+# IN THE FUTURE, THE AGENT SHOULD BE ABLE TO HANDLE MULTIPLE TURNS, NEED TO MAINTAIN history thoroughout the run_agent_turn
 def run_agent_turn(user_prompt, workspace_path):
-    """Runs a single turn of the conversation with the Gemini model."""
     logging.info(f"Starting agent turn. Workspace: '{workspace_path}', Prompt: '{user_prompt[:100]}...'")
     if not workspace_path or not os.path.isdir(workspace_path):
          logging.error(f"Invalid workspace path provided: '{workspace_path}'")
@@ -119,7 +124,7 @@ def run_agent_turn(user_prompt, workspace_path):
             })
 
             history.append({
-                "role": "user",
+                "role": "user",  # NEED TO REVISE, THE ROLE CAN BE TOOL OR FUNCTION BASED ON THE API GEMINI
                 "parts": [{
                     "function_response": {
                         "name": tool_name,        # The name of the function that was called
