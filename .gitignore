@@ -3,6 +3,7 @@ foxconn_env/
 *.py[cod]
 **/.env
 **/logs/
+venv/
 
 src/module_3/mcp-file-agent/node_modules/
 
