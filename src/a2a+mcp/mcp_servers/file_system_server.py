@@ -9,7 +9,7 @@ import argparse
 from pydantic import BaseModel, ValidationError
 from pathlib import Path
 from datetime import datetime
-from mcp.server.sse imprort SseServerTransport
+from mcp.server.sse import SseServerTransport
 from mcp.server.fastmcp import FastMCP
 from mcp.server import Server
 from starlette.applications import Starlette
