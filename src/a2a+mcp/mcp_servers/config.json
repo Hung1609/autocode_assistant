@@ -1,0 +1,11 @@
+{
+  "port": 8080,
+  "allowed_directories": [
+    "/Users/username/Work",
+    "/Users/username/Projects"
+  ],
+  "restrictions": {
+    "max_file_size_mb": 10,
+    "allowed_extensions": [".py", ".html", ".css", ".js", ".txt", ".md", ".csv", ".env"]
+  }
+}

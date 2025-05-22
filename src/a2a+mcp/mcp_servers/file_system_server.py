@@ -18,17 +18,8 @@ from starlette.routing import Route, Mount
 from typing import List, Dict, Optional
 from diff_match_patch import diff_match_patch
 
-# {
-#   "port": 8080,
-#   "allowed_directories": [
-#     "/Users/username/Work",
-#     "/Users/username/Projects"
-#   ],
-#   "restrictions": {
-#     "max_file_size_mb": 10,
-#     "allowed_extensions": [".py", ".html", ".css", ".js", ".txt", ".md", ".csv", ".env"]
-#   }
-# }
+with open('config.json', 'r') as f:
+    config = json.load(f)
 
 mcp = FastMCP("File System Server")
 
@@ -271,7 +262,7 @@ def create_starlette_app(
         async with sse.connect_sse(
             request.scope,
             request.receive,
-            request._send, # noqa: ??????, SLF001
+            request._send, # noqa: SLF001 -->  bỏ qua cảnh báo từ công cụ lint (như Flake8) và Cảnh báo về truy cập thuộc tính private (_send), vì _send là phương thức nội bộ của Starlette.
         ) as (read_stream, write_stream):
             await mcp_server.run(
                 read_stream,
@@ -287,7 +278,7 @@ def create_starlette_app(
     )
 
 if __name__ == "__main__":
-    mcp_server = mcp._mcp_server # noqa: WPS437 ??????
+    mcp_server = mcp._mcp_server # noqa: WPS43 --> Bỏ qua cảnh báo từ Flake8 về sử dụng thuộc tính không rõ ràng hoặc không chuẩn.
     parser = argparse.ArgumentParser(description='Run MCP SSE-based server')
     parser.add_argument('--host', default='0.0.0.0', help='Host to bind to')
     parser.add_argument('--port', type=int, default=8080, help='Port to listen on')

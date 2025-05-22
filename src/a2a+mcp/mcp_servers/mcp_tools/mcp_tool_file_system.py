@@ -11,3 +11,8 @@ async def return_sse_mcp_tools_file_system():
     tools, exit_stack = await MCPToolset.from_server(connection_params=server_params)
     print("MCP Toolset created successfully.")
     return tools, exit_stack # what is exit_stack, what does it use for
+
+# --> exit_stack là một instance của contextlib.AsyncExitStack (hoặc tương tự), được trả về bởi MCPToolset.from_server để quản lý tài nguyên bất đồng bộ.
+# --> Khi MCPToolset.from_server thiết lập kết nối SSE đến server MCP, nó có thể mở các tài nguyên như luồng mạng hoặc hàng đợi.
+# --> exit_stack theo dõi các tài nguyên này và đảm bảo chúng được đóng (hoặc giải phóng) khi context manager thoát.
+# --> exit_stack được trả về cùng tools để agent ADK có thể sử dụng context manager này trong quá trình chạy.
