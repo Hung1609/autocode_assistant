@@ -12,7 +12,7 @@ def generate_agent_card(
     can_push_notifications: bool = False, # Whether the agent can send push notifications.
     can_state_transition_history: bool = True, # Whether the agent can maintain state transition history.
     authentication: str = None, # The authentication method for the agent.
-    default_input_modes: List[str] = ["text"], # The default input modes for the agent.
+    default_input_modes: List[str] = ["text"], # The default input modes for the agent. Can be "text", "voice", "image"
     default_output_modes: List[str] = ["text"], # The default output modes for the agent.
     skills: List[AgentSkill] = None, # The skills of the agent.
 ):

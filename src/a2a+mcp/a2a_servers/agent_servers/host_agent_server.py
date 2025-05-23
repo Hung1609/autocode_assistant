@@ -4,7 +4,6 @@ from a2a_servers.agent_servers.utils import generate_agent_card, generate_agent_
 from a2a_servers.agents.adk_agent import ADKAgent
 from a2a_servers.common.server.server import A2AServer
 from a2a_servers.common.types import AgentSkill
-from mcp_servers.mcp_tools.mcp_tool_file_system import return_sse_mcp_tools_file_system
 
 load_dotenv(find_dotenv()) # for what???
 
@@ -26,6 +25,7 @@ async def run_agent():
 
     list_urls = [
         "http://localhost:11000/specification_agent",
+        "http://localhost:10000/design_agent"
     ]
 
     AGENT_CARD = generate_agent_card(
@@ -44,7 +44,7 @@ async def run_agent():
     host_agent = ADKAgent(
         model=MODEL,
         name="host_agent",
-        description="",
+        description="coordinate tasks between agents.",
         tools=[],
         instructions="",
         is_host_agent=True,

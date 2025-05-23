@@ -5,23 +5,23 @@ from a2a_servers.agents.adk_agent import ADKAgent
 from a2a_servers.common.server.server import A2AServer
 from a2a_servers.common.types import AgentSkill
 from mcp_servers.mcp_tools.mcp_tool_file_system import return_sse_mcp_tools_file_system
-from a2a_servers.common.prompt.prompt import SPECIFICATION_PROMPT
+from a2a_servers.common.prompt.prompt import DESIGN_PROMPT
 
 load_dotenv(find_dotenv())
 
 async def run_agent():
-    AGENT_NAME = "specification_agent"
-    AGENT_DESCRIPTION = "An agent that analyzes user requirements and generates structured JSON specifications."
-    PORT = 11000
+    AGENT_NAME = "design_agent"
+    AGENT_DESCRIPTION = "An agent that generates a detailed system design specification from a requirements specification."
+    PORT = 10000
     HOST = "0.0.0.0"
     AGENT_URL = f"http://{HOST}:{PORT}"
     AGENT_VERSION = "1.0.0"
     MODEL = "gemini-2.5-pro-preview-05-06"
     AGENT_SKILLS = [
         AgentSkill(
-            id="REQUIREMENTS_AGENT_ANALYSIS",
-            name="requirements_analysis",
-            description="Analyzes user requirements and generates structured JSON specifications.",
+            id="SYSTEM_DESIGN",
+            name="system_design",
+            description="Generates structured JSON system design specifications from requirements.",
         ),
     ]
 
@@ -40,26 +40,26 @@ async def run_agent():
 
     filesystem_tools, filesystem_exit_stack = await return_sse_mcp_tools_file_system()
 
-    specification_agent = ADKAgent(
+    design_agent = ADKAgent(
         model=MODEL,
-        name="specification_agent",
-        description="Analyzes user requirements and generates structured JSON specifications.",
+        name="design_agent",
+        description="Generates a detailed system design specification from a requirements specification.",
         instructions=(
-            "You are an expert requirements analyst. Use the following prompt template to analyze the user_provided project description received in the message and generate a structured JSON specification. The user description will be provided in the message's text content. Follow the instructions in the prompt strictly:\n\n"
-            f"{SPECIFICATION_PROMPT}"
+            "You are an expert system designer. Use the following prompt template to analyze the JSON requirements specification received in the message and generate a structured JSON system design specification. The JSON specification will be provided in the message's text content. Follow the instructions in the prompt strictly:\n\n"
+            f"{DESIGN_PROMPT}"
         ),
         tools=filesystem_tools,
         is_host_agent=False,
     )
 
     task_manager = generate_agent_task_manager(
-        agent=specification_agent,
+        agent=design_agent,
     )
 
     server = A2AServer(
         host=HOST,
         port=PORT,
-        endpoint="/specification_agent",
+        endpoint="/design_agent",
         agent_card=AGENT_CARD,
         task_manager=task_manager
     )
