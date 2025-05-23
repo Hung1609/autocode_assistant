@@ -66,7 +66,7 @@ class Message(BaseModel): # cấu trúc thông diệp trong giao tiếp giữa u
 class TaskStatus(BaseModel): # trạng thái của 1 task
     status: TaskState
     message: Message | None = None
-    timestamp: datetime = Field(Default_factory=datetime.now)
+    timestamp: datetime = Field(default_factory=datetime.now) # Field trong Pydantic không nhận tham số Default_factory viết hoa. --> sửa thành viết thường
 
     @field_serializer("timestamp") # Chuyển datetime thành chuỗi ISO khi xuất JSON.
     def serialize_dt(self, dt:datetime, _info):

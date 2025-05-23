@@ -18,7 +18,10 @@ from starlette.routing import Route, Mount
 from typing import List, Dict, Optional
 from diff_match_patch import diff_match_patch
 
-with open('config.json', 'r') as f:
+base_dir = pathlib.Path(__file__).resolve().parent
+config_path = base_dir / "config.json"
+
+with open(config_path, 'r') as f:
     config = json.load(f)
 
 mcp = FastMCP("File System Server")
@@ -256,7 +259,7 @@ def create_starlette_app(
     *,
     debug: bool = False, # whether to enable debug mode
 ) -> Starlette: # ép kiểu tạo thành 1 Starlette application
-    sse = SseServerTransport("/messages/")
+    sse = SseServerTransport("/message/")
 
     async def handle_sse(request: Request) -> None:
         async with sse.connect_sse(

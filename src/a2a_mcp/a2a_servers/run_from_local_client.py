@@ -1,11 +1,13 @@
+# This script is act as a client for interacting with an A2A server,specifically targeting the host_agent running at http://localhost:12000/host_agent. It sends a user query to the server, receives a response, and processes the result
+
 import asyncio
 import logging
 import traceback
 from uuid import uuid4
 
 # Assuming common types and client are importable
-from common.a2a_client import A2AClient, card_resolver # card_resolver might be needed
-from common.types import Message, TextPart, AgentCard # Import AgentCard if needed directly
+from a2a_servers.common.a2a_client import A2AClient, card_resolver # card_resolver might be needed for discovering the host_agent's capabilities via its AgentCard.
+from a2a_servers.common.types import Message, TextPart, AgentCard # Import AgentCard if needed directly
 
 # Configure basic logging
 logging.basicConfig(level=logging.INFO)
@@ -18,7 +20,7 @@ async def main():
 
     task_id = f"echo-task-{uuid4().hex}"
     session_id = f"session-{uuid4().hex}"
-    user_text = input("Enter your query: ")
+    user_text = input("Enter your query: ") # Example user input
 
     user_message = Message(
         role="user",

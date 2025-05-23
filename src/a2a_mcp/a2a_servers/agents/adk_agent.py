@@ -95,7 +95,7 @@ class ADKAgent:
                 session_id=session_id,
             )
         events_async = self._runner.run_async(
-            session_id=session_id, user_id=session_id.user_id, new_message=content
+            session_id=session_id, user_id=session.user_id, new_message=content
         )
         events = []
         async for event in events_async:

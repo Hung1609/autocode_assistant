@@ -1,3 +1,4 @@
+from datetime import datetime
 from abc import ABC, abstractmethod
 from typing import Union, AsyncIterable, List
 from a2a_servers.common.types import Task
@@ -206,7 +207,7 @@ class InMemoryTaskManager(TaskManager):
                     id=task_send_params.id,
                     sessionId = task_send_params.sessionId,
                     messages=[task_send_params.message],
-                    status=TaskStatus(state=TaskState.SUBMITTED),
+                    status=TaskStatus(status=TaskState.SUBMITTED), # fix bug bằng cách tham chiếu đối số với TaskStatus và sửa syntax từ state sang status
                     history=[task_send_params.message],
                 )
                 self.tasks[task_send_params.id] = task

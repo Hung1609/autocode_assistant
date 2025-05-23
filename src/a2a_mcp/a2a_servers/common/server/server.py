@@ -153,8 +153,8 @@ class A2AServer:
             logger.error(f"Unhandled exception: {e}")
             json_rpc_error = InternalError()
 
-        response = JSONResponse(id=None, error=json_rpc_error)
-        return JSONResponse(response.model_dump(exclude_none=True), status_code=400)
+        response = JSONResponse(content={"id": None, "error": json_rpc_error.model_dump(exclude_none=True)}, status_code=400) #fix bug TypeError: Object of type InvalidRequestError is not JSON serializable bằng cách thêm .model_dump() vào json_rpc_error
+        return response
     
     # The server supports two types of responses:
     # - Regular JSON responses for immediate results

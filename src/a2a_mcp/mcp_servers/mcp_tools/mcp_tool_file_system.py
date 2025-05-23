@@ -8,7 +8,9 @@ async def return_sse_mcp_tools_file_system():
     server_params = SseServerParams(
         url="http://localhost:8080/sse", # make sure the PORT is fit with the chosen one from mcp_servers.file_system_server.py
     )
-    tools, exit_stack = await MCPToolset.from_server(connection_params=server_params)
+    tools, exit_stack = await MCPToolset.from_server(connection_params=server_params) # this is for version 0.1.0
+    # toolset = MCPToolset(connection_params=server_params) # this is for adk version 1.0.0
+    # tools, exit_stack = await toolset.get_tools()
     print("MCP Toolset created successfully.")
     return tools, exit_stack # what is exit_stack, what does it use for
 
