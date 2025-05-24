@@ -57,7 +57,7 @@ class AgentTaskManager(InMemoryTaskManager):
                 parts = [{"type": "text", "text": item["content"]}]
               artifacts = [Artifact(parts=parts, index=0, append=False)]
           message = Message(role="agent", parts=parts)
-          task_status = TaskStatus(state=task_state, message=message)
+          task_status = TaskStatus(status=task_state, message=message)
           await self._update_store(task_send_params.id, task_status, artifacts)
           task_update_event = TaskStatusUpdateEvent(
                 id=task_send_params.id,
@@ -80,7 +80,7 @@ class AgentTaskManager(InMemoryTaskManager):
               result=TaskStatusUpdateEvent(
                   id=task_send_params.id,
                   status=TaskStatus(
-                      state=task_status.state,
+                      state=task_status.status,
                   ),
                   final=True
               )
@@ -144,8 +144,9 @@ class AgentTaskManager(InMemoryTaskManager):
     async def _invoke(self, request: SendTaskRequest) -> SendTaskResponse:
         task_send_params: TaskSendParams = request.params
         query = self._get_user_query(task_send_params)
+        task_id=task_send_params.id
         try:
-            result = await self.agent.invoke(query, task_send_params.sessionId)
+            result = await self.agent.invoke(query, task_send_params.sessionId, task_id) # bug bị thiếu param taskID do trong hàm invoke() trong adk_agent.py, state={}.
         except Exception as e:
             raise ValueError(f"Error invoking agent: {e}")
         parts = [{"type": "text", "text": result}]
@@ -153,7 +154,7 @@ class AgentTaskManager(InMemoryTaskManager):
         task = await self._update_store(
             task_send_params.id,
             TaskStatus(
-                state=task_state, message=Message(role="agent", parts=parts)
+                status=task_state, message=Message(role="agent", parts=parts)
             ),
             [Artifact(parts=parts)],
         )

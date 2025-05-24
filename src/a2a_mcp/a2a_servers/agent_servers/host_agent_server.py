@@ -15,7 +15,7 @@ async def run_agent():
     HOST = "0.0.0.0"
     AGENT_URL = f"http://{HOST}:{PORT}"
     AGENT_VERSION = "1.0.0"
-    MODEL = "gemini-2.5-pro-preview-05-06"
+    MODEL = "gemini-2.0-flash"
     AGENT_SKILLS = [
         AgentSkill(
             id="COORDINATE_AGENT_TASKS",
@@ -47,7 +47,17 @@ async def run_agent():
         name="host_agent",
         description="coordinate tasks between agents.",
         tools=[],
-        instructions="",
+        instructions="""
+            You are a project manager. Your responsibilities are:
+            1. Receive the user's request
+            2. Analyze the request and break it down into clear, actionable tasks.
+            3. Assign each task to the appropriate specialized agent based on their skillset and role.
+            4. Manage the workflow by coordinating task execution among agents without asking the user for further clarifications.
+            5. Monitor progress, handle dependencies between tasks, and ensure smooth communication between agents.
+            6. Handle exceptions or incomplete information by making intelligent decisions
+
+            You act autonomously to ensure efficient task distribution and project completion, simulating how a project manager leads a software development team.
+            """,
         is_host_agent=True,
         remote_agent_addresses=list_urls,
     )

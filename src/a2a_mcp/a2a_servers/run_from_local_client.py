@@ -41,7 +41,7 @@ async def main():
             logger.error(f"Task {task_id} failed: {response.error.message} (Code: {response.error.code})")
         elif response.result:
             task_result = response.result
-            logger.info(f"Task {task_id} completed with state: {task_result.status.state}")
+            logger.info(f"Task {task_id} completed with state: {task_result.status.status}")
             if task_result.status.message and task_result.status.message.parts:
                  agent_part = task_result.status.message.parts[0]
                  print(agent_part.text)

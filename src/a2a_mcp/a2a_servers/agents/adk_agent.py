@@ -74,7 +74,7 @@ class ADKAgent:
 
     # handle request from users, return text response
     # Invokes the agent with the given query and session ID.
-    async def invoke(self, query, session_id) -> str: # session_id is used to maintain context
+    async def invoke(self, query, session_id, task_id=None) -> str: # session_id is used to maintain context
         """
         Invokes the agent with the given query and session ID.
         :param query: The query to send to the agent.
@@ -91,17 +91,17 @@ class ADKAgent:
             session = self._runner.session_service.create_session(
                 app_name=self._agent.name,
                 user_id=self._user_id,
-                state={},
+                state={"taskId": task_id} if task_id else {},
                 session_id=session_id,
             )
         events_async = self._runner.run_async(
-            session_id=session_id, user_id=session.user_id, new_message=content
+            session_id=session_id, user_id=session.user_id, new_message=content, state={"taskId": task_id} if task_id else {}
         )
         events = []
         async for event in events_async:
             print(event)
             events.append(event)
-        if not events or not events[-1].content or not events[-1].context.parts:
+        if not events or not events[-1].content or not events[-1].content.parts:
             return ""
         return "\n".join([p.text for p in events[-1].content.parts if p.text]) # return the last event which is events[-1]
 
@@ -281,20 +281,20 @@ class ADKAgent:
         )
         task = await client.send_task(request, self.task_callback)
         # Assume completion unless a state returns that isn't complete
-        state['session_active'] = task.status.state not in [
+        state['session_active'] = task.status.status not in [
             TaskState.COMPLETED,
             TaskState.CANCELED,
             TaskState.FAILED,
             TaskState.UNKNOWN,
         ]
-        if task.status.state == TaskState.INPUT_REQUIRED:
+        if task.status.status == TaskState.INPUT_REQUIRED:
             # Force user input back
             tool_context.actions.skip_summarization = True
             tool_context.actions.escalate = True
-        elif task.status.state == TaskState.CANCELED:
+        elif task.status.status == TaskState.CANCELED:
             # Open question, should we return some info for cancellation instead
             raise ValueError(f"Agent {agent_name} task {task.id} is cancelled")
-        elif task.status.state == TaskState.FAILED:
+        elif task.status.status == TaskState.FAILED:
             # Raise error for failure
             raise ValueError(f"Agent {agent_name} task {task.id} failed")
         response = []

@@ -172,7 +172,7 @@ class A2AServer:
                 async for item in result:
                     yield {"data": item.model_dump_json(exclude_none=True)}
             return EventSourceResponse(event_generator(result))
-        elif isinstance(result, JSONResponse):
+        elif isinstance(result, JSONRPCResponse):
             return JSONResponse(result.model_dump(exclude_none=True))
         else:
             logger.error(f"Unexpected result type: {type(result)}")
