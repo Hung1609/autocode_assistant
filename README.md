@@ -18,6 +18,11 @@ Make sure to change the PowerShell Execution Policy to allow scripts to run:
 4. Open Command Pallette(Ctrl+Shift+P)
 5. Type the command title: Start MCP File Agent Chat
 
+# Implement A2A_MCP folder
+1. Activate MCP server using: `python mcp_servers/file_system_server.py`
+2. Activate agents' server using: `python -m a2a_servers.agent_servers.specification_agent_server`
+3. Activate host agent using: `python -m a2a_servers.agent_servers.host_agent_server`
+4. Contact the host agent by running: `python -m a2a_servers.run_from_local_client`
 
 # Commit Convention
 1. feature: introduce new feature
