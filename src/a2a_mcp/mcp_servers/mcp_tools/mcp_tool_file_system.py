@@ -8,11 +8,11 @@ async def return_sse_mcp_tools_file_system():
     server_params = SseServerParams(
         url="http://localhost:8080/sse", # make sure the PORT is fit with the chosen one from mcp_servers.file_system_server.py
     )
-    tools, exit_stack = await MCPToolset.from_server(connection_params=server_params) # this is for version 0.1.0
+    tools, exit_stack = await MCPToolset.from_server(connection_params=server_params) # this is for version 0.1.0 which we will use for this project
     # toolset = MCPToolset(connection_params=server_params) # this is for adk version 1.0.0
     # tools, exit_stack = await toolset.get_tools()
     print("MCP Toolset created successfully.")
-    return tools, exit_stack # what is exit_stack, what does it use for
+    return tools, exit_stack 
 
 # --> exit_stack là một instance của contextlib.AsyncExitStack (hoặc tương tự), được trả về bởi MCPToolset.from_server để quản lý tài nguyên bất đồng bộ.
 # --> Khi MCPToolset.from_server thiết lập kết nối SSE đến server MCP, nó có thể mở các tài nguyên như luồng mạng hoặc hàng đợi.

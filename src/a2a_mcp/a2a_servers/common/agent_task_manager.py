@@ -144,9 +144,9 @@ class AgentTaskManager(InMemoryTaskManager):
     async def _invoke(self, request: SendTaskRequest) -> SendTaskResponse:
         task_send_params: TaskSendParams = request.params
         query = self._get_user_query(task_send_params)
-        task_id=task_send_params.id
+        # task_id=task_send_params.id
         try:
-            result = await self.agent.invoke(query, task_send_params.sessionId, task_id) # bug bị thiếu param taskID do trong hàm invoke() trong adk_agent.py, state={}.
+            result = await self.agent.invoke(query, task_send_params.sessionId) # bug bị thiếu param taskID do trong hàm invoke() trong adk_agent.py, state={}.
         except Exception as e:
             raise ValueError(f"Error invoking agent: {e}")
         parts = [{"type": "text", "text": result}]

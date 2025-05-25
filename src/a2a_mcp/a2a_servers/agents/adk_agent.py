@@ -68,13 +68,13 @@ class ADKAgent:
             app_name=self._agent.name,
             agent=self._agent,
             artifact_service=InMemoryArtifactService(), # store artifact
-            session_service=InMemorySessionService(), # Session management.
+            session_service=InMemorySessionService(), # Session management, Keeps track of conversations
             memory_service=InMemoryMemoryService(), # store state/memory
         )
 
     # handle request from users, return text response
     # Invokes the agent with the given query and session ID.
-    async def invoke(self, query, session_id, task_id=None) -> str: # session_id is used to maintain context
+    async def invoke(self, query, session_id) -> str: # session_id is used to maintain context
         """
         Invokes the agent with the given query and session ID.
         :param query: The query to send to the agent.
@@ -91,11 +91,11 @@ class ADKAgent:
             session = self._runner.session_service.create_session(
                 app_name=self._agent.name,
                 user_id=self._user_id,
-                state={"taskId": task_id} if task_id else {},
                 session_id=session_id,
+                state={},
             )
         events_async = self._runner.run_async(
-            session_id=session_id, user_id=session.user_id, new_message=content, state={"taskId": task_id} if task_id else {}
+            session_id=session_id, user_id=session.user_id, new_message=content
         )
         events = []
         async for event in events_async:

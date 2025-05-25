@@ -1,8 +1,6 @@
 {
   "port": 8080,
-  "allowed_directories": [
-    "C:/Users/Hoang Duy/Documents/Phan Lac Hung/autocode_assistant/src/a2a+mcp/test"
-  ],
+  "allowed_directories": ["./test"],
   "restrictions": {
     "max_file_size_mb": 10,
     "allowed_extensions": [".py", ".html", ".css", ".js", ".txt", ".md", ".csv", ".env"]

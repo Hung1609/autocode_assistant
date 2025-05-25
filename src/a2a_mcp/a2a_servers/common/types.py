@@ -11,13 +11,13 @@ from enum import Enum
 from typing_extensions import Self
 
 class TaskState(str, Enum): # -> all the state of a task -> used in TaskStatus
-    SUBMITTED = "submitted"
-    WORKING = "working"
-    INPUT_REQUIRED = "input-required"
-    COMPLETED = "completed"
-    CANCELED = "canceled"
-    FAILED = "failed"
-    UNKNOWN = "unknown"
+    SUBMITTED = "submitted" # Task has been received
+    WORKING = "working" # Task is in progress
+    INPUT_REQUIRED = "input-required" # Agent is waiting for more input
+    COMPLETED = "completed" # Task is done
+    CANCELED = "canceled" # Task was canceled by user or system
+    FAILED = "failed" # Something went wrong
+    UNKNOWN = "unknown" # Fallback for undefined or unrecognized states
 
 # Part: The atomic content unit within Messages or Artifacts.
 # Parts can be of different types:
@@ -164,13 +164,13 @@ class JSONRPCResponse(JSONRPCMessage):
     result: Any | None = None
     error: JSONRPCError | None = None
 
-# Định nghĩa các yêu cầu/phản hồi cho các phương thức cụ thể.
+# Định nghĩa các yêu cầu/phản hồi cho các phương thức cụ thể. Used to send a new task to an agent
 class SendTaskRequest(JSONRPCRequest):
     method: Literal["tasks/send"] = "tasks/send"
     params: TaskSendParams
 
 class SendTaskResponse(JSONRPCResponse):
-    result: Task | None = None
+    result: Task | None = None # The task returned by the agent
 
 # Streaming: For tasks that require extended processing time, servers can implement streaming capabilities through tasks/sendSubscribe.
 # This allows clients to receive real-time updates via Server-Sent Events (SSE), including task status changes and new artifacts.
@@ -304,24 +304,28 @@ class AgentProvider(BaseModel):
     organization: str
     url: str | None = None
 
+# defines what features or protocols the agent supports.
 class AgentCapabilities(BaseModel):
-    streaming: bool = False
-    pushNotifications: bool = False
-    stateTransitionHistory: bool = False
+    streaming: bool = False # Indicates if the agent can send intermediate task results through streaming
+    pushNotifications: bool = False # Indicates if the agent can push updates via HTTP push/webhooks
+    stateTransitionHistory: bool = False # If enabled, the agent keeps track of the history of task state transitions
 
 class AgentAuthentication(BaseModel):
     schemes: List[str]
     credentials: str | None = None
 
+# This class defines metadata about a single skill that the agent offers.
+# Each skill corresponds to a specific type of task the agent can perform.
 class AgentSkill(BaseModel):
-    id: str
-    name: str
-    description: str | None = None
-    tags: List[str] | None = None
-    examples: List[str] | None = None
-    inputModes: List[str] | None = None
-    outputModes: List[str] | None = None
+    id: str # Unique identifier for the skill (e.g., "get_time")
+    name: str # Human-readable name for the skill (e.g., "Get Current Time")
+    description: str | None = None # Optional description to help users understand what the skill does
+    tags: List[str] | None = None # Optional tags to help categorize or search for the skill (e.g., ["time", "clock"])
+    examples: List[str] | None = None # Optional example phrases that this skill might respond to
+    inputModes: List[str] | None = None # Optional list of supported input modes (e.g., ["text", "json"])
+    outputModes: List[str] | None = None # Optional list of supported output modes (e.g., ["text", "image"])
 
+# This information can be shared with a directory service or other agents to describe what the agent does, where to reach it, and what capabilities it supports.
 class AgentCard(BaseModel):
     name: str
     description: str | None = None
@@ -329,11 +333,11 @@ class AgentCard(BaseModel):
     provider: AgentProvider | None = None
     version: str
     documentationUrl: str | None = None
-    capabilities: AgentCapabilities
+    capabilities: AgentCapabilities #The capabilities this agent supports (uses the AgentCapabilities model above)
     authentication: AgentAuthentication | None = None
     defaultInputModes: List[str] = ["text"]
     defaultOutputModes: List[str] = ["text"]
-    skills: List[AgentSkill]
+    skills: List[AgentSkill] # # List of skills (as strings) this agent can perform
 
 # Client errors
 class A2AClientError(Exception):
