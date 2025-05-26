@@ -79,6 +79,8 @@ def expand_home(filepath: str) -> str: # Mở rộng dấu ~ thành thư mục h
     return filepath
 
 async def validate_path(requested_path: str, check_existence: bool = False) -> str:
+    if ".." in requested_path:
+        raise ValueError("Invalid path: contains '..'")
     expanded_path = expand_home(requested_path)
     absolute = os.path.abspath(expanded_path) if not os.path.isabs(expanded_path) else os.path.abspath(expanded_path)
     normalized = normalize_path(absolute)

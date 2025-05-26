@@ -452,7 +452,7 @@ Do not include any introductory text, explanations, code comments, or markdown f
       {{ "path": "/backend/src/services", "description": "Business logic directory" }}, 
       {{ "path": "/backend/src/middlewares", "description": "Request processing middleware directory (auth, validation)" }}, 
       {{ "path": "/backend/server.js", "description": "Main application entry point file" }},
-      // ... (other backend files/folders)
+      // etc create other backend files/folders if needed
 
       // --- Frontend ---
       {{ "path": "frontend", "description": "Frontend application source code and related files directory." }},
@@ -463,7 +463,7 @@ Do not include any introductory text, explanations, code comments, or markdown f
       {{ "path": "/frontend/src/services", "description": "API call functions directory" }}, 
       {{ "path": "/frontend/src/App.js", "description": "Main React application component file" }}, 
       {{ "path": "/frontend/src/index.js", "description": "Frontend entry point file" }},
-      // ... (other frontend files/folders)
+      // etc, create other frontend files/folders
 
       // --- General ---
       // Remember to adjust based on actual tech stack (e.g., different folders for Next.js, Vue, Angular, Python/Django/Flask).

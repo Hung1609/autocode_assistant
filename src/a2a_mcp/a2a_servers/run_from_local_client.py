@@ -7,7 +7,7 @@ from uuid import uuid4
 
 # Assuming common types and client are importable
 from a2a_servers.common.a2a_client import A2AClient, card_resolver # card_resolver might be needed for discovering the host_agent's capabilities via its AgentCard.
-from a2a_servers.common.types import Message, TextPart, AgentCard # Import AgentCard if needed directly
+from a2a_servers.common.types import Message, TextPart, AgentCard, TaskSendParams # Import AgentCard if needed directly
 
 # Configure basic logging
 logging.basicConfig(level=logging.INFO)
@@ -27,11 +27,12 @@ async def main():
         parts=[TextPart(text=user_text)]
     )
 
-    send_params = {
-        "id": task_id,
-        "sessionId": session_id,
-        "message": user_message.model_dump(),
-    }
+    send_params = TaskSendParams(
+        id=task_id,
+        sessionId=session_id,
+        message=user_message.model_dump(),
+        acceptedOutputModes=["text"]
+    )
 
     try:
         logger.info(f"Sending task {task_id} to {SERVER_URL}...")

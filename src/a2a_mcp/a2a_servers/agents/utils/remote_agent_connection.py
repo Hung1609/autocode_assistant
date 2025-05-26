@@ -46,7 +46,7 @@ class RemoteAgentConnections: # --> hold the connections to the remote agents.
                     ),
                     history=[request.message],
                 ), self.card)
-            async for response in self.agent_client.send_task_streaming(request.model_dump()):
+            async for response in self.agent_client.send_task_streaming(request.model_dump(), timeout=600):
                 merge_metadata(response.result, request)
                 # For task status updates, we need to propagate metadata and provide
                 # a unique message id.
