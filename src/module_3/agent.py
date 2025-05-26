@@ -27,10 +27,13 @@ logger.info("Gemini API configured successfully.")
 SUPPORTED_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash']
 DEFAULT_MODEL = 'gemini-2.0-flash'
 BASE_OUTPUT_DIR = 'code_generated_result'
-OUTPUTS_DIR = r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs'
+# path in company's computer
+# OUTPUTS_DIR = r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs'
+# PYTHON_PATH = r"C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\python.exe"
 
-PYTHON_PATH = r"C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\python.exe"
-
+# my laptop
+OUTPUTS_DIR = r"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs"
+PYTHON_PATH = r"C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe"
 
 # parser = argparse.ArgumentParser(description="Generate an application from JSON design and specification files.")
 # parser.add_argument('design_file', help="Path to the JSON design file")

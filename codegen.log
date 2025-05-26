@@ -1,0 +1,182 @@
+2025-05-26 23:01:52,256 - INFO - Gemini API configured successfully.
+2025-05-26 23:01:52,256 - INFO - Initializing LLM model for code generation: gemini-2.0-flash
+2025-05-26 23:01:52,257 - INFO - Successfully initialized LLM: gemini-2.0-flash
+2025-05-26 23:01:52,257 - INFO - Scanning outputs directory for JSON files...
+2025-05-26 23:01:52,257 - INFO - Detected specification file: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs\to_do_web_app_20250516.spec.json
+2025-05-26 23:01:52,259 - INFO - Detected design file: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs\to_do_web_app_20250516.design.json
+2025-05-26 23:01:52,259 - INFO - Loading design file: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs\to_do_web_app_20250516.design.json
+2025-05-26 23:01:52,270 - INFO - Loading specification file: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs\to_do_web_app_20250516.spec.json
+2025-05-26 23:01:52,282 - INFO - Starting code generation pipeline using model: models/gemini-2.0-flash
+2025-05-26 23:01:52,282 - INFO - Generating scaffold plan from JSON design file.
+2025-05-26 23:01:52,282 - DEBUG - Validating JSON design file.
+2025-05-26 23:01:52,282 - DEBUG - JSON design validation successful.
+2025-05-26 23:01:52,282 - DEBUG - Validating JSON specification structure.
+2025-05-26 23:01:52,282 - DEBUG - JSON specification validation successful.
+2025-05-26 23:01:52,283 - INFO - Target project root directory: code_generated_result\to_do_web_app
+2025-05-26 23:01:52,283 - INFO - Detected backend module path: backend.main
+2025-05-26 23:01:52,283 - INFO - Detected frontend directory: frontend
+2025-05-26 23:01:52,283 - INFO - Detected CSS path: style.css
+2025-05-26 23:01:52,284 - INFO - Detected JS path: app.js
+2025-05-26 23:01:52,284 - INFO - Added setup_and_run.bat to scaffold plan: code_generated_result\to_do_web_app\setup_and_run.bat
+2025-05-26 23:01:52,284 - INFO - Scaffold plan generated successfully. Root: code_generated_result\to_do_web_app
+2025-05-26 23:01:52,284 - DEBUG - Directories planned: ['code_generated_result\\to_do_web_app\\backend', 'code_generated_result\\to_do_web_app\\frontend']
+2025-05-26 23:01:52,285 - DEBUG - Files planned: ['code_generated_result\\to_do_web_app\\requirements.txt', 'code_generated_result\\to_do_web_app\\.env', 'code_generated_result\\to_do_web_app\\backend/main.py', 'code_generated_result\\to_do_web_app\\backend/models.py', 'code_generated_result\\to_do_web_app\\backend/routes.py', 'code_generated_result\\to_do_web_app\\backend/database.py', 'code_generated_result\\to_do_web_app\\frontend/index.html', 'code_generated_result\\to_do_web_app\\frontend/style.css', 'code_generated_result\\to_do_web_app\\frontend/app.js', 'code_generated_result\\to_do_web_app\\setup_and_run.bat']
+2025-05-26 23:01:52,285 - DEBUG - Backend module path: backend.main, Frontend dir: frontend, CSS path: style.css, JS path: app.js
+2025-05-26 23:01:52,285 - INFO - Creating project structure in code_generated_result\to_do_web_app.
+2025-05-26 23:01:52,286 - INFO - Ensured base project directory exists: code_generated_result\to_do_web_app
+2025-05-26 23:01:52,287 - INFO - Created output directory: code_generated_result
+2025-05-26 23:01:52,287 - INFO - Created directory: code_generated_result\to_do_web_app\backend
+2025-05-26 23:01:52,288 - INFO - Created directory: code_generated_result\to_do_web_app\frontend
+2025-05-26 23:01:52,289 - INFO - Created empty file: code_generated_result\to_do_web_app\requirements.txt
+2025-05-26 23:01:52,291 - INFO - Created empty file: code_generated_result\to_do_web_app\.env
+2025-05-26 23:01:52,292 - INFO - Created empty file: code_generated_result\to_do_web_app\backend/main.py
+2025-05-26 23:01:52,293 - INFO - Created empty file: code_generated_result\to_do_web_app\backend/models.py
+2025-05-26 23:01:52,294 - INFO - Created empty file: code_generated_result\to_do_web_app\backend/routes.py
+2025-05-26 23:01:52,296 - INFO - Created empty file: code_generated_result\to_do_web_app\backend/database.py
+2025-05-26 23:01:52,298 - INFO - Created empty file: code_generated_result\to_do_web_app\frontend/index.html
+2025-05-26 23:01:52,299 - INFO - Created empty file: code_generated_result\to_do_web_app\frontend/style.css
+2025-05-26 23:01:52,301 - INFO - Created empty file: code_generated_result\to_do_web_app\frontend/app.js
+2025-05-26 23:01:52,303 - INFO - Created empty file: code_generated_result\to_do_web_app\setup_and_run.bat
+2025-05-26 23:01:52,303 - INFO - Project structure created successfully.
+2025-05-26 23:01:52,304 - INFO - Attempting to generate code for 10 file(s).
+2025-05-26 23:01:52,304 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\requirements.txt
+2025-05-26 23:01:52,304 - INFO - Generating content for backend requirements.txt: code_generated_result\to_do_web_app\requirements.txt
+2025-05-26 23:01:52,304 - INFO - Writing code to file: code_generated_result\to_do_web_app\requirements.txt
+2025-05-26 23:01:52,305 - INFO - Successfully wrote 59 characters to code_generated_result\to_do_web_app\requirements.txt
+2025-05-26 23:01:52,306 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\.env
+2025-05-26 23:01:52,306 - INFO - Generating content for .env: code_generated_result\to_do_web_app\.env
+2025-05-26 23:01:52,306 - INFO - Writing code to file: code_generated_result\to_do_web_app\.env
+2025-05-26 23:01:52,308 - INFO - Successfully wrote 31 characters to code_generated_result\to_do_web_app\.env
+2025-05-26 23:01:52,308 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\backend/main.py
+2025-05-26 23:01:52,308 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\backend/main.py
+2025-05-26 23:01:52,309 - INFO - Waiting for 5 seconds before API call for main.py...
+2025-05-26 23:01:57,310 - INFO - Sending generation request to model models/gemini-2.0-flash for main.py.
+2025-05-26 23:02:00,243 - INFO - Code successfully generated by LLM for main.py (691 chars).
+2025-05-26 23:02:00,243 - INFO - Writing code to file: code_generated_result\to_do_web_app\backend/main.py
+2025-05-26 23:02:00,244 - INFO - Successfully wrote 691 characters to code_generated_result\to_do_web_app\backend/main.py
+2025-05-26 23:02:00,245 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\backend/models.py
+2025-05-26 23:02:00,245 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\backend/models.py
+2025-05-26 23:02:00,245 - INFO - Waiting for 5 seconds before API call for models.py...
+2025-05-26 23:02:05,246 - INFO - Sending generation request to model models/gemini-2.0-flash for models.py.
+2025-05-26 23:02:08,821 - INFO - Code successfully generated by LLM for models.py (1601 chars).
+2025-05-26 23:02:08,822 - INFO - Writing code to file: code_generated_result\to_do_web_app\backend/models.py
+2025-05-26 23:02:08,823 - INFO - Successfully wrote 1601 characters to code_generated_result\to_do_web_app\backend/models.py
+2025-05-26 23:02:08,823 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\backend/routes.py
+2025-05-26 23:02:08,824 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\backend/routes.py
+2025-05-26 23:02:08,824 - INFO - Waiting for 5 seconds before API call for routes.py...
+2025-05-26 23:02:13,825 - INFO - Sending generation request to model models/gemini-2.0-flash for routes.py.
+2025-05-26 23:02:19,599 - INFO - Code successfully generated by LLM for routes.py (2859 chars).
+2025-05-26 23:02:19,599 - INFO - Writing code to file: code_generated_result\to_do_web_app\backend/routes.py
+2025-05-26 23:02:19,600 - INFO - Successfully wrote 2859 characters to code_generated_result\to_do_web_app\backend/routes.py
+2025-05-26 23:02:19,600 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\backend/database.py
+2025-05-26 23:02:19,600 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\backend/database.py
+2025-05-26 23:02:19,601 - INFO - Waiting for 5 seconds before API call for database.py...
+2025-05-26 23:02:24,602 - INFO - Sending generation request to model models/gemini-2.0-flash for database.py.
+2025-05-26 23:02:28,594 - INFO - Code successfully generated by LLM for database.py (1644 chars).
+2025-05-26 23:02:28,594 - INFO - Writing code to file: code_generated_result\to_do_web_app\backend/database.py
+2025-05-26 23:02:28,595 - INFO - Successfully wrote 1644 characters to code_generated_result\to_do_web_app\backend/database.py
+2025-05-26 23:02:28,595 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\frontend/index.html
+2025-05-26 23:02:28,595 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\frontend/index.html
+2025-05-26 23:02:28,596 - INFO - Waiting for 5 seconds before API call for index.html...
+2025-05-26 23:02:33,597 - INFO - Sending generation request to model models/gemini-2.0-flash for index.html.
+2025-05-26 23:02:35,801 - INFO - Code successfully generated by LLM for index.html (633 chars).
+2025-05-26 23:02:35,802 - INFO - Writing code to file: code_generated_result\to_do_web_app\frontend/index.html
+2025-05-26 23:02:35,803 - INFO - Successfully wrote 633 characters to code_generated_result\to_do_web_app\frontend/index.html
+2025-05-26 23:02:35,804 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\frontend/style.css
+2025-05-26 23:02:35,804 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\frontend/style.css
+2025-05-26 23:02:35,805 - INFO - Waiting for 5 seconds before API call for style.css...
+2025-05-26 23:02:40,806 - INFO - Sending generation request to model models/gemini-2.0-flash for style.css.
+2025-05-26 23:02:44,781 - INFO - Code successfully generated by LLM for style.css (1371 chars).
+2025-05-26 23:02:44,781 - INFO - Writing code to file: code_generated_result\to_do_web_app\frontend/style.css
+2025-05-26 23:02:44,782 - INFO - Successfully wrote 1371 characters to code_generated_result\to_do_web_app\frontend/style.css
+2025-05-26 23:02:44,782 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\frontend/app.js
+2025-05-26 23:02:44,782 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\frontend/app.js
+2025-05-26 23:02:44,783 - INFO - Waiting for 5 seconds before API call for app.js...
+2025-05-26 23:02:49,784 - INFO - Sending generation request to model models/gemini-2.0-flash for app.js.
+2025-05-26 23:02:56,326 - INFO - Code successfully generated by LLM for app.js (4143 chars).
+2025-05-26 23:02:56,327 - INFO - Writing code to file: code_generated_result\to_do_web_app\frontend/app.js
+2025-05-26 23:02:56,328 - INFO - Successfully wrote 4143 characters to code_generated_result\to_do_web_app\frontend/app.js
+2025-05-26 23:02:56,328 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\setup_and_run.bat
+2025-05-26 23:02:56,329 - INFO - Generating content for setup_and_run.bat: code_generated_result\to_do_web_app\setup_and_run.bat
+2025-05-26 23:02:56,329 - DEBUG - Generated setup_and_run.bat content:
+@echo off
+setlocal EnableDelayedExpansion
+
+:: Setup and run the generated application
+echo Setting up and running the application... > debug.log 2>&1
+
+:: Set project root
+set "PROJECT_ROOT=%~dp0"
+cd /d "%PROJECT_ROOT%" >> debug.log 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo ERROR: Failed to change to project root directory %PROJECT_ROOT%. >> debug.log 2>&1
+    echo ERROR: Failed to change to project root directory %PROJECT_ROOT%.
+    pause
+    exit /b 1
+)
+echo Project root set to: %PROJECT_ROOT% >> debug.log 2>&1
+
+:: Check for Python
+echo Checking for Python... >> debug.log 2>&1
+"C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe" --version >> debug.log 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo ERROR: Python is not installed at C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe. Please ensure Python 3.8+ is installed. >> debug.log 2>&1
+    echo ERROR: Python is not installed at C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe. Please ensure Python 3.8+ is installed.
+    pause
+    exit /b 1
+)
+echo Python found. >> debug.log 2>&1
+
+:: Create and activate virtual environment in project directory
+echo Setting up virtual environment in !PROJECT_ROOT!\venv... >> debug.log 2>&1
+if not exist "!PROJECT_ROOT!\venv" (
+    "C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe" -m venv "!PROJECT_ROOT!\venv" >> debug.log 2>&1
+    if %ERRORLEVEL% neq 0 (
+        echo ERROR: Failed to create virtual environment in !PROJECT_ROOT!\venv. >> debug.log 2>&1
+        echo ERROR: Failed to create virtual environment in !PROJECT_ROOT!\venv.
+        pause
+        exit /b 1
+    )
+)
+call "!PROJECT_ROOT!\venv\Scripts\activate.bat" >> debug.log 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo ERROR: Failed to activate virtual environment. Check !PROJECT_ROOT!\venv\Scripts\activate.bat. >> debug.log 2>&1
+    echo ERROR: Failed to activate virtual environment. Check !PROJECT_ROOT!\venv\Scripts\activate.bat.
+    pause
+    exit /b 1
+)
+echo Virtual environment activated. >> debug.log 2>&1
+
+:: Install dependencies
+echo Installing dependencies... >> debug.log 2>&1
+if exist "requirements.txt" (
+    pip install -r requirements.txt >> debug.log 2>&1
+    if %ERRORLEVEL% neq 0 (
+        echo ERROR: Failed to install dependencies. Check requirements.txt. >> debug.log 2>&1
+        echo ERROR: Failed to install dependencies. Check requirements.txt.
+        pause
+        exit /b 1
+    )
+) else (
+    echo WARNING: requirements.txt not found. Skipping dependency installation. >> debug.log 2>&1
+    echo WARNING: requirements.txt not found. Skipping dependency installation.
+)
+echo Dependencies installed. >> debug.log 2>&1
+
+:: Run the application
+echo Starting the application... >> debug.log 2>&1
+python -m uvicorn backend.main:app --reload --port 8001 >> debug.log 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo ERROR: Failed to start the application. Check backend/main.py and uvicorn configuration. >> debug.log 2>&1
+    echo ERROR: Failed to start the application. Check backend/main.py and uvicorn configuration.
+    pause
+    exit /b 1
+)
+echo Application started. >> debug.log 2>&1
+
+pause
+exit /b 0
+
+2025-05-26 23:02:56,330 - INFO - Writing code to file: code_generated_result\to_do_web_app\setup_and_run.bat
+2025-05-26 23:02:56,331 - INFO - Successfully wrote 3133 characters to code_generated_result\to_do_web_app\setup_and_run.bat
+2025-05-26 23:02:56,357 - INFO - Executing C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\to_do_web_app\setup_and_run.bat to setup and run the application...
