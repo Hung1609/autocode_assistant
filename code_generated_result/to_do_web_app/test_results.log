@@ -1,0 +1,14 @@
+============================= test session starts =============================
+platform win32 -- Python 3.10.10, pytest-8.3.5, pluggy-1.5.0 -- C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\foxconn_env\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\to_do_web_app
+plugins: anyio-4.9.0, langsmith-0.3.33, mock-3.14.0
+collecting ... collected 0 items
+
+============================ no tests ran in 0.01s ============================
+
+--- Errors ---
+ERROR: file or directory not found: code_generated_result\to_do_web_app\tests
+
+
+--- Failure Summary ---

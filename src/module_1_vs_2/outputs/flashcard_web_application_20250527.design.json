@@ -1,0 +1,394 @@
+{
+  "system_Architecture": {
+    "description": "Client-Server architecture with a Python FastAPI backend serving a Vanilla JavaScript frontend. Data is persisted in an SQLite database.",
+    "components": [
+      {
+        "name": "Web Frontend",
+        "description": "Provides the user interface for interacting with the flashcard application. Handles user input, displays flashcards, and communicates with the backend API.",
+        "technologies": [
+          "HTML",
+          "CSS",
+          "JavaScript"
+        ],
+        "inputs": [
+          "User interactions (button clicks, text input)",
+          "API responses from the backend"
+        ],
+        "outputs": [
+          "API requests to the backend",
+          "Rendered UI elements (flashcards, search results, statistics)"
+        ]
+      },
+      {
+        "name": "Backend API",
+        "description": "Handles requests from the frontend, interacts with the database, and returns data to the frontend. Implements the application's business logic.",
+        "technologies": [
+          "Python",
+          "FastAPI",
+          "RESTful"
+        ],
+        "inputs": [
+          "HTTP requests from the frontend"
+        ],
+        "outputs": [
+          "HTTP responses (JSON data)",
+          "Database queries"
+        ]
+      },
+      {
+        "name": "Database",
+        "description": "Persists flashcard data and review statistics.",
+        "technologies": [
+          "SQL",
+          "SQLite"
+        ],
+        "inputs": [
+          "Data read/write requests from the backend"
+        ],
+        "outputs": [
+          "Stored flashcard and review data",
+          "Query results"
+        ]
+      }
+    ]
+  },
+  "data_Design": {
+    "data_Flow_Description": "User interacts with the frontend, which sends API requests to the backend. The backend processes these requests by querying or updating the SQLite database. The backend then sends a response back to the frontend, which updates the user interface.",
+    "storage_Type": "SQL",
+    "database_Type": "SQLite",
+    "data_Models": [
+      {
+        "model_Name": "Flashcard",
+        "description": "Represents a single flashcard with a front and back side.",
+        "fields": [
+          {
+            "name": "id",
+            "type": "INTEGER",
+            "description": "Primary key for the flashcard.",
+            "constraints": [
+              "primary_key: true",
+              "autoincrement: true"
+            ]
+          },
+          {
+            "name": "front_text",
+            "type": "TEXT",
+            "description": "The text or content on the front of the flashcard.",
+            "constraints": [
+              "required"
+            ]
+          },
+          {
+            "name": "back_text",
+            "type": "TEXT",
+            "description": "The text or content on the back of the flashcard.",
+            "constraints": [
+              "required"
+            ]
+          }
+        ],
+        "relationships": []
+      },
+      {
+        "model_Name": "Review",
+        "description": "Represents a single review event for a flashcard.",
+        "fields": [
+          {
+            "name": "id",
+            "type": "INTEGER",
+            "description": "Primary key for the review event.",
+            "constraints": [
+              "primary_key: true",
+              "autoincrement: true"
+            ]
+          },
+          {
+            "name": "flashcard_id",
+            "type": "INTEGER",
+            "description": "Foreign key linking to the flashcard being reviewed.",
+            "constraints": [
+              "required",
+              "indexed"
+            ]
+          },
+          {
+            "name": "correct",
+            "type": "BOOLEAN",
+            "description": "Indicates whether the user answered the flashcard correctly during the review.",
+            "constraints": [
+              "required"
+            ]
+          },
+          {
+            "name": "review_timestamp",
+            "type": "DATETIME",
+            "description": "Timestamp of when the review occurred",
+            "constraints": [
+              "required",
+              "default: CURRENT_TIMESTAMP"
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "field_Name": "flashcard_id",
+            "type": "Many-to-one",
+            "related_Model": "Flashcard",
+            "foreign_Field": "id",
+            "description": "Each review is associated with one flashcard.",
+            "implementation_Notes": "FOREIGN KEY (flashcard_id) REFERENCES Flashcard(id)",
+            "on_Delete": "CASCADE"
+          }
+        ]
+      }
+    ]
+  },
+  "interface_Design": {
+    "api_Specifications": [
+      {
+        "endpoint": "/api/flashcards",
+        "method": "POST",
+        "description": "Creates a new flashcard.",
+        "request_Format": {
+          "params": [],
+          "query": [],
+          "body_Schema": {
+            "description": "{ front_text: String (required), back_text: String (required) }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 201,
+          "success_Schema": {
+            "description": "Returns the created flashcard object."
+          },
+          "error_Status": [
+            400,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message describing the issue' }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": []
+      },
+      {
+        "endpoint": "/api/flashcards",
+        "method": "GET",
+        "description": "Retrieves all flashcards, optionally filtered by a search query.",
+        "request_Format": {
+          "params": [],
+          "query": [
+            "query (optional): String to search for in flashcard front or back"
+          ],
+          "body_Schema": {
+            "description": "None"
+          }
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "Returns an array of flashcard objects."
+          },
+          "error_Status": [
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message describing the issue' }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": []
+      },
+      {
+        "endpoint": "/api/flashcards/{flashcard_id}",
+        "method": "GET",
+        "description": "Retrieves a specific flashcard by ID.",
+        "request_Format": {
+          "params": [
+            "{flashcard_id}"
+          ],
+          "query": [],
+          "body_Schema": {
+            "description": "None"
+          }
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "Returns the flashcard object."
+          },
+          "error_Status": [
+            404,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message describing the issue' }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": []
+      },
+      {
+        "endpoint": "/api/reviews",
+        "method": "POST",
+        "description": "Creates a new review record for a flashcard.",
+        "request_Format": {
+          "params": [],
+          "query": [],
+          "body_Schema": {
+            "description": "{ flashcard_id: Integer (required), correct: Boolean (required) }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 201,
+          "success_Schema": {
+            "description": "Returns the created review object."
+          },
+          "error_Status": [
+            400,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message describing the issue' }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": []
+      },
+      {
+        "endpoint": "/api/statistics",
+        "method": "GET",
+        "description": "Retrieves review statistics.",
+        "request_Format": {
+          "params": [],
+          "query": [],
+          "body_Schema": {
+            "description": "None"
+          }
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "Returns an object containing review statistics (e.g., total cards reviewed, percentage correct)."
+          },
+          "error_Status": [
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message describing the issue' }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": []
+      }
+    ],
+    "ui_Interaction_Notes": "The 'Create Flashcard' interface sends a POST request to /api/flashcards on form submission. The 'Search' interface dynamically updates results by calling GET /api/flashcards?query=... as the user types. The 'Review' interface fetches flashcards via GET /api/flashcards/{flashcard_id} and submits review data to /api/reviews via POST. The 'Statistics' interface fetches statistics from GET /api/statistics."
+  },
+  "workflow_Interaction": [
+    {
+      "workflow_Name": "Create Flashcard Workflow",
+      "description": "1. User enters front and back text in the 'Create Flashcard' interface. 2. User clicks the 'Save' button. 3. The frontend sends a POST request to /api/flashcards with the front and back text in the request body. 4. The backend receives the request, validates the data, and creates a new flashcard record in the SQLite database. 5. The backend sends a success response (201 Created) back to the frontend, including the newly created flashcard data. 6. The frontend displays a success message to the user.",
+      "related_Requirements": [
+        "FR-001"
+      ]
+    },
+    {
+      "workflow_Name": "Review Flashcard Workflow",
+      "description": "1. User navigates to the 'Review' interface. 2. The frontend requests a flashcard from the backend via a GET request to /api/flashcards/{flashcard_id}. 3. The backend retrieves a flashcard from the database and sends it to the frontend. 4. The frontend displays the front of the flashcard. 5. The user clicks or presses Space to flip the card. 6. The frontend displays the back of the flashcard. 7. The user presses an arrow key to navigate to the next flashcard (repeats steps 2-6). 8. User answers flashcard and the frontend sends review via POST request to /api/reviews. ",
+      "related_Requirements": [
+        "FR-003"
+      ]
+    }
+  ],
+  "folder_Structure": {
+    "description": "Proposed folder structure for the entire project. All paths are relative to the root project directory. It includes dependency files and main subdirectories for the Python/FastAPI backend and Vanilla JS frontend.",
+    "root_Project_Directory_Name": "flashcard_web_application",
+    "structure": [
+      {
+        "path": "requirements.txt",
+        "description": "Python backend dependencies file."
+      },
+      {
+        "path": "README.md",
+        "description": "Project documentation file (general overview, setup instructions)."
+      },
+      {
+        "path": ".gitignore",
+        "description": "Git ignore file."
+      },
+      {
+        "path": "backend",
+        "description": "Backend application source code and related files directory."
+      },
+      {
+        "path": "/backend/main.py",
+        "description": "Main FastAPI application file."
+      },
+      {
+        "path": "/backend/database.py",
+        "description": "Database connection setup and SQLAlchemy configuration file."
+      },
+      {
+        "path": "/backend/models.py",
+        "description": "SQLAlchemy ORM models file."
+      },
+      {
+        "path": "/backend/routers",
+        "description": "API route definitions directory."
+      },
+      {
+        "path": "/backend/routers/flashcards.py",
+        "description": "API endpoints for flashcard management file."
+      },
+      {
+        "path": "/backend/routers/reviews.py",
+        "description": "API endpoints for review management file."
+      },
+      {
+        "path": "/backend/schemas.py",
+        "description": "Pydantic schemas for data validation and serialization file."
+      },
+      {
+        "path": "frontend",
+        "description": "Frontend application source code and related files directory."
+      },
+      {
+        "path": "/frontend/index.html",
+        "description": "Main HTML file, entry point for the frontend."
+      },
+      {
+        "path": "/frontend/style.css",
+        "description": "Main CSS stylesheet file."
+      },
+      {
+        "path": "/frontend/script.js",
+        "description": "Main JavaScript file containing application logic and event handling."
+      },
+      {
+        "path": "/frontend/utils.js",
+        "description": "JavaScript utility functions file (e.g., API calls, DOM manipulation)."
+      },
+      {
+        "path": "/frontend/assets",
+        "description": "Directory for static assets like images, fonts directory."
+      }
+    ]
+  },
+  "dependencies": {
+    "backend": [
+      "fastapi",
+      "uvicorn",
+      "SQLAlchemy",
+      "pydantic",
+      "aiosqlite"
+    ],
+    "frontend": []
+  },
+  "metadata": {
+    "generation_step": "design",
+    "timestamp": "2025-05-27T15:37:28.171109",
+    "model_used": "gemini-2.0-flash",
+    "source_specification_timestamp": "2025-05-27T15:27:58.130103"
+  }
+}

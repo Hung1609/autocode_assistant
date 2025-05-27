@@ -1,0 +1,6 @@
+fastapi[all]
+uvicorn
+SQLAlchemy
+pydantic
+aiosqlite
+uvicorn[standard]

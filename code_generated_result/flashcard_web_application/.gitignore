@@ -1,0 +1,58 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written into a dist/ folder, but PyInstaller does not enforce this.
+#/dist/
+#/build/
+/dist/*
+/build/*
+# sdist
+/develop-eggs/
+/eggs/
+*.egg-info/
+/.installed.cfg
+*~
+# Packaging
+/.Python
+/lib/
+/lib64/
+/parts/
+/sdist/
+/var/
+/wheels/
+/share/
+/installed.cfg
+*.egg-info/
+/MANIFEST
+
+# Translations
+/*.mo
+
+# JetBrains IDE
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VS Code
+.vscode/
+
+# Logs
+logs/
+*.log

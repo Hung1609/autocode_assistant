@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard App</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="sidebar">
+        <a href="#" id="create-link">Create</a>
+        <a href="#" id="search-link">Search</a>
+        <a href="#" id="review-link">Review</a>
+        <a href="#" id="statistics-link">Statistics</a>
+    </div>
+
+    <div class="content">
+        <section id="create" class="hidden">
+            <h2>Create Flashcard</h2>
+            <input type="text" id="front-text" placeholder="Front Text">
+            <input type="text" id="back-text" placeholder="Back Text">
+            <button id="create-button">Save</button>
+        </section>
+
+        <section id="search" class="hidden">
+            <h2>Search Flashcards</h2>
+            <input type="text" id="search-input" placeholder="Search...">
+            <div id="search-results"></div>
+        </section>
+
+        <section id="review" class="hidden">
+            <h2>Review Flashcards</h2>
+            <div class="flashcard-container">
+                <div id="flashcard" class="flashcard">
+                    <div class="front">
+                        <p id="front-content"></p>
+                    </div>
+                    <div class="back">
+                        <p id="back-content"></p>
+                    </div>
+                </div>
+            </div>
+            <div id="review-progress"></div>
+            <button id="flip-button">Flip</button>
+        </section>
+
+        <section id="statistics" class="hidden">
+            <h2>Review Statistics</h2>
+            <div id="statistics-content">
+                <p>Total cards reviewed: <span id="total-reviewed">0</span></p>
+                <p>Percentage correct: <span id="percentage-correct">0%</span></p>
+            </div>
+        </section>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>
