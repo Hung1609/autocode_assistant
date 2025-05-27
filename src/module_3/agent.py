@@ -3,6 +3,7 @@ import os
 import logging
 import time
 import re
+from datetime import datetime
 import subprocess
 from google.generativeai import GenerativeModel, configure
 from dotenv import load_dotenv
@@ -11,7 +12,7 @@ API_CALL_DELAY_SECONDS = 5
 load_dotenv()
 
 logging.basicConfig(
-    level=logging.DEBUG, # Thay đổi từ INFO thành DEBUG
+    level=logging.DEBUG, # Thay đổi từ INFO thành DEBUG để dễ track issues, dễ debug, reverting to INFO in production to reduce noise.
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler('codegen.log'),
@@ -28,12 +29,12 @@ SUPPORTED_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash']
 DEFAULT_MODEL = 'gemini-2.0-flash'
 BASE_OUTPUT_DIR = 'code_generated_result'
 # path in company's computer
-# OUTPUTS_DIR = r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs'
-# PYTHON_PATH = r"C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\python.exe"
+OUTPUTS_DIR = r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs'
+PYTHON_PATH = r"C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\python.exe"
 
 # my laptop
-OUTPUTS_DIR = r"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs"
-PYTHON_PATH = r"C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe"
+# OUTPUTS_DIR = r"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs"
+# PYTHON_PATH = r"C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe"
 
 # parser = argparse.ArgumentParser(description="Generate an application from JSON design and specification files.")
 # parser.add_argument('design_file', help="Path to the JSON design file")
@@ -181,6 +182,11 @@ def parse_json_and_generate_scaffold_plan(json_design, json_spec):
     if not js_path:
         logger.warning("No primary JS file (e.g., app.js) found in folder structure. Frontend may lack interactivity.")
         js_path = "app.js"  # Fallback
+
+    # Add the 'logs' directory to the directories to be created
+    logs_dir_path = os.path.join(actual_project_root_dir, "logs")
+    directories_to_create.add(logs_dir_path)
+    logger.info(f"Added logs directory to scaffold plan: {logs_dir_path}")
 
     bat_file_path = os.path.join(actual_project_root_dir, "setup_and_run.bat")
     files_to_create[bat_file_path] = ""
@@ -380,33 +386,54 @@ exit /b 0
        - Use FastAPI conventions, Python logging, and StaticFiles for frontend serving.
        - Ensure dependencies from the `dependencies` section are utilized.
     5. **Determine Entry Point Requirements**:
-       - For `{plan['backend_module_path'].replace('.', '/')}.py`, include FastAPI app initialization and StaticFiles mounting.
+       - For `{plan['backend_module_path'].replace('.', '/')}.py`, include FastAPI app initialization, StaticFiles mounting.
        - Ensure the file is executable via `uvicorn {plan['backend_module_path']}:app --reload --port 8001`.
 
     Instructions for Code Generation:
     1.  **Output Code Only**: Your response MUST be only the raw code for the file. Do NOT include any explanations, comments outside the code, or markdown formatting (like ```language ... ```).
     2.  **Python Import Placement (Python Files Only)**: All `import` statements MUST be placed at the very top of the file, before any function definitions, class definitions, or any other executable code (e.g., variable assignments, route definitions outside functions). This is crucial for correct module loading and dependency resolution.
-    3.  **Logging Requirements (Python Files Only)**
-        - For all Python files (e.g., `{plan['backend_module_path'].replace('.', '/')}.py`, `backend/routes.py`, `backend/models.py`), include logging using Python's `logging` module.
-        - Initialize logging in `{plan['backend_module_path'].replace('.', '/')}.py` with:
-         ```python
-         import logging
-         logging.basicConfig(
-             level=logging.DEBUG,
-             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-             handlers=[
-                 logging.FileHandler('app.log'),
-                 StreamHandler()
-             ]
-         )
-         logger = logging.getLogger(__name__)
-         ```
-       - In every function, add logging for:
-         - Entry: `logger.info("Entering <function_name> with args: <args>, kwargs: <kwargs>")`
-         - Exit: `logger.info("Exiting <function_name> with result: <result>")` (if applicable)
-         - Errors: Wrap function logic in a try-except block and log errors with `logger.error("Error in <function_name>: <exception>", exc_info=True)`
-       - For FastAPI route handlers, log incoming requests and responses similarly.
-       - Do NOT add logging to non-Python files (e.g., HTML, CSS, JavaScript).
+    3.  **Advanced Logging Setup for Debug Agent (Python Files Only)**
+        -   **Objective**: Generate structured, rotatable logs in a dedicated `logs/` directory for easy processing by a debug agent.
+        -   **Detailed Initialization (ONLY in `{plan['backend_module_path'].replace('.', '/')}.py`):**
+            -   **Import necessary modules:** `logging`, `logging.handlers`, `json` (for custom JSON formatting), `contextvars`, `uuid`. If `python-json-logger` is intended for structured logging, attempt to import it and handle `ImportError` gracefully by providing a fallback custom JSON formatter.
+            -   **Define a custom JSON formatter:**
+                -   This formatter should convert `logging.LogRecord` attributes into a JSON string.
+                -   It must include the following fields: `timestamp` (from `asctime`), `level` (from `levelname`), `logger_name` (from `name`), `message`, `pathname`, `funcName`, `lineno`.
+                -   Crucially, it must **also include a `request_id` field** if it's present on the `LogRecord` (e.g., `record.request_id`).
+                -   For exceptions, ensure `exc_info` is properly formatted and included.
+            -   **Configure a `RotatingFileHandler`:**
+                -   It should write to `logs/app.log` (path relative to the project root).
+                -   Set a `maxBytes` limit (e.g., 10 * 1024 * 1024 bytes for 10MB) and `backupCount` (e.g., 5) to enable log rotation.
+                -   Set its formatter to the custom JSON formatter defined above.
+            -   **Configure a `StreamHandler`:**
+                -   For console output.
+                -   Use a standard, human-readable format (not JSON) for console logs (e.g., `%(asctime)s - %(levelname)s - %(name)s - %(message)s`).
+            -   **Root Logger Configuration:**
+                -   Call `logging.basicConfig` with `level=logging.DEBUG` and register both the `RotatingFileHandler` and `StreamHandler`.
+                -   Get the initial logger instance: `logger = logging.getLogger(__name__)`.
+        -   **Request ID (Correlation ID) Implementation (ONLY in `{plan['backend_module_path'].replace('.', '/')}.py`):**
+            -   **Objective**: Trace individual HTTP requests across all related log messages.
+            -   **`ContextVar`:** Declare a `contextvars.ContextVar` (e.g., `request_id_ctx`) to store the unique request ID for the current request context.
+            -   **FastAPI Middleware:** Implement a `starlette.middleware.base.BaseHTTPMiddleware`.
+                -   Inside its `dispatch` method, generate a unique ID for each incoming request (e.g., using `uuid.uuid4()`).
+                -   Set this ID in `request_id_ctx` using `request_id_ctx.set()` **before** `call_next(request)`.
+                -   Reset the `ContextVar` using `request_id_ctx.reset()` in a `finally` block **after** `call_next(request)` to ensure context is cleaned up.
+            -   **Logging Filter:** Create a custom `logging.Filter`.
+                -   Its `filter` method should retrieve the `request_id` from `request_id_ctx.get()` and attach it as an attribute to the `logging.LogRecord` (e.g., `record.request_id = request_id_value`).
+            -   **Registration:** Register the custom middleware with the FastAPI `app` using `app.add_middleware()`. Also, add the custom logging filter to the root logger (e.g., `logger.addFilter(YourRequestIdFilter())`) after `basicConfig`.
+        -   **Logging in Other Python Files (e.g., `backend/routes.py`, `backend/models.py`):**
+            -   Simply import `logging` and get the logger instance at the top of the file:
+                ```python
+                import logging
+                logger = logging.getLogger(__name__)
+                ```
+            -   Log messages will automatically inherit the global logging configuration and Request ID from the context.
+        -   **Content of Logs:** In every function, add logging for:
+            -   Entry: `logger.info("Entering <function_name> with args: <args>, kwargs: <kwargs>")`
+            -   Exit: `logger.info("Exiting <function_name> with result: <result>")` (if applicable)
+            -   Errors: Wrap function logic in a try-except block and log errors with `logger.error("Error in <function_name>: <dynamic_error_message>", exc_info=True)` (message should be informative).
+            -   For FastAPI route handlers, log incoming requests and responses, including basic path and method.
+            -   Do NOT add logging to non-Python files (e.g., HTML, CSS, JavaScript).
     4.  **FastAPI StaticFiles for Frontend ({plan['backend_module_path'].replace('.', '/')}.py Only)**:
        - In `{plan['backend_module_path'].replace('.', '/')}.py`, configure FastAPI to serve frontend static files (HTML, CSS, JavaScript) using `fastapi.StaticFiles`.
        - Mount the frontend directory `{plan['frontend_dir']}` at the root path `/`:
@@ -437,15 +464,13 @@ exit /b 0
         -   **JSON Specification (Requirements & Scope)**:
             -   `project_Overview.project_Purpose`, `project_Overview.product_Scope`: Understand the overall goals and boundaries.
             -   `functional_Requirements`: Ensure the code implements the specified features and actions. Pay attention to `acceptance_criteria`.
-            -   `non_Functional_Requirements`: Adhere to quality attributes like security (e.g., input validation, auth checks if applicable to the file), usability, performance.
+            -   `non_Functional_Requirements`: Adhere to quality attributes like security (e.g., input validation, auth checks if applicable to the file), usability, performance).
     8.  **Infer Role from Path**: Deduce the file's purpose from its path and the overall project structure (e.g., a backend model, a frontend UI component, a utility script, a configuration file).
     9.  **Completeness**: Generate all necessary imports, class/function definitions, and logic. For frontend files, include basic HTML structure and styling compatible with StaticFiles.
-    10.  **Implement Entry Points Correctly**: For files that serve as application entry points, include the appropriate language-specific entry point pattern:
+    10. **Implement Entry Points Correctly**: For files that serve as application entry points, include the appropriate language-specific entry point pattern:
         -   Automatically identify if this file serves as an application entry point, main execution file, or server startup file based on its path, name, and role in the system architecture.
         -   Generate fully executable code, including appropriate initialization code and language-specific entry point patterns (like `if __name__ == "__main__":`) for any file that serves as an application entry point or executable script without requiring explicit instructions.
-    11.  **Technology Specifics**: Use idiomatic code and conventions for the specified technologies (e.g., FastAPI/SQLAlchemy for Python backend, React/VanillaJS for frontend).
-    12. **Logging**: Add logging to Python functions as described. Initialize logging in `{plan['backend_module_path'].replace('.', '/')}.py`.
-    13. **StaticFiles**: Configure FastAPI in `{plan['backend_module_path'].replace('.', '/')}.py` to serve frontend files.
+    11. **Technology Specifics**: Use idiomatic code and conventions for the specified technologies (e.g., FastAPI/SQLAlchemy for Python backend, React/VanillaJS for frontend).
 
     Here is the design file in JSON format:
     ```json
@@ -457,7 +482,7 @@ exit /b 0
     {json.dumps(json_spec, indent=2)}
     ```
 
-    Now, generate the code for the file: `{file_path}`. Ensure it is complete and ready to run, includes logging for Python functions, and supports FastAPI StaticFiles for frontend serving in `{plan['backend_module_path'].replace('.', '/')}.py`. If any file should serve as an entry point or executable file, include the appropriate language-specific entry point code.
+    Now, generate the code for the file: `{file_path}`. Ensure it is complete and ready to run, includes advanced logging for Python functions tailored for a debug agent, and supports FastAPI StaticFiles for frontend serving in `{plan['backend_module_path'].replace('.', '/')}.py`. If any file should serve as an entry point or executable file, include the appropriate language-specific entry point code.
     """
 
     if API_CALL_DELAY_SECONDS > 0:
@@ -559,26 +584,35 @@ def run_codegen_pipeline(json_design, json_spec, llm_model_instance):
         raise
 
 def find_json_files():
-    """Find exactly one .spec.json and one .design.json file in the outputs directory."""
     if not os.path.exists(OUTPUTS_DIR):
         logger.error(f"Outputs directory '{OUTPUTS_DIR}' does not exist.")
         raise FileNotFoundError(f"Outputs directory '{OUTPUTS_DIR}' does not exist.")
 
-    spec_files = [f for f in os.listdir(OUTPUTS_DIR) if f.endswith('.spec.json')]
-    design_files = [f for f in os.listdir(OUTPUTS_DIR) if f.endswith('.design.json')]
+    all_files = os.listdir(OUTPUTS_DIR)
 
-    if len(spec_files) != 1:
-        logger.error(f"Expected exactly one .spec.json file in '{OUTPUTS_DIR}', found {len(spec_files)}: {spec_files}")
-        raise ValueError(f"Expected exactly one .spec.json file, found {len(spec_files)}")
-    if len(design_files) != 1:
-        logger.error(f"Expected exactly one .design.json file in '{OUTPUTS_DIR}', found {len(design_files)}: {design_files}")
-        raise ValueError(f"Expected exactly one .design.json file, found {len(design_files)}")
+    spec_candidate_paths = [os.path.join(OUTPUTS_DIR, f) for f in all_files if f.endswith('.spec.json')]
+    design_candidate_paths = [os.path.join(OUTPUTS_DIR, f) for f in all_files if f.endswith('.design.json')]
 
-    spec_file = os.path.join(OUTPUTS_DIR, spec_files[0])
-    design_file = os.path.join(OUTPUTS_DIR, design_files[0])
-    logger.info(f"Detected specification file: {spec_file}")
-    logger.info(f"Detected design file: {design_file}")
-    return design_file, spec_file
+    spec_candidate_paths.sort(key=os.path.getmtime, reverse=True)
+    design_candidate_paths.sort(key=os.path.getmtime, reverse=True)
+
+    latest_spec_file = None
+    if spec_candidate_paths:
+        latest_spec_file = spec_candidate_paths[0]
+        logger.info(f"Latest specification file found: {latest_spec_file}")
+    else:
+        logger.error(f"No .spec.json files found in '{OUTPUTS_DIR}'.")
+        raise FileNotFoundError(f"No .spec.json file found in '{OUTPUTS_DIR}'.")
+
+    latest_design_file = None
+    if design_candidate_paths:
+        latest_design_file = design_candidate_paths[0]
+        logger.info(f"Latest design file found: {latest_design_file}")
+    else:
+        logger.error(f"No .design.json files found in '{OUTPUTS_DIR}'.")
+        raise FileNotFoundError(f"No .design.json file found in '{OUTPUTS_DIR}'.")
+        
+    return latest_design_file, latest_spec_file
 
 if __name__ == "__main__":
     llm_for_codegen = None
@@ -627,4 +661,22 @@ if __name__ == "__main__":
         logger.error(f"An unexpected error occurred: {e}", exc_info=True)
         print(f"An unexpected error occurred. Check codegen.log for details. Error: {e}")
 
-# Run file in C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant> python src/module_3/agent.py <design.json> <spec.json> VD: python src/module_3/agent.py src/module_1_vs_2/outputs/task_management_app_20250516.design.json src/module_1_vs_2/outputs/task_management_app_20250516.spec.json
+# Run file in C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant> python src/module_3/agent.py
+
+
+### Vấn đề hardcode của coding agent: 
+# - Đường dẫn tuyệt đối cho thư mục đầu ra và trình thông dịch Python:
+# OUTPUTS_DIR = r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs'
+# PYTHON_PATH = r"C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\python.exe"
+# - Thư mục đầu ra cơ sở: BASE_OUTPUT_DIR = 'code_generated_result'
+#  Là một tên thư mục cố định, không thể thay đổi dễ dàng mà không chỉnh sửa code. Mặc dù là tương đối, nó vẫn là hardcode.
+#  - Logic phát hiện và tạo tệp .bat (Windows-specific):
+# bat_file_path = os.path.join(actual_project_root_dir, "setup_and_run.bat")
+# Phần lớn nội dung của setup_and_run.bat được tạo ra trong hàm generate_code_for_each_file là Windows-specific (.bat extension, setlocal EnableDelayedExpansion, call "!PROJECT_ROOT!\venv\Scripts\activate.bat").
+# - Logic tạo tệp .env và requirements.txt mặc định:
+# if relative_file_path == '.env': return "DATABASE_URL=sqlite:///todo.db\n"
+# Logic cho requirements.txt thêm fastapi[all], uvicorn[standard], sqlalchemy, pydantic nếu không có dependency nào khác được tìm thấy.
+# Vấn đề: Giả định mạnh mẽ về công nghệ (FastAPI, SQLite, Python virtual environments). Nếu dự án được tạo không phải là FastAPI/Python, những tệp này sẽ không chính xác.
+# - Nội dung Prompt cho LLM:
+# Toàn bộ chuỗi prompt trong generate_code_for_each_file là hardcode. Mặc dù nó sử dụng các biến động (project name, tech stack), các hướng dẫn và yêu cầu cốt lõi (như cách xử lý logging Python, StaticFiles của FastAPI, cấu trúc HTML) đều được nhúng cứng vào prompt.
+# giới hạn khả năng của agent chỉ tạo ra các ứng dụng Python với FastAPI làm backend, HTML/CSS/JS thuần túy làm frontend và một số quy ước nhất định. Để hỗ trợ các công nghệ khác (Node.js, Java, React, Angular, v.v.), prompt sẽ phải thay đổi đáng kể.
