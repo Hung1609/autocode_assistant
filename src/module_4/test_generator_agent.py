@@ -29,16 +29,24 @@ logger.info("Gemini API configured successfully for test generator.")
 
 DEFAULT_MODEL = 'gemini-2.0-flash'
 BASE_GENERATED_DIR = "code_generated_result"
-OUTPUTS_DIR = r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs'
+# company's computer
+# OUTPUTS_DIR = r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs'
+
+# my laptop
+OUTPUTS_DIR = r"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs"
 TEST_OUTPUT_DIR_NAME = "tests"
 TEST_LOG_FILE = "test_results.log"
 
 def detect_project_and_framework(specified_project_name=None, design_file_path=None, spec_file_path=None):
     logger.info("Detecting project and framework...")
+
+    # Validate BASE_GENERATED_DIR existence
     if not os.path.exists(BASE_GENERATED_DIR):
         msg = f"Base directory '{BASE_GENERATED_DIR}' does not exist. Run codegen_agent.py first."
         logger.error(msg)
         raise FileNotFoundError(msg)
+
+    # Validate OUTPUTS_DIR existence
     if not os.path.exists(OUTPUTS_DIR):
         msg = f"Outputs directory '{OUTPUTS_DIR}' does not exist. Ensure your design/spec files are there."
         logger.error(msg)
@@ -55,8 +63,8 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
                 design_data = json.load(f)
             with open(spec_file_path, 'r', encoding='utf-8') as f:
                 spec_data = json.load(f)
-            project_name =  design_data.get('folder_Structure', {}).get('root_Project_Directory_Name')
 
+            project_name = design_data.get('folder_Structure', {}).get('root_Project_Directory_Name')
             if project_name:
                 potential_project_root = os.path.join(BASE_GENERATED_DIR, project_name)
                 if os.path.isdir(potential_project_root):
@@ -66,6 +74,7 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
                     logger.warning(f"Project directory '{potential_project_root}' from specified design not found in '{BASE_GENERATED_DIR}'.")
             else:
                 logger.warning("Root project directory name not found in specified design file.")
+
         except Exception as e:
             logger.error(f"Failed to load/parse specified JSON files: {e}")
             raise ValueError(f"Invalid specified JSON files: {e}")
@@ -74,7 +83,10 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
         potential_project_root = os.path.join(BASE_GENERATED_DIR, specified_project_name)
         if os.path.isdir(potential_project_root):
             project_root = potential_project_root
-            logger.info(f"Using specified project root: {project_root}")
+            logger.info(f"Using specified project folder: {project_root}")
+            
+            # Try to find matching design/spec files for the specified project
+            # This assumes naming convention like "project_name_timestamp.design.json"
             relevant_design_files = [f for f in os.listdir(OUTPUTS_DIR) if f.endswith('.design.json') and specified_project_name in f]
             relevant_spec_files = [f for f in os.listdir(OUTPUTS_DIR) if f.endswith('.spec.json') and specified_project_name in f]
 
@@ -86,28 +98,30 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
                     logger.info(f"Loaded latest design file for specified project: {design_file_path}")
                 except Exception as e:
                     logger.warning(f"Failed to load design file '{design_file_path}' for specified project: {e}")
-
             if relevant_spec_files:
                 spec_file_path = os.path.join(OUTPUTS_DIR, max(relevant_spec_files, key=lambda f: os.path.getmtime(os.path.join(OUTPUTS_DIR, f))))
                 try:
                     with open(spec_file_path, 'r', encoding='utf-8') as f:
                         spec_data = json.load(f)
-                    logger.info(f"Loaded latest specification file for specified project: {spec_file_path}")
+                    logger.info(f"Loaded latest spec file for specified project: {spec_file_path}")
                 except Exception as e:
-                    logger.warning(f"Failed to load specification file '{spec_file_path}' for specified project: {e}")\
+                    logger.warning(f"Failed to load spec file '{spec_file_path}' for specified project: {e}")
         else:
             logger.warning(f"Specified project folder '{specified_project_name}' not found. Falling back to most recent project/files.")
 
     if not project_root:
         projects = [d for d in os.listdir(BASE_GENERATED_DIR) if os.path.isdir(os.path.join(BASE_GENERATED_DIR, d))]
         if not projects:
-            msg = f"No project directories found in '{BASE_GENERATED_DIR}'. Run codegen_agent.py first."
+            msg = f"No project folders found in '{BASE_GENERATED_DIR}'."
             logger.error(msg)
-            raise FileNotFoundError(msg)
+            raise ValueError(msg)
+        
         # Select the most recent project folder based on creation time
         project_dir_name = max(projects, key=lambda p: os.path.getctime(os.path.join(BASE_GENERATED_DIR, p)))
         project_root = os.path.join(BASE_GENERATED_DIR, project_dir_name)
         logger.info(f"Using most recent project folder: {project_root}")
+
+        # Find the most recently modified .design.json and .spec.json in OUTPUTS_DIR
         all_design_files = [f for f in os.listdir(OUTPUTS_DIR) if f.endswith('.design.json')]
         all_spec_files = [f for f in os.listdir(OUTPUTS_DIR) if f.endswith('.spec.json')]
 
@@ -118,7 +132,7 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
                     design_data = json.load(f)
                 logger.info(f"Loaded latest design file: {design_file_path}")
             except Exception as e:
-                logger.warning(f"Failed to load design file '{design_file_path}': {e}")
+                logger.warning(f"Failed to load latest design file '{design_file_path}': {e}")
         else:
             logger.warning("No .design.json file found in OUTPUTS_DIR.")
 
@@ -149,9 +163,12 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
             relative_path = item['path'].strip().replace('\\', '/')
             if relative_path.endswith('main.py'):
                 backend_dir = os.path.dirname(relative_path)
+                # Ensure backend_dir does not start with a slash here if it came from JSON like /backend
+                if backend_dir.startswith('/') and len(backend_dir) > 1:
+                    backend_dir = backend_dir[1:]
                 app_package = backend_dir or "app"
                 logger.info(f"Detected app package from JSON design: {app_package}")
-                break
+                break # Found main.py, so app_package is set
     
     if spec_data:
         tech_stack = spec_data.get('technology_Stack', {}).get('backend', {})
@@ -162,6 +179,7 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
             framework = "flask"
         logger.info(f"Detected framework from JSON specification: {framework}")
 
+    # Fallback: Check requirements.txt (only if framework is still unknown)
     if framework == "unknown":
         requirements_path = os.path.join(project_root, "requirements.txt")
         if os.path.exists(requirements_path):
@@ -176,6 +194,7 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
                     if app_package == "app":  # Only override if JSON didn't set it
                         app_package = "app" # Common Flask app_package name
 
+    # Fallback: Inspect source files (only if framework is still unknown)
     if framework == "unknown":
         for root, _, files in os.walk(project_root):
             for file in files:
@@ -202,7 +221,9 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
         logger.warning("Could not detect framework. Defaulting to Flask.")
         framework = "flask"
         if app_package == "app":
+            # If no main.py was found and framework is defaulted, assume a common flask app structure
             app_package = "app"
+
     logger.info(f"Final detected project: {os.path.basename(project_root)}, Framework: {framework}, App Package: {app_package}")
     return project_root, framework, app_package, design_data, spec_data
 
@@ -216,10 +237,6 @@ def ensure_init_py(directory_path):
         logger.debug(f"__init__.py already exists in {directory_path}")
 
 def update_requirements_for_testing(project_root):
-    """
-    Checks if 'pytest' is in requirements.txt of the generated project.
-    If not, adds it to ensure pytest is installed in the project's venv.
-    """
     requirements_path = os.path.join(project_root, "requirements.txt")
     
     if not os.path.exists(requirements_path):
@@ -252,6 +269,7 @@ def update_requirements_for_testing(project_root):
         logger.info(f"Added {', '.join(reqs_to_add)} to {requirements_path}")
     else:
         logger.info("pytest and pytest-mock are already present in requirements.txt.")
+
 
 def get_function_code(filepath, function_name):
     """Extracts the source code of a given function from a Python file."""
@@ -290,6 +308,7 @@ def get_function_code(filepath, function_name):
         return None
 
 def generate_unit_tests(function_code, function_name, module_path, framework, context):
+    """Generates unit tests for a given Python function using LLM."""
     if not function_code:
         logger.warning(f"No function code provided for {function_name}. Skipping unit test generation.") # Added warning
         return None
@@ -368,8 +387,11 @@ def generate_unit_tests(function_code, function_name, module_path, framework, co
         return None
 
 def generate_integration_tests(app_package, framework, endpoints, project_root):
+    """Generates integration tests for API endpoints using LLM."""
     model = GenerativeModel(DEFAULT_MODEL)
     logger.info(f"Generating integration tests for {app_package} using {DEFAULT_MODEL}")
+    
+    # Corrected setup for FastAPI TestClient
     framework_specific = {
         "flask": {
             "client_import": "from flask.testing import FlaskClient",
@@ -384,9 +406,9 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
             "app_import": f"from {app_package}.main import app"
         }
     }.get(framework, {"client_import": "", "client_setup": "", "request_example": "", "app_import": ""})
-    
+
     if not endpoints:
-        logger.warning("No API endpoints provided for integration testing. Skipping integration test generation.")
+        logger.warning("No API endpoints provided for integration testing. Skipping integration test generation.") # Added warning
         return None
 
     prompt = f"""
@@ -451,7 +473,7 @@ def run_tests(project_root):
     # --- Use Python executable from the project's virtual environment ---
     venv_python_path = os.path.join(project_root, "venv", "Scripts", "python.exe")
     if not os.path.exists(venv_python_path):
-        logger.error(f"Virtual environment python executable not found at {venv_python_path}. Please ensure 'venv' exists and is properly set up in the generated project.")
+        logger.error(f"Virtual environment python executable not found at {venv_python_path}. Please ensure 'venv' exists and is properly set up in the generated project (run codegen_agent.py first).")
         return []
     
     try:
@@ -518,13 +540,8 @@ def map_test_to_source(test_name, project_root, test_dir):
     Attempts to map a test function name to its source file and function using heuristics.
     Prioritizes reading 'source_info' comment from the test file.
     """
-    # Heuristic based on test naming convention
-    # Assumes unit tests are like 'test_functionname' or 'test_functionname_scenario'
-    # and default to 'routes.py' or 'main.py' if not specified
-    heuristic_func_name_match = re.match(r"test_([a-zA-Z0-9_]+)(?:_|$)", test_name)
-    heuristic_func_name = heuristic_func_name_match.group(1) if heuristic_func_name_match else "unknown_function"
-
     # Search in all generated test files for the test function name
+    # It's more reliable to search for the test function name and then find the nearest source_info
     for root, _, files in os.walk(test_dir):
         for file_name in files:
             if file_name.startswith("test_") and file_name.endswith(".py"):
@@ -532,31 +549,43 @@ def map_test_to_source(test_name, project_root, test_dir):
                 try:
                     with open(test_file_path, 'r', encoding='utf-8') as f:
                         test_content = f.read()
-                        # Look for the source_info comment within the test function
-                        # This regex looks for 'def test_something(...):' followed by '# source_info: module.function'
-                        # It's a bit complex as it needs to avoid matching comments outside the specific function
-                        # A simpler approach: just find any source_info comment in the file
-                        source_info_match = re.search(r"#\s*source_info:\s*([a-zA-Z0-9_.]+)", test_content)
-                        if source_info_match:
-                            full_source_path = source_info_match.group(1)
-                            parts = full_source_path.split('.')
-                            if len(parts) >= 2:
-                                source_module = parts[-2]
-                                source_func = parts[-1]
-                                return f"{source_module}.py", source_func
-                            else:
-                                logger.warning(f"Malformed source_info in {test_file_path}: {full_source_path}")
+                        # Look for test function definition
+                        # This regex finds a test function definition
+                        test_func_pattern = rf"def\s+{re.escape(test_name)}\s*\(.*?\):"
+                        test_func_match = re.search(test_func_pattern, test_content)
+
+                        if test_func_match:
+                            # Search for source_info in the vicinity of the test function or file-wide
+                            source_info_match = re.search(r"#\s*source_info:\s*([a-zA-Z0-9_.]+)", test_content)
+                            if source_info_match:
+                                full_source_path = source_info_match.group(1)
+                                parts = full_source_path.split('.')
+                                # Assuming module.function format, e.g., 'backend.routes.read_tasks'
+                                if len(parts) >= 2:
+                                    source_module_name = parts[-2]
+                                    source_func_name = parts[-1]
+                                    return f"{source_module_name}.py", source_func_name
+                                else:
+                                    logger.warning(f"Malformed source_info in {test_file_path}: {full_source_path}")
 
                 except Exception as e:
                     logger.warning(f"Error reading test file {test_file_path} for source info: {e}")
 
     # Fallback to heuristic if source_info comment is not found or malformed
-    logger.debug(f"Source info comment not found for {test_name}. Falling back to heuristic.")
-    # Assuming primary backend files for `backend.main` or `backend.routes`
-    if "routes" in test_name: # Common for test_create_task, test_read_tasks
+    logger.debug(f"Source info comment not found for '{test_name}'. Falling back to heuristic.")
+    # Heuristic based on test naming convention
+    heuristic_func_name_match = re.match(r"test_([a-zA-Z0-9_]+)(?:_|$)", test_name)
+    heuristic_func_name = heuristic_func_name_match.group(1) if heuristic_func_name_match else "unknown_function"
+
+    # Default common modules for these functions
+    if "routes" in test_name.lower(): # Common for test_create_task, test_read_tasks
         return "routes.py", heuristic_func_name
-    elif "main" in test_name:
+    elif "main" in test_name.lower(): # For functions in main.py
         return "main.py", heuristic_func_name
+    elif "database" in test_name.lower(): # For functions in database.py
+        return "database.py", heuristic_func_name
+    elif "models" in test_name.lower(): # For functions in models.py
+        return "models.py", heuristic_func_name
     
     return "unknown_file.py", heuristic_func_name # Default fallback
 
@@ -581,8 +610,10 @@ if __name__ == "__main__":
         # Ensure __init__.py files are present for Python package structure
         ensure_init_py(project_root)
         # Check if app_package is a sub-directory, then ensure __init__.py
-        if os.path.exists(os.path.join(project_root, app_package)) and os.path.isdir(os.path.join(project_root, app_package)):
-            ensure_init_py(os.path.join(project_root, app_package))
+        # This handles cases where app_package might be empty (e.g., main.py directly in root)
+        app_package_full_path = os.path.join(project_root, app_package) if app_package else project_root
+        if os.path.exists(app_package_full_path) and os.path.isdir(app_package_full_path):
+            ensure_init_py(app_package_full_path)
         ensure_init_py(test_output_dir)
 
         # Ensure pytest is in the project's requirements.txt
@@ -591,7 +622,7 @@ if __name__ == "__main__":
         # Scan for Python files to test and generate unit tests
         source_dir = os.path.join(project_root, app_package)
         if not os.path.exists(source_dir):
-            logger.error(f"Source directory '{source_dir}' (app package) not found. Cannot generate unit tests.")
+            logger.error(f"Source directory '{source_dir}' (app package) not found. Cannot generate unit tests. Ensure the project code is generated correctly by codegen_agent.py.")
         else:
             for root, _, files in os.walk(source_dir):
                 for file in files:
@@ -630,7 +661,7 @@ if __name__ == "__main__":
                                             f.write(test_code)
                                         logger.info(f"Saved unit tests to {test_file}")
                                     else:
-                                        logger.warning(f"No test code generated for {func_name} in {module_name}. Skipping file creation.")
+                                        logger.warning(f"No test code generated by LLM for '{func_name}' in '{module_name}'. Skipping file creation.")
                                 else:
                                     logger.warning(f"Could not extract code for function '{func_name}' from '{file_path}'. Skipping unit test generation.")
 
@@ -650,7 +681,7 @@ if __name__ == "__main__":
                 f.write(test_code)
             logger.info(f"Saved integration tests to {test_file}")
         else:
-            logger.warning("No integration test code generated. Skipping file creation.")
+            logger.warning("No integration test code generated by LLM. Skipping file creation.")
 
 
         # Run tests and log results

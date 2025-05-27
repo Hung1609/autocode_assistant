@@ -151,6 +151,8 @@ def parse_json_and_generate_scaffold_plan(json_design, json_spec):
             # Detect backend directory (contains main.py)
         if relative_path.endswith('main.py'):
             backend_dir = os.path.dirname(relative_path)
+            if backend_dir.startswith('/') and len(backend_dir) > 1: # Only remove if it's not just "/"
+                backend_dir = backend_dir[1:]
             backend_module_path = backend_dir.replace('/', '.') + '.main' if backend_dir else 'main'
             logger.info(f"Detected backend module path: {backend_module_path}")
 

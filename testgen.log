@@ -43,3 +43,57 @@
 2025-05-27 16:18:53,548 - INFO - Detected framework from JSON specification: fastapi
 2025-05-27 16:18:53,548 - INFO - Detected project: flashcard_web_application, Framework: fastapi, App Package: /backend
 2025-05-27 16:18:53,549 - INFO - Created missing __init__.py in code_generated_result\flashcard_web_application
+2025-05-27 22:23:47,023 - INFO - Gemini API configured successfully for test generator.
+2025-05-27 22:23:47,025 - INFO - Detecting project and framework...
+2025-05-27 22:23:47,025 - INFO - Using most recent project folder: code_generated_result\flashcard_web_application
+2025-05-27 22:23:47,035 - INFO - Loaded latest design file: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.design.json
+2025-05-27 22:23:47,047 - INFO - Loaded latest specification file: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.spec.json
+2025-05-27 22:23:47,048 - INFO - Detected app package from JSON design: /backend
+2025-05-27 22:23:47,048 - INFO - Detected framework from JSON specification: fastapi
+2025-05-27 22:23:47,048 - INFO - Final detected project: flashcard_web_application, Framework: fastapi, App Package: /backend
+2025-05-27 22:23:47,048 - INFO - Ensured test output directory exists: code_generated_result\flashcard_web_application\tests
+2025-05-27 22:23:47,049 - INFO - Created missing __init__.py in code_generated_result\flashcard_web_application
+2025-05-27 22:23:47,050 - INFO - Created missing __init__.py in code_generated_result\flashcard_web_application\tests
+2025-05-27 22:23:47,058 - INFO - Added pytest, pytest-mock to code_generated_result\flashcard_web_application\requirements.txt
+2025-05-27 22:23:47,058 - ERROR - Source directory '/backend' (app package) not found. Cannot generate unit tests.
+2025-05-27 22:23:47,058 - INFO - Extracted 5 API endpoints from design file for integration testing.
+2025-05-27 22:23:47,058 - INFO - Generating integration tests for /backend using gemini-2.0-flash
+2025-05-27 22:23:47,059 - DEBUG - Integration test prompt:
+
+    You are an expert Python test engineer specializing in the pytest framework and testing fastapi applications.
+    Your task is to generate comprehensive pytest integration tests for the fastapi application.
+
+    Module Path of main app: /backend.main
+    Application Entry Point: `app` (e.g., `from /backend.main import app`)
+
+    API Endpoints to Test:
+    [
+  {
+    "endpoint": "/api/flashcards",
+    "method": "POST",
+    "description": "Creates a new flashcard.",
+    "request_Format": {
+      "params": [],
+      "query": [],
+      "body_Schema": {
+        "description": "{ front_text: String (required), back_text: String (required) }"
+      }
+    },
+    "response_Format": {
+      "success_Status": 201,
+      "success_Schema": {
+        "description": "Returns the created flashcard object."
+      },
+      "error_Status": [
+        400,
+        500
+      ],
+      "error_Schema": {
+        "description": "{ error: 'Error message describing the issue' }"
+      }
+    },
+    "authentica...
+2025-05-27 22:24:01,503 - INFO - Saved integration tests to code_generated_result\flashcard_web_application\tests\test_integration.py
+2025-05-27 22:24:01,503 - INFO - Running pytest in code_generated_result\flashcard_web_application\tests from project root: code_generated_result\flashcard_web_application
+2025-05-27 22:24:01,504 - ERROR - Virtual environment python executable not found at code_generated_result\flashcard_web_application\venv\Scripts\python.exe. Please ensure 'venv' exists and is properly set up in the generated project.
+2025-05-27 22:24:01,504 - INFO - All tests passed successfully.
