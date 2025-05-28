@@ -6,13 +6,15 @@ import ast
 import subprocess
 import re
 import argparse
+import sys
+
 from google.generativeai import GenerativeModel, configure, types
 from dotenv import load_dotenv
 
 load_dotenv()
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.DEBUG, # Giữ DEBUG để dễ dàng debug
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler('testgen.log'),
@@ -30,10 +32,10 @@ logger.info("Gemini API configured successfully for test generator.")
 DEFAULT_MODEL = 'gemini-2.0-flash'
 BASE_GENERATED_DIR = "code_generated_result"
 # company's computer
-# OUTPUTS_DIR = r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs'
+OUTPUTS_DIR = r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs'
 
 # my laptop
-OUTPUTS_DIR = r"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs"
+# OUTPUTS_DIR = r"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs"
 TEST_OUTPUT_DIR_NAME = "tests"
 TEST_LOG_FILE = "test_results.log"
 
@@ -56,6 +58,7 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
     design_data = None
     spec_data = None
 
+    # First approach for command: Using argparse to choose design/spec files
     if design_file_path and spec_file_path:
         logger.info(f"Using specified design file: {design_file_path} and spec file: {spec_file_path}")
         try:
@@ -78,7 +81,8 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
         except Exception as e:
             logger.error(f"Failed to load/parse specified JSON files: {e}")
             raise ValueError(f"Invalid specified JSON files: {e}")
-
+    
+    # Second approach for command: Fallback to specified project name (if provided) and find latest design/spec in OUTPUTS_DIR
     if not project_root and specified_project_name:
         potential_project_root = os.path.join(BASE_GENERATED_DIR, specified_project_name)
         if os.path.isdir(potential_project_root):
@@ -109,6 +113,7 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
         else:
             logger.warning(f"Specified project folder '{specified_project_name}' not found. Falling back to most recent project/files.")
 
+    # Third approach for command(Default): Find the most recent project folder and associated design/spec files
     if not project_root:
         projects = [d for d in os.listdir(BASE_GENERATED_DIR) if os.path.isdir(os.path.join(BASE_GENERATED_DIR, d))]
         if not projects:
@@ -221,20 +226,28 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
         logger.warning("Could not detect framework. Defaulting to Flask.")
         framework = "flask"
         if app_package == "app":
-            # If no main.py was found and framework is defaulted, assume a common flask app structure
             app_package = "app"
 
     logger.info(f"Final detected project: {os.path.basename(project_root)}, Framework: {framework}, App Package: {app_package}")
     return project_root, framework, app_package, design_data, spec_data
 
-def ensure_init_py(directory_path):
-    init_py_path = os.path.join(directory_path, "__init__.py")
-    if not os.path.exists(init_py_path):
-        with open(init_py_path, 'w', encoding='utf-8') as f:
-            f.write("# This file makes this directory a Python package.\n")
-        logger.info(f"Created missing __init__.py in {directory_path}")
-    else:
-        logger.debug(f"__init__.py already exists in {directory_path}")
+def ensure_init_py_recursive(base_directory_path): # duyệt đệ quy để đảm bảo tất cả các dir đều có __init__.py
+    for root, dirs, files in os.walk(base_directory_path):
+        if 'venv' in dirs:
+            dirs.remove('venv') # This modifies dirs in-place for os.walk to skip it
+            logger.debug(f"Skipping 'venv' directory in {root}")
+
+        if any(f.endswith(".py") for f in files): # <--- Điều kiện này được kiểm tra cho MỌI thư mục
+            init_py_path = os.path.join(root, "__init__.py")
+            if not os.path.exists(init_py_path):
+                try:
+                    with open(init_py_path, 'w', encoding='utf-8') as f:
+                        f.write("# This file makes this directory a Python package.\n")
+                    logger.info(f"Created missing __init__.py in {root}")
+                except Exception as e:
+                    logger.error(f"Failed to create __init__.py in {root}: {e}")
+            else:
+                logger.debug(f"__init__.py already exists in {root}")
 
 def update_requirements_for_testing(project_root):
     requirements_path = os.path.join(project_root, "requirements.txt")
@@ -250,67 +263,105 @@ def update_requirements_for_testing(project_root):
 
     pytest_present = False
     pytest_mock_present = False
+    pytest_asyncio_present = False # Added pytest-asyncio check
+
     for req in existing_reqs:
         if re.match(r"^pytest($|[<=>~])", req.lower()):
             pytest_present = True
         if re.match(r"^pytest-mock($|[<=>~])", req.lower()):
             pytest_mock_present = True
+        if re.match(r"^pytest-asyncio($|[<=>~])", req.lower()): # Check for pytest-asyncio
+            pytest_asyncio_present = True
 
     reqs_to_add = []
     if not pytest_present:
         reqs_to_add.append("pytest")
-    if not pytest_mock_present: # pytest-mock is very useful for mocking
+    if not pytest_mock_present:
         reqs_to_add.append("pytest-mock")
+    if not pytest_asyncio_present: # Add if not present
+        reqs_to_add.append("pytest-asyncio")
 
     if reqs_to_add:
         with open(requirements_path, 'a', encoding='utf-8') as f:
             for req in reqs_to_add:
                 f.write(f"\n{req}")
         logger.info(f"Added {', '.join(reqs_to_add)} to {requirements_path}")
+        return True # Changes were made, installation is needed
     else:
-        logger.info("pytest and pytest-mock are already present in requirements.txt.")
+        logger.info("All required test dependencies (pytest, pytest-mock, pytest-asyncio) are already present in requirements.txt. No update needed.")
+        return False
 
+def install_project_dependencies(project_root):
+    venv_python_path = os.path.join(project_root, "venv", "Scripts", "python.exe")
+    requirements_path = os.path.join(project_root, "requirements.txt")
 
-def get_function_code(filepath, function_name):
-    """Extracts the source code of a given function from a Python file."""
+    if not os.path.exists(venv_python_path):
+        logger.error(f"Virtual environment python executable not found at {venv_python_path}. Please ensure 'venv' exists and is properly set up in the generated project.")
+        # Raise a specific error to indicate this critical failure
+        raise FileNotFoundError(f"Project venv not found: {venv_python_path}")
+    
+    if not os.path.exists(requirements_path):
+        logger.warning(f"requirements.txt not found at {requirements_path}. Skipping dependency installation.")
+        return
+
+    logger.info(f"Installing dependencies from {requirements_path} into project venv...")
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            source = f.read()
-        tree = ast.parse(source)
+        # Use the venv's pip
+        result = subprocess.run(
+            [venv_python_path, "-m", "pip", "install", "-r", "requirements.txt"], # Only pass filename, cwd handles path
+            capture_output=True,
+            text=True,
+            check=True, # Raise CalledProcessError if pip fails
+            cwd=project_root
+        )
+        logger.info(f"Successfully installed dependencies. Pip output:\n{result.stdout}")
+        if result.stderr:
+            logger.warning(f"Pip warnings/errors during dependency installation:\n{result.stderr}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to install dependencies. Exit code: {e.returncode}")
+        logger.error(f"Pip stdout:\n{e.stdout}")
+        logger.error(f"Pip stderr:\n{e.stderr}")
+        # Re-raise the exception to stop the pipeline, as this is a critical error
+        raise
 
-        func_code_lines = []
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == function_name:
-                start_line = node.lineno - 1
-                end_line = node.end_lineno
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    lines = f.readlines()
-                func_code_lines = lines[start_line:end_line]
-                break
-            elif isinstance(node, ast.ClassDef): # Check methods within classes
-                for method in [n for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
-                    if method.name == function_name:
-                        start_line = method.lineno - 1
-                        end_line = method.end_lineno
-                        with open(filepath, 'r', encoding='utf-8') as f:
-                            lines = f.readlines()
-                        func_code_lines = lines[start_line:end_line]
-                        break
-        if not func_code_lines:
-            logger.warning(f"Function '{function_name}' not found in '{filepath}'.")
-            return None
-        return "".join(func_code_lines)
-    except FileNotFoundError:
-        logger.error(f"File not found: {filepath}")
-        return None
-    except Exception as e:
-        logger.error(f"Error extracting function '{function_name}' from '{filepath}': {e}", exc_info=True)
-        return None
+# def get_function_code(filepath, function_name):
+#     try:
+#         with open(filepath, 'r', encoding='utf-8') as f:
+#             source = f.read()
+#         tree = ast.parse(source)
 
-def generate_unit_tests(function_code, function_name, module_path, framework, context):
-    """Generates unit tests for a given Python function using LLM."""
+#         func_code_lines = []
+#         for node in ast.walk(tree):
+#             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == function_name:
+#                 start_line = node.lineno - 1
+#                 end_line = node.end_lineno
+#                 with open(filepath, 'r', encoding='utf-8') as f:
+#                     lines = f.readlines()
+#                 func_code_lines = lines[start_line:end_line]
+#                 break
+#             elif isinstance(node, ast.ClassDef): # Check methods within classes
+#                 for method in [n for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
+#                     if method.name == function_name:
+#                         start_line = method.lineno - 1
+#                         end_line = method.end_lineno
+#                         with open(filepath, 'r', encoding='utf-8') as f:
+#                             lines = f.readlines()
+#                         func_code_lines = lines[start_line:end_line]
+#                         break
+#         if not func_code_lines:
+#             logger.warning(f"Function '{function_name}' not found in '{filepath}'.")
+#             return None
+#         return "".join(func_code_lines)
+#     except FileNotFoundError:
+#         logger.error(f"File not found: {filepath}")
+#         return None
+#     except Exception as e:
+#         logger.error(f"Error extracting function '{function_name}' from '{filepath}': {e}", exc_info=True)
+#         return None
+
+def generate_unit_tests(function_code, function_name, module_path, framework, context, is_method=False, class_name=None):
     if not function_code:
-        logger.warning(f"No function code provided for {function_name}. Skipping unit test generation.") # Added warning
+        logger.warning(f"No function code provided for {function_name}. Skipping unit test generation.")
         return None
 
     model = GenerativeModel(DEFAULT_MODEL)
@@ -323,19 +374,39 @@ def generate_unit_tests(function_code, function_name, module_path, framework, co
             "context_hint": "Use app.test_request_context() for Flask routes. Mock db.session and models appropriately. Target mocks at the module where the function under test looks up the dependency."
         },
         "fastapi": {
-            "imports": "from fastapi import Request, HTTPException, Depends", # Added Depends
+            "imports": "from fastapi import Request, HTTPException, Depends",
             "mock_targets": f"{module_path}.Request, {module_path}.HTTPException",
             "context_hint": "Mock FastAPI dependencies (like Depends) using pytest-mock's `mocker` fixture or `unittest.mock.patch` where the dependency is looked up. For routes, use FastAPI's `TestClient` for API calls from the test suite. Ensure mocks for database sessions are handled correctly."
         }
     }.get(framework, {"imports": "", "mock_targets": "", "context_hint": ""})
 
+    target_import = ""
+    target_source_info = ""
+    if is_method and class_name:
+        # LLM should import the class, not the method directly
+        target_import = f"from {module_path} import {class_name}"
+        # Source info format: module.Class.method
+        target_source_info = f"{module_path}.{class_name}.{function_name}"
+        method_context = (
+            f"This is a method of class `{class_name}`. When testing, you will need to "
+            f"instantiate `{class_name}` or mock its instance, and then call its method `{function_name}`. "
+            f"Mock `self` if necessary for the method's behavior. "
+            f"The source info should be in the format: `module.ClassName.methodName`."
+        )
+    else:
+        # Top-level function
+        target_import = f"from {module_path} import {function_name}"
+        target_source_info = f"{module_path}.{function_name}"
+        method_context = f"This is a top-level function. The source info should be in the format: `module.functionName`."
+
     prompt = f"""
     You are an expert Python test engineer specializing in the pytest framework and testing {framework} applications.
-    Your task is to generate comprehensive unit tests for the Python function below using the pytest framework and `pytest-mock`.
+    Your task is to generate comprehensive unit tests for the Python function/method below using the pytest framework and `pytest-mock`.
 
-    Function Name: {function_name}
+    Function/Method Name: {function_name}
     Module Path: {module_path}
     Framework: {framework}
+    {method_context}
 
     Function Code:
     ```python
@@ -348,26 +419,26 @@ def generate_unit_tests(function_code, function_name, module_path, framework, co
 
     Requirements for Test Generation:
     1.  **Strictly Output Code Only**: Your response MUST be only the raw Python code for the test file. Do NOT include any explanations, comments outside the code blocks, or markdown formatting (like ```python ... ```).
-    2.  **Imports**: Include all necessary imports: `pytest`, `unittest.mock` (or `pytest-mock`'s `mocker` fixture), relevant modules from `{framework_specific['imports']}`, and import the function under test `from {module_path} import {function_name}`.
+    2.  **Imports**: Include all necessary imports: `pytest`, `unittest.mock` (or `pytest-mock`'s `mocker` fixture), relevant modules from `{framework_specific['imports']}`, and **specifically import the target for testing: `{target_import}`.**
     3.  **Mocking Dependencies**:
         -   Properly mock all external dependencies.
         -   Specifically mock: {framework_specific['mock_targets']}.
         -   Crucially, ensure patches target the **correct module where the object is looked up by the function under test**, not just where it's defined. For example, if a function in `my_module.py` does `from another_module import SomeClass` and then uses `SomeClass`, you should mock `my_module.SomeClass`. If it uses a database session (e.g., `db: Session = Depends(get_db)`), mock `get_db` or the database session itself.
         -   Use `pytest-mock`'s `mocker` fixture where appropriate, or `unittest.mock.patch`.
     4.  **Test Scenarios**:
-        -   Test the "happy path" where the function behaves as expected with valid inputs.
+        -   Test the "happy path" where the function/method behaves as expected with valid inputs.
         -   Test edge cases, invalid inputs, and error conditions (e.g., missing data, database errors, HTTP exceptions).
         -   Verify that mocks for collaborators (like database session methods or external API calls) are called with the expected arguments.
-        -   Assert the function's return value or expected side effects.
+        -   Assert the function/method's return value or expected side effects.
     5.  **Test Naming and Structure**:
-        -   Write clear, well-named test functions (e.g., `test_{function_name}_success`, `test_{function_name}_invalid_input`).
+        -   Write clear, well-named test functions (e.g., `test_{function_name}_success`, `test_{function_name}_invalid_input`). If testing a method, consider `test_{class_name}_{function_name}_success`.
         -   Use pytest conventions (test functions prefixed with `test_`, fixtures).
-        -   **Important for `map_test_to_source`**: Include a comment like `# source_info: {module_path}.{function_name}` at the beginning of each test function's body. This metadata is critical for tracing test failures back to the source.
+        -   **IMPORTANT**: Include a comment like `# source_info: {target_source_info}` at the beginning of each test function's body. This metadata is critical for tracing test failures back to the source.
     6.  **Runnability**: Ensure tests are runnable with `pytest` from the project root.
 
     Generate the Python code for the test file now.
     """
-    logger.debug(f"Unit test prompt for {function_name}:\n{prompt[:1000]}...") # Log first 1000 chars of prompt
+    # logger.debug(f"Unit test prompt for {function_name}:\n{prompt[:1000]}...") # Log first 1000 chars of prompt
     time.sleep(API_CALL_DELAY_SECONDS)
 
     try:
@@ -378,8 +449,8 @@ def generate_unit_tests(function_code, function_name, module_path, framework, co
         if generated_text.endswith("```"):
             generated_text = generated_text[:-3].strip()
         
-        if not generated_text.strip(): # Check if text is empty after stripping
-            logger.warning(f"LLM returned empty content for unit tests for {function_name}. Skipping file creation.") # Added warning
+        if not generated_text.strip():
+            logger.warning(f"LLM returned empty content for unit tests for {function_name}. Skipping file creation.")
             return None
         return generated_text
     except Exception as e:
@@ -387,7 +458,6 @@ def generate_unit_tests(function_code, function_name, module_path, framework, co
         return None
 
 def generate_integration_tests(app_package, framework, endpoints, project_root):
-    """Generates integration tests for API endpoints using LLM."""
     model = GenerativeModel(DEFAULT_MODEL)
     logger.info(f"Generating integration tests for {app_package} using {DEFAULT_MODEL}")
     
@@ -397,18 +467,18 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
             "client_import": "from flask.testing import FlaskClient",
             "client_setup": "client = app.test_client()",
             "request_example": "client.get('/your-endpoint')",
-            "app_import": "from app import app" # Assuming 'app' is the main app instance
+            "app_import": "from app import app"
         },
         "fastapi": {
             "client_import": "from fastapi.testclient import TestClient",
-            "client_setup": f"from {app_package}.main import app; client = TestClient(app)", # Corrected
+            "client_setup": f"from {app_package}.main import app; client = TestClient(app)",
             "request_example": "client.get('/your-endpoint')",
             "app_import": f"from {app_package}.main import app"
         }
     }.get(framework, {"client_import": "", "client_setup": "", "request_example": "", "app_import": ""})
 
     if not endpoints:
-        logger.warning("No API endpoints provided for integration testing. Skipping integration test generation.") # Added warning
+        logger.warning("No API endpoints provided for integration testing. Skipping integration test generation.")
         return None
 
     prompt = f"""
@@ -438,11 +508,10 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
         -   Write clear, well-named test functions (e.g., `test_create_task_success`, `test_get_tasks_empty`).
         -   Use pytest fixtures for setup/teardown (e.g., for test client, temporary database).
         -   Organize tests logically.
-    6.  **Runnability**: Ensure tests are runnable with `pytest` when executed from the project root (`{project_root}`).
+    6.  **Runnability**: Ensure tests are runnable with `pytest` from the project root (`{project_root}`).
 
     Generate the Python code for the integration test file now.
     """
-    logger.debug(f"Integration test prompt:\n{prompt[:1000]}...") # Log first 1000 chars of prompt
     time.sleep(API_CALL_DELAY_SECONDS)
 
     try:
@@ -453,8 +522,8 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
         if generated_text.endswith("```"):
             generated_text = generated_text[:-3].strip()
         
-        if not generated_text.strip(): # Check if text is empty after stripping
-            logger.warning("LLM returned empty content for integration tests. Skipping file creation.") # Added warning
+        if not generated_text.strip():
+            logger.warning("LLM returned empty content for integration tests. Skipping file creation.")
             return None
         return generated_text
     except Exception as e:
@@ -462,10 +531,6 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
         return None
 
 def run_tests(project_root):
-    """
-    Runs pytest tests within the generated project's virtual environment.
-    Logs output and summarizes failures.
-    """
     test_dir = os.path.join(project_root, TEST_OUTPUT_DIR_NAME)
     log_file = os.path.join(project_root, TEST_LOG_FILE)
     logger.info(f"Running pytest in {test_dir} from project root: {project_root}")
@@ -473,41 +538,45 @@ def run_tests(project_root):
     # --- Use Python executable from the project's virtual environment ---
     venv_python_path = os.path.join(project_root, "venv", "Scripts", "python.exe")
     if not os.path.exists(venv_python_path):
-        logger.error(f"Virtual environment python executable not found at {venv_python_path}. Please ensure 'venv' exists and is properly set up in the generated project (run codegen_agent.py first).")
-        return []
+        logger.error(f"Virtual environment python executable not found at {venv_python_path}. Please ensure 'venv' exists and is properly set up in the generated project (run codegen_agent.py first and check its debug.log).")
+        sys.exit(1)
     
     try:
-        # Call pytest using the venv's python executable
+        relative_test_dir = os.path.relpath(test_dir, project_root)
         result = subprocess.run(
-            [venv_python_path, "-m", "pytest", test_dir, "--tb=short", "-v"],
+            [venv_python_path, "-m", "pytest", relative_test_dir, "--tb=short", "-v"],
             capture_output=True,
             text=True,
-            cwd=project_root # Set cwd to project root
+            check=False, # Set to False here so we can parse output even if tests fail or pytest exits with 1
+            cwd=project_root
         )
         
-        # Write results to log file
+        # Write results to log file, including stderr
         with open(log_file, 'w', encoding='utf-8') as f:
             f.write(result.stdout)
-            if result.stderr: # Only write stderr if it's not empty
+            if result.stderr:
                 f.write("\n--- Errors/Warnings (stderr) ---\n")
                 f.write(result.stderr)
+
+        if "No module named pytest" in result.stderr:
+            logger.error(f"Pytest module not found in venv. Ensure `pip install -r requirements.txt` was run successfully in the project's venv. Full stderr:\n{result.stderr}")
+            sys.exit(1)
 
         failures = []
         # Parse stdout for test failures
         for line in result.stdout.splitlines():
-            if "FAILED" in line and "::" in line: # Ensure it's a test failure line
-                # Extract test name, e.g., "test_read_tasks_success"
-                test_match = re.match(r"^(?:.*?::)?(test_[a-zA-Z0-9_]+)\s+FAILED", line)
+            # Look for lines indicating a specific test failure
+            if "FAILED" in line and "::" in line and not line.startswith("="):
+                test_match = re.search(r"::(\w+)\s+FAILED", line)
                 test_name = test_match.group(1) if test_match else "UnknownTest"
 
-                # Attempt to map test name to source file/function using heuristic and source_info comment
                 source_file, source_func = map_test_to_source(test_name, project_root, test_dir)
 
                 failures.append({
                     "test": test_name,
                     "source_file": source_file,
                     "source_function": source_func,
-                    "error_line": line # Keep the specific failure line for context
+                    "error_line": line
                 })
 
         if failures:
@@ -518,30 +587,32 @@ def run_tests(project_root):
                     f.write(f"Source File: {failure['source_file']}\n")
                     f.write(f"Source Function: {failure['source_function']}\n")
                     f.write(f"Error Line: {failure['error_line']}\n\n")
-            logger.warning(f"Found {len(failures)} test failures. Check {os.path.join(project_root, TEST_LOG_FILE)} for details.")
-        else:
+            logger.error(f"Found {len(failures)} test failures. Check {os.path.join(project_root, TEST_LOG_FILE)} for details.")
+            sys.exit(1)
+        
+        if result.returncode == 0:
             logger.info("All tests passed successfully.")
-            
-        return failures
-    except FileNotFoundError:
-        logger.error(f"Pytest executable not found. Ensure it's installed in the venv and the path is correct: {venv_python_path}")
-        return []
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Pytest command failed with exit code {e.returncode}. Check {log_file} for full output.")
-        logger.debug(f"Pytest stdout:\n{e.stdout}")
-        logger.debug(f"Pytest stderr:\n{e.stderr}")
-        return []
+            return True # All tests passed
+        else:
+            # This case means pytest exited non-zero but no specific FAILED lines were parsed.
+            logger.error(f"Pytest exited with non-zero code {result.returncode} but no specific test failures detected in stdout. Check {log_file} for full output and stderr. Stderr: {result.stderr}")
+            sys.exit(1) # Dừng ngay lập tức nếu có lỗi thực thi không mong muốn
+
+    except FileNotFoundError: # Catches if venv_python_path itself is not found
+        logger.error(f"Pytest executable (via venv Python) not found. Ensure it's installed in the venv and the path is correct: {venv_python_path}")
+        sys.exit(1)
     except Exception as e:
         logger.error(f"An unexpected error occurred during test execution: {e}", exc_info=True)
-        return []
+        sys.exit(1)
 
 def map_test_to_source(test_name, project_root, test_dir):
     """
-    Attempts to map a test function name to its source file and function using heuristics.
+    Attempts to map a test function name to its source file and function/method.
     Prioritizes reading 'source_info' comment from the test file.
     """
-    # Search in all generated test files for the test function name
-    # It's more reliable to search for the test function name and then find the nearest source_info
+    logger.debug(f"Attempting to map test '{test_name}' to source.")
+
+    # Iterate through all generated test files to find the test function
     for root, _, files in os.walk(test_dir):
         for file_name in files:
             if file_name.startswith("test_") and file_name.endswith(".py"):
@@ -549,45 +620,59 @@ def map_test_to_source(test_name, project_root, test_dir):
                 try:
                     with open(test_file_path, 'r', encoding='utf-8') as f:
                         test_content = f.read()
-                        # Look for test function definition
-                        # This regex finds a test function definition
-                        test_func_pattern = rf"def\s+{re.escape(test_name)}\s*\(.*?\):"
-                        test_func_match = re.search(test_func_pattern, test_content)
 
-                        if test_func_match:
-                            # Search for source_info in the vicinity of the test function or file-wide
-                            source_info_match = re.search(r"#\s*source_info:\s*([a-zA-Z0-9_.]+)", test_content)
-                            if source_info_match:
-                                full_source_path = source_info_match.group(1)
-                                parts = full_source_path.split('.')
-                                # Assuming module.function format, e.g., 'backend.routes.read_tasks'
-                                if len(parts) >= 2:
-                                    source_module_name = parts[-2]
-                                    source_func_name = parts[-1]
-                                    return f"{source_module_name}.py", source_func_name
+                    # Find the specific test function block using the exact test_name
+                    # This regex is corrected to avoid unbalanced parenthesis and correctly capture the block
+                    # It matches from 'def test_name(...):' up to the start of the next 'def test_' or end of file.
+                    test_func_pattern = rf"(def\s+{re.escape(test_name)}\s*\(.*?\):\s*\n(?:(?:\s*#.*|\s*).*?\n)*?)(?=\n\s*def\s+test_|\Z)"
+                    test_func_match = re.search(test_func_pattern, test_content, re.DOTALL | re.MULTILINE)
+
+                    if test_func_match:
+                        func_block_content = test_func_match.group(1)
+                        
+                        # Search for source_info within the captured function block
+                        source_info_match = re.search(r"#\s*source_info:\s*([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)", func_block_content)
+                        
+                        if source_info_match:
+                            full_source_path = source_info_match.group(1)
+                            parts = full_source_path.split('.')
+                            
+                            if len(parts) >= 2:
+                                source_func_or_method_name = parts[-1]
+                                parent_name = parts[-2]
+
+                                if parent_name[0].isupper() and parent_name.isalpha():
+                                    if len(parts) >= 3:
+                                        module_part = ".".join(parts[:-2])
+                                        return f"{module_part.replace('.', os.sep)}.py", f"{parent_name}.{source_func_or_method_name}"
+                                    else:
+                                        logger.warning(f"Malformed source_info (Class.method without full module path) in {test_file_path} for {test_name}: {full_source_path}")
+                                        return "unknown_file.py", f"{parent_name}.{source_func_or_method_name}"
                                 else:
-                                    logger.warning(f"Malformed source_info in {test_file_path}: {full_source_path}")
+                                    module_part = ".".join(parts[:-1])
+                                    return f"{module_part.replace('.', os.sep)}.py", source_func_or_method_name
+                            else:
+                                logger.warning(f"Malformed source_info (too few parts) in {test_file_path} for {test_name}: {full_source_path}. Expected module.function or module.Class.method.")
+                        else:
+                            logger.debug(f"No # source_info comment found within test function block for '{test_name}' in '{test_file_path}'.")
+                    else:
+                        logger.debug(f"Test function definition for '{test_name}' not found in '{test_file_path}'. This might indicate a pytest collection issue or a malformed test file.")
 
+                except re.error as re_err: # Catch regex specific errors
+                    logger.error(f"Regex error in map_test_to_source for test '{test_name}' in '{test_file_path}': {re_err}")
                 except Exception as e:
-                    logger.warning(f"Error reading test file {test_file_path} for source info: {e}")
+                    logger.warning(f"Error reading or parsing test file '{test_file_path}' for '{test_name}' source info: {e}", exc_info=True)
 
-    # Fallback to heuristic if source_info comment is not found or malformed
-    logger.debug(f"Source info comment not found for '{test_name}'. Falling back to heuristic.")
-    # Heuristic based on test naming convention
+    # Fallback heuristic
+    logger.warning(f"Failed to find reliable # source_info for '{test_name}' in any test file. Falling back to simple heuristic/unknown.")
+    
     heuristic_func_name_match = re.match(r"test_([a-zA-Z0-9_]+)(?:_|$)", test_name)
     heuristic_func_name = heuristic_func_name_match.group(1) if heuristic_func_name_match else "unknown_function"
 
-    # Default common modules for these functions
-    if "routes" in test_name.lower(): # Common for test_create_task, test_read_tasks
-        return "routes.py", heuristic_func_name
-    elif "main" in test_name.lower(): # For functions in main.py
-        return "main.py", heuristic_func_name
-    elif "database" in test_name.lower(): # For functions in database.py
-        return "database.py", heuristic_func_name
-    elif "models" in test_name.lower(): # For functions in models.py
-        return "models.py", heuristic_func_name
+    if test_name.startswith("test_integration"):
+        return "test_integration.py", heuristic_func_name
     
-    return "unknown_file.py", heuristic_func_name # Default fallback
+    return "unknown_file.py", heuristic_func_name # Final fallback
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate and run tests for a generated application.")
@@ -607,66 +692,111 @@ if __name__ == "__main__":
         os.makedirs(test_output_dir, exist_ok=True)
         logger.info(f"Ensured test output directory exists: {test_output_dir}")
 
-        # Ensure __init__.py files are present for Python package structure
-        ensure_init_py(project_root)
-        # Check if app_package is a sub-directory, then ensure __init__.py
-        # This handles cases where app_package might be empty (e.g., main.py directly in root)
-        app_package_full_path = os.path.join(project_root, app_package) if app_package else project_root
-        if os.path.exists(app_package_full_path) and os.path.isdir(app_package_full_path):
-            ensure_init_py(app_package_full_path)
-        ensure_init_py(test_output_dir)
+        # Ensure __init__.py files are present for Python package structure recursively
+        logger.info(f"Ensuring __init__.py files in main application package: {os.path.join(project_root, app_package)}")
+        ensure_init_py_recursive(os.path.join(project_root, app_package)) # Only for the app_package
+        
+        logger.info(f"Ensuring __init__.py files in test output directory: {test_output_dir}")
+        ensure_init_py_recursive(test_output_dir) # For the test output directory
 
-        # Ensure pytest is in the project's requirements.txt
-        update_requirements_for_testing(project_root)
+        # Check and update requirements.txt for testing dependencies
+        needs_test_deps_install = update_requirements_for_testing(project_root)
+        
+        # Only install dependencies if requirements.txt was updated OR if it's the first run
+        if needs_test_deps_install:
+            logger.info("Test dependencies (pytest, pytest-mock, pytest-asyncio) were added/updated in requirements.txt. Installing/Updating dependencies in project venv.")
+            install_project_dependencies(project_root)
+        else:
+            logger.info("No new test dependencies detected in requirements.txt. Skipping dependency installation.")
 
         # Scan for Python files to test and generate unit tests
         source_dir = os.path.join(project_root, app_package)
         if not os.path.exists(source_dir):
             logger.error(f"Source directory '{source_dir}' (app package) not found. Cannot generate unit tests. Ensure the project code is generated correctly by codegen_agent.py.")
+            sys.exit(1)
         else:
             for root, _, files in os.walk(source_dir):
                 for file in files:
                     if file.endswith(".py") and file != "__init__.py":
                         file_path = os.path.join(root, file)
-                        # Construct module_name correctly, relative to project_root
-                        # Example: if project_root is /app, file_path is /app/backend/routes.py
-                        # module_name should be 'backend.routes'
                         relative_to_project_root = os.path.relpath(file_path, project_root)
-                        module_name = relative_to_project_root.replace(os.sep, ".")[:-3] # Remove .py
+                        module_name = relative_to_project_root.replace(os.sep, ".")[:-3]
 
                         with open(file_path, 'r', encoding='utf-8') as f:
-                            tree = ast.parse(f.read())
+                            source = f.read() # Đọc toàn bộ nội dung file
+                        tree = ast.parse(source) # Parse AST từ nội dung đã đọc
                         
-                        logger.info(f"Scanning '{file_path}' for functions to test...")
-                        for node in ast.walk(tree):
-                            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                                func_name = node.name
-                                if func_name.startswith('_'): # Skip private/internal functions by convention
-                                    logger.debug(f"Skipping private/internal function: {func_name}")
-                                    continue
-
-                                func_code = get_function_code(file_path, func_name)
-                                if func_code: # get_function_code now logs warning if not found
-                                    logger.debug(f"Generating unit tests for function: {func_name} in module: {module_name}")
-                                    test_code = generate_unit_tests(
-                                        func_code,
-                                        func_name,
-                                        module_name, # Pass correct module name for imports
-                                        framework,
-                                        f"Function {func_name} is in module {module_name}. Ensure all its dependencies are mocked effectively."
-                                    )
-                                    if test_code: # generate_unit_tests now logs warning if empty
-                                        test_file = os.path.join(test_output_dir, f"test_{func_name}.py")
-                                        with open(test_file, 'w', encoding='utf-8') as f:
-                                            f.write(test_code)
-                                        logger.info(f"Saved unit tests to {test_file}")
-                                    else:
-                                        logger.warning(f"No test code generated by LLM for '{func_name}' in '{module_name}'. Skipping file creation.")
+                        logger.info(f"Scanning '{file_path}' for functions and methods to test...")
+                        
+                        # Collect top-level functions
+                        top_level_functions = [
+                            n for n in tree.body
+                            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                            and not n.name.startswith('_') # Skip private functions
+                        ]
+                        
+                        # Collect class methods
+                        class_methods = []
+                        for node in tree.body:
+                            if isinstance(node, ast.ClassDef):
+                                class_name = node.name
+                                for method_node in node.body:
+                                    if isinstance(method_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                                        if not method_node.name.startswith('_'): # Skip private methods
+                                            class_methods.append((class_name, method_node))
+                        
+                        # Process Top-Level Functions
+                        for func_node in top_level_functions:
+                            func_name = func_node.name
+                            func_code = ast.get_source_segment(source, func_node)
+                            if func_code:
+                                logger.debug(f"Generating unit tests for function: {func_name} in module: {module_name}")
+                                test_code = generate_unit_tests(
+                                    func_code,
+                                    func_name,
+                                    module_name,
+                                    framework,
+                                    f"Function {func_name} is in module {module_name}. Ensure all its dependencies are mocked effectively.",
+                                    is_method=False,
+                                    class_name=None
+                                )
+                                if test_code:
+                                    test_file = os.path.join(test_output_dir, f"test_{func_name}.py")
+                                    with open(test_file, 'w', encoding='utf-8') as f:
+                                        f.write(test_code)
+                                    logger.info(f"Saved unit tests to {test_file}")
                                 else:
-                                    logger.warning(f"Could not extract code for function '{func_name}' from '{file_path}'. Skipping unit test generation.")
+                                    logger.warning(f"No test code generated by LLM for '{func_name}' in '{module_name}'. Skipping file creation.")
+                            else:
+                                logger.warning(f"Could not extract code for function '{func_name}' from '{file_path}'. Skipping unit test generation.")
+
+                        # Process Class Methods
+                        for class_name, method_node in class_methods:
+                            method_name = method_node.name
+                            method_code = ast.get_source_segment(source, method_node)
+                            if method_code:
+                                logger.debug(f"Generating unit tests for method: {class_name}.{method_name} in module: {module_name}")
+                                test_code = generate_unit_tests(
+                                    method_code,
+                                    method_name,
+                                    module_name,
+                                    framework,
+                                    f"Method {method_name} is part of class {class_name} in module {module_name}. Ensure you instantiate or mock the class to test this method. Mock its `self` argument if necessary.",
+                                    is_method=True,
+                                    class_name=class_name
+                                )
+                                if test_code:
+                                    test_file = os.path.join(test_output_dir, f"test_{class_name}_{method_name}.py") # Name test file by Class_Method
+                                    with open(test_file, 'w', encoding='utf-8') as f:
+                                        f.write(test_code)
+                                    logger.info(f"Saved unit tests to {test_file}")
+                                else:
+                                    logger.warning(f"No test code generated by LLM for method '{class_name}.{method_name}' in '{module_name}'. Skipping file creation.")
+                            else:
+                                logger.warning(f"Could not extract code for method '{class_name}.{method_name}' from '{file_path}'. Skipping unit test generation.")
+
 
         # Generate integration tests for API endpoints
-        # Extract endpoints from design_data
         endpoints = []
         if design_data and 'interface_Design' in design_data and 'api_Specifications' in design_data['interface_Design']:
             endpoints = design_data['interface_Design']['api_Specifications']
@@ -675,7 +805,7 @@ if __name__ == "__main__":
             logger.warning("No API specifications found in design file for integration testing.")
 
         test_code = generate_integration_tests(app_package, framework, endpoints, project_root)
-        if test_code: # generate_integration_tests now logs warning if empty
+        if test_code:
             test_file = os.path.join(test_output_dir, "test_integration.py")
             with open(test_file, 'w', encoding='utf-8') as f:
                 f.write(test_code)
@@ -685,19 +815,24 @@ if __name__ == "__main__":
 
 
         # Run tests and log results
-        failures = run_tests(project_root)
-        if failures:
-            logger.warning(f"Found {len(failures)} test failures. Check {os.path.join(project_root, TEST_LOG_FILE)} for details.")
+        tests_passed = run_tests(project_root)
+
+        # Final outcome log (optional, as run_tests handles exit)
+        if tests_passed:
+            logger.info("Test generation and execution pipeline completed successfully.")
         else:
-            logger.info("All tests passed successfully.")
+            logger.warning("Test generation and execution pipeline completed with failures or errors.")
+
 
     except FileNotFoundError as e:
         logger.error(f"Error: {e}")
+        sys.exit(1)
     except ValueError as e:
         logger.error(f"Configuration Error: {e}")
+        sys.exit(1)
     except Exception as e:
         logger.error(f"An unexpected error occurred during test generation pipeline: {e}", exc_info=True)
-
+        sys.exit(1)
 
 #     prompt = f"""
 #     You are an expert Python test engineer specializing in the pytest framework and testing Flask applications.
