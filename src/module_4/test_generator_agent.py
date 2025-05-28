@@ -32,12 +32,49 @@ logger.info("Gemini API configured successfully for test generator.")
 DEFAULT_MODEL = 'gemini-2.0-flash'
 BASE_GENERATED_DIR = "code_generated_result"
 # company's computer
-OUTPUTS_DIR = r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs'
+# OUTPUTS_DIR = r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs'
 
 # my laptop
-# OUTPUTS_DIR = r"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs"
+OUTPUTS_DIR = r"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs"
 TEST_OUTPUT_DIR_NAME = "tests"
 TEST_LOG_FILE = "test_results.log"
+
+def create_pytest_ini(project_root):
+    """
+    Creates or updates pytest.ini in the project root with recommended configurations
+    for asyncio mode and cache directory to handle potential permission issues.
+    """
+    pytest_ini_path = os.path.join(project_root, "pytest.ini")
+    
+    # Define the content for pytest.ini
+    pytest_ini_content = """\
+[pytest]
+asyncio_mode = auto
+asyncio_default_fixture_loop_scope = function
+# Configure cachedir to a user-specific temporary directory if default causes issues
+# This uses Python's tempfile module and is more robust for permission issues.
+# The actual path will be resolved by pytest.
+# Note: pytest needs to know the path relative to its rootdir (project_root)
+# So, we'll put it in a subdirectory named 'tmp_pytest_cache'
+cachedir = tmp_pytest_cache/
+"""
+    # Check if pytest.ini already exists and has similar content to avoid overwriting unnecessarily
+    if os.path.exists(pytest_ini_path):
+        try:
+            with open(pytest_ini_path, 'r', encoding='utf-8') as f:
+                current_content = f.read()
+            if "asyncio_mode = auto" in current_content and "asyncio_default_fixture_loop_scope = function" in current_content and "cachedir" in current_content:
+                logger.info(f"pytest.ini already exists with required asyncio and cachedir settings in {project_root}. Skipping creation.")
+                return
+        except Exception as e:
+            logger.warning(f"Could not read existing pytest.ini in {project_root}: {e}. Overwriting.")
+
+    try:
+        with open(pytest_ini_path, 'w', encoding='utf-8') as f:
+            f.write(pytest_ini_content)
+        logger.info(f"Created/Updated pytest.ini in {project_root} with asyncio and cachedir configurations.")
+    except Exception as e:
+        logger.error(f"Failed to create/update pytest.ini in {project_root}: {e}")
 
 def detect_project_and_framework(specified_project_name=None, design_file_path=None, spec_file_path=None):
     logger.info("Detecting project and framework...")
@@ -567,10 +604,19 @@ def run_tests(project_root):
         for line in result.stdout.splitlines():
             # Look for lines indicating a specific test failure
             if "FAILED" in line and "::" in line and not line.startswith("="):
-                test_match = re.search(r"::(\w+)\s+FAILED", line)
-                test_name = test_match.group(1) if test_match else "UnknownTest"
+                match = re.search(r"^(.*?)::(\w+)\s+FAILED", line)
+                if match:
+                    test_file_rel_path = match.group(1) # e.g., 'tests/test_CustomJsonFormatter_format.py'
+                    test_name = match.group(2) # e.g., 'test_CustomJsonFormatter_format_success'
+                else:
+                    # Fallback if regex doesn't match expected pattern (shouldn't happen often)
+                    test_file_rel_path = "unknown_test_file.py"
+                    test_name_match = re.search(r"::(\w+)\s+FAILED", line)
+                    test_name = test_name_match.group(1) if test_name_match else "UnknownTest"
 
-                source_file, source_func = map_test_to_source(test_name, project_root, test_dir)
+                test_file_full_path = os.path.join(project_root, test_file_rel_path.replace('/', os.sep))
+
+                source_file, source_func = map_test_to_source(test_name, test_file_full_path)
 
                 failures.append({
                     "test": test_name,
@@ -605,66 +651,63 @@ def run_tests(project_root):
         logger.error(f"An unexpected error occurred during test execution: {e}", exc_info=True)
         sys.exit(1)
 
-def map_test_to_source(test_name, project_root, test_dir):
+def map_test_to_source(test_name, specific_test_file_path):
     """
     Attempts to map a test function name to its source file and function/method.
+    It now expects the specific test file path where the failure occurred.
     Prioritizes reading 'source_info' comment from the test file.
     """
-    logger.debug(f"Attempting to map test '{test_name}' to source.")
+    logger.debug(f"Attempting to map test '{test_name}' from '{specific_test_file_path}' to source.")
 
-    # Iterate through all generated test files to find the test function
-    for root, _, files in os.walk(test_dir):
-        for file_name in files:
-            if file_name.startswith("test_") and file_name.endswith(".py"):
-                test_file_path = os.path.join(root, file_name)
-                try:
-                    with open(test_file_path, 'r', encoding='utf-8') as f:
-                        test_content = f.read()
+    # directly work with 
+    test_file_path = specific_test_file_path # Renaming for consistency with previous variable name
+    try:
+        with open(test_file_path, 'r', encoding='utf-8') as f:
+            test_content = f.read()
+        # Find the specific test function block using the exact test_name
+        test_func_pattern = rf"(def\s+{re.escape(test_name)}\s*\(.*?\):\s*\n(?:(?!\n\s*def\s+test_).)*?)(?=\n\s*def\s+test_|\Z)"
+        test_func_match = re.search(test_func_pattern, test_content, re.DOTALL | re.MULTILINE)
 
-                    # Find the specific test function block using the exact test_name
-                    # This regex is corrected to avoid unbalanced parenthesis and correctly capture the block
-                    # It matches from 'def test_name(...):' up to the start of the next 'def test_' or end of file.
-                    test_func_pattern = rf"(def\s+{re.escape(test_name)}\s*\(.*?\):\s*\n(?:(?:\s*#.*|\s*).*?\n)*?)(?=\n\s*def\s+test_|\Z)"
-                    test_func_match = re.search(test_func_pattern, test_content, re.DOTALL | re.MULTILINE)
+        if test_func_match:
+            func_block_content = test_func_match.group(1)
+            
+            # Search for source_info within the captured function block
+            source_info_match = re.search(r"#\s*source_info:\s*([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)", func_block_content)
+            
+            if source_info_match:
+                full_source_path = source_info_match.group(1)
+                parts = full_source_path.split('.')
+                
+                if len(parts) >= 2:
+                    source_func_or_method_name = parts[-1]
+                    parent_name = parts[-2]
 
-                    if test_func_match:
-                        func_block_content = test_func_match.group(1)
-                        
-                        # Search for source_info within the captured function block
-                        source_info_match = re.search(r"#\s*source_info:\s*([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)", func_block_content)
-                        
-                        if source_info_match:
-                            full_source_path = source_info_match.group(1)
-                            parts = full_source_path.split('.')
-                            
-                            if len(parts) >= 2:
-                                source_func_or_method_name = parts[-1]
-                                parent_name = parts[-2]
-
-                                if parent_name[0].isupper() and parent_name.isalpha():
-                                    if len(parts) >= 3:
-                                        module_part = ".".join(parts[:-2])
-                                        return f"{module_part.replace('.', os.sep)}.py", f"{parent_name}.{source_func_or_method_name}"
-                                    else:
-                                        logger.warning(f"Malformed source_info (Class.method without full module path) in {test_file_path} for {test_name}: {full_source_path}")
-                                        return "unknown_file.py", f"{parent_name}.{source_func_or_method_name}"
-                                else:
-                                    module_part = ".".join(parts[:-1])
-                                    return f"{module_part.replace('.', os.sep)}.py", source_func_or_method_name
-                            else:
-                                logger.warning(f"Malformed source_info (too few parts) in {test_file_path} for {test_name}: {full_source_path}. Expected module.function or module.Class.method.")
+                    if parent_name[0].isupper() and parent_name.isalpha():
+                        if len(parts) >= 3:
+                            module_part = ".".join(parts[:-2])
+                            return f"{module_part.replace('.', os.sep)}.py", f"{parent_name}.{source_func_or_method_name}"
                         else:
-                            logger.debug(f"No # source_info comment found within test function block for '{test_name}' in '{test_file_path}'.")
+                            logger.warning(f"Malformed source_info (Class.method without full module path) in {test_file_path} for {test_name}: {full_source_path}")
+                            return "unknown_file.py", f"{parent_name}.{source_func_or_method_name}"
                     else:
-                        logger.debug(f"Test function definition for '{test_name}' not found in '{test_file_path}'. This might indicate a pytest collection issue or a malformed test file.")
+                        module_part = ".".join(parts[:-1])
+                        return f"{module_part.replace('.', os.sep)}.py", source_func_or_method_name
+                else:
+                    logger.warning(f"Malformed source_info (too few parts) in {test_file_path} for {test_name}: {full_source_path}. Expected module.function or module.Class.method.")
+            else:
+                logger.debug(f"No # source_info comment found within test function block for '{test_name}' in '{test_file_path}'.")
+        else:
+            logger.debug(f"Test function definition for '{test_name}' not found in '{test_file_path}'. This might indicate a pytest collection issue or a malformed test file.")
 
-                except re.error as re_err: # Catch regex specific errors
-                    logger.error(f"Regex error in map_test_to_source for test '{test_name}' in '{test_file_path}': {re_err}")
-                except Exception as e:
-                    logger.warning(f"Error reading or parsing test file '{test_file_path}' for '{test_name}' source info: {e}", exc_info=True)
+    except FileNotFoundError:
+        logger.error(f"Test file '{test_file_path}' not found during mapping for test '{test_name}'.")
+    except re.error as re_err:
+        logger.error(f"Regex error in map_test_to_source for test '{test_name}' in '{test_file_path}': {re_err}")
+    except Exception as e:
+        logger.warning(f"Error reading or parsing test file '{test_file_path}' for '{test_name}' source info: {e}", exc_info=True)
 
-    # Fallback heuristic
-    logger.warning(f"Failed to find reliable # source_info for '{test_name}' in any test file. Falling back to simple heuristic/unknown.")
+    # Fallback heuristic (only if source_info or specific test file parsing failed)
+    logger.warning(f"Failed to find reliable # source_info for '{test_name}' in '{test_file_path}'. Falling back to simple heuristic/unknown.")
     
     heuristic_func_name_match = re.match(r"test_([a-zA-Z0-9_]+)(?:_|$)", test_name)
     heuristic_func_name = heuristic_func_name_match.group(1) if heuristic_func_name_match else "unknown_function"
@@ -672,7 +715,68 @@ def map_test_to_source(test_name, project_root, test_dir):
     if test_name.startswith("test_integration"):
         return "test_integration.py", heuristic_func_name
     
-    return "unknown_file.py", heuristic_func_name # Final fallback
+    return "unknown_file.py", heuristic_func_name
+
+    # for root, _, files in os.walk(test_dir):
+    #     for file_name in files:
+    #         if file_name.startswith("test_") and file_name.endswith(".py"):
+    #             test_file_path = os.path.join(root, file_name)
+    #             try:
+    #                 with open(test_file_path, 'r', encoding='utf-8') as f:
+    #                     test_content = f.read()
+
+    #                 # Find the specific test function block using the exact test_name
+    #                 # This regex is corrected to avoid unbalanced parenthesis and correctly capture the block
+    #                 # It matches from 'def test_name(...):' up to the start of the next 'def test_' or end of file.
+    #                 test_func_pattern = rf"(def\s+{re.escape(test_name)}\s*\(.*?\):\s*\n(?:(?:\s*#.*|\s*).*?\n)*?)(?=\n\s*def\s+test_|\Z)"
+    #                 test_func_match = re.search(test_func_pattern, test_content, re.DOTALL | re.MULTILINE)
+
+    #                 if test_func_match:
+    #                     func_block_content = test_func_match.group(1)
+                        
+    #                     # Search for source_info within the captured function block
+    #                     source_info_match = re.search(r"#\s*source_info:\s*([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)", func_block_content)
+                        
+    #                     if source_info_match:
+    #                         full_source_path = source_info_match.group(1)
+    #                         parts = full_source_path.split('.')
+                            
+    #                         if len(parts) >= 2:
+    #                             source_func_or_method_name = parts[-1]
+    #                             parent_name = parts[-2]
+
+    #                             if parent_name[0].isupper() and parent_name.isalpha():
+    #                                 if len(parts) >= 3:
+    #                                     module_part = ".".join(parts[:-2])
+    #                                     return f"{module_part.replace('.', os.sep)}.py", f"{parent_name}.{source_func_or_method_name}"
+    #                                 else:
+    #                                     logger.warning(f"Malformed source_info (Class.method without full module path) in {test_file_path} for {test_name}: {full_source_path}")
+    #                                     return "unknown_file.py", f"{parent_name}.{source_func_or_method_name}"
+    #                             else:
+    #                                 module_part = ".".join(parts[:-1])
+    #                                 return f"{module_part.replace('.', os.sep)}.py", source_func_or_method_name
+    #                         else:
+    #                             logger.warning(f"Malformed source_info (too few parts) in {test_file_path} for {test_name}: {full_source_path}. Expected module.function or module.Class.method.")
+    #                     else:
+    #                         logger.debug(f"No # source_info comment found within test function block for '{test_name}' in '{test_file_path}'.")
+    #                 else:
+    #                     logger.debug(f"Test function definition for '{test_name}' not found in '{test_file_path}'. This might indicate a pytest collection issue or a malformed test file.")
+
+    #             except re.error as re_err: # Catch regex specific errors
+    #                 logger.error(f"Regex error in map_test_to_source for test '{test_name}' in '{test_file_path}': {re_err}")
+    #             except Exception as e:
+    #                 logger.warning(f"Error reading or parsing test file '{test_file_path}' for '{test_name}' source info: {e}", exc_info=True)
+
+    # # Fallback heuristic
+    # logger.warning(f"Failed to find reliable # source_info for '{test_name}' in any test file. Falling back to simple heuristic/unknown.")
+    
+    # heuristic_func_name_match = re.match(r"test_([a-zA-Z0-9_]+)(?:_|$)", test_name)
+    # heuristic_func_name = heuristic_func_name_match.group(1) if heuristic_func_name_match else "unknown_function"
+
+    # if test_name.startswith("test_integration"):
+    #     return "test_integration.py", heuristic_func_name
+    
+    # return "unknown_file.py", heuristic_func_name # Final fallback
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate and run tests for a generated application.")
@@ -687,6 +791,8 @@ if __name__ == "__main__":
             design_file_path=args.design_file,
             spec_file_path=args.spec_file
         )
+
+        create_pytest_ini(project_root)
 
         test_output_dir = os.path.join(project_root, TEST_OUTPUT_DIR_NAME)
         os.makedirs(test_output_dir, exist_ok=True)
