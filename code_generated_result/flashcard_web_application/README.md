@@ -2,53 +2,21 @@
 
 ## Overview
 
-This is a web application for creating, reviewing, and searching flashcards. It is built with a Python FastAPI backend and a Vanilla JavaScript frontend, using an SQLite database for storage.
+This is a simple flashcard web application built with:
 
-## Features
+*   **Backend:** Python, FastAPI
+*   **Frontend:** HTML, CSS, JavaScript (Vanilla)
+*   **Database:** SQLite
 
-*   **Create Flashcards:** Create new flashcards with a front and back side.
-*   **Search Flashcards:** Search through existing flashcards using a search query.
-*   **Review Flashcards:** Review flashcards, flipping them to reveal the answer.
-*   **View Review Statistics:** View statistics on flashcard reviews (number of cards reviewed, percentage correct).
-*   **Preloaded Flashcards:** The application is preloaded with ten flashcards containing Hindi words or phrases and their English translations.
+The application allows users to:
 
-## Technologies
+*   Create flashcards
+*   Search flashcards
+*   Review flashcards
+*   View review statistics
+*   Comes preloaded with ten Hindi-English flashcards.
 
-*   **Backend:**
-    *   Python
-    *   FastAPI
-    *   SQLAlchemy
-    *   SQLite
-*   **Frontend:**
-    *   HTML
-    *   CSS
-    *   JavaScript
-
-## Project Structure
-
-```
-flashcard_web_application/
-├── README.md                 # This file
-├── requirements.txt          # Python dependencies
-├── .gitignore                # Git ignore file
-├── backend/                  # Backend application
-│   ├── main.py               # Main FastAPI application
-│   ├── database.py           # Database connection setup
-│   ├── models.py             # SQLAlchemy ORM models
-│   ├── routers/              # API route definitions
-│   │   ├── flashcards.py     # Flashcard API endpoints
-│   │   └── reviews.py        # Review API endpoints
-│   └── schemas.py            # Pydantic schemas
-├── frontend/                 # Frontend application
-│   ├── index.html            # Main HTML file
-│   ├── style.css             # Main CSS stylesheet
-│   ├── script.js             # Main JavaScript file
-│   ├── utils.js              # JavaScript utility functions
-│   └── assets/               # Static assets (images, fonts)
-└── logs/                     # Log files directory
-```
-
-## Setup Instructions
+## Setup
 
 1.  **Clone the repository:**
 
@@ -62,7 +30,7 @@ flashcard_web_application/
     ```bash
     python3 -m venv venv
     source venv/bin/activate  # On Linux/macOS
-    venv\Scripts\activate  # On Windows
+    # venv\Scripts\activate  # On Windows
     ```
 
 3.  **Install backend dependencies:**
@@ -77,18 +45,65 @@ flashcard_web_application/
     uvicorn backend.main:app --reload --port 8001
     ```
 
-5.  **Open the frontend in your browser:**
+    This will start the FastAPI server on port 8001.  The `--reload` flag enables automatic reloading on code changes.
 
-    Navigate to `http://localhost:8001` in your web browser.
+5.  **Access the application:**
+
+    Open your web browser and navigate to `http://localhost:8001`.
+
+## Project Structure
+
+```
+flashcard_web_application/
+├── backend/            # Backend application code
+│   ├── main.py         # Main FastAPI application file
+│   ├── database.py     # Database connection setup
+│   ├── models.py       # SQLAlchemy ORM models
+│   ├── routers/        # API route definitions
+│   │   ├── flashcards.py # Flashcard API endpoints
+│   │   └── reviews.py    # Review API endpoints
+│   └── schemas.py      # Pydantic schemas for data validation
+├── frontend/           # Frontend application code
+│   ├── index.html      # Main HTML file
+│   ├── style.css       # CSS stylesheet
+│   ├── script.js       # JavaScript application logic
+│   └── utils.js        # JavaScript utility functions
+├── requirements.txt   # Python dependencies
+├── README.md          # This file
+└── .gitignore         # Git ignore file
+```
 
 ## API Endpoints
 
+The backend provides the following API endpoints:
+
 *   `POST /api/flashcards`: Create a new flashcard.
-*   `GET /api/flashcards`: Retrieve all flashcards (optionally filtered by search query).
+*   `GET /api/flashcards`: Retrieve all flashcards (optionally filtered by a search query).
 *   `GET /api/flashcards/{flashcard_id}`: Retrieve a specific flashcard by ID.
 *   `POST /api/reviews`: Create a new review record for a flashcard.
 *   `GET /api/statistics`: Retrieve review statistics.
 
+## Usage
+
+Once the application is running, you can use the web interface to create, search, review, and view statistics for your flashcards. The interface is designed to be intuitive and easy to use.
+
+## Technologies Used
+
+*   **Backend:**
+    *   Python
+    *   FastAPI
+    *   SQLAlchemy
+    *   Pydantic
+    *   SQLite
+*   **Frontend:**
+    *   HTML
+    *   CSS
+    *   JavaScript (Vanilla)
+
 ## Contributing
 
 Contributions are welcome! Please submit a pull request with your changes.
+
+## License
+
+[MIT](LICENSE) (Replace with your desired license)

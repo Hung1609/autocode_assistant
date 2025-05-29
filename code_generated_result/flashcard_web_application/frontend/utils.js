@@ -1,104 +1,81 @@
-// Function to fetch flashcards from the backend
-async function getFlashcards(query = '') {
-    try {
-        let url = '/api/flashcards';
-        if (query) {
-            url += `?query=${query}`;
-        }
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const flashcards = await response.json();
-        return flashcards;
-    } catch (error) {
-        console.error('Error fetching flashcards:', error);
-        return []; // Return an empty array in case of error
+// Function to fetch data from an API endpoint
+async function fetchData(url, options = {}) {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    throw error; // Re-throw the error to be handled by the caller
+  }
 }
 
-// Function to create a flashcard
+// Function to create a new flashcard
 async function createFlashcard(front_text, back_text) {
-    try {
-        const response = await fetch('/api/flashcards', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ front_text: front_text, back_text: back_text })
-        });
+  const url = '/api/flashcards';
+  const options = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ front_text, back_text }),
+  };
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const newFlashcard = await response.json();
-        return newFlashcard;
-    } catch (error) {
-        console.error('Error creating flashcard:', error);
-        return null;
-    }
+  return fetchData(url, options);
 }
 
-// Function to submit a review
-async function submitReview(flashcard_id, correct) {
-    try {
-        const response = await fetch('/api/reviews', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ flashcard_id: flashcard_id, correct: correct })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const newReview = await response.json();
-        return newReview;
-    } catch (error) {
-        console.error('Error submitting review:', error);
-        return null;
-    }
+// Function to get all flashcards (optionally filtered by a query)
+async function getFlashcards(query = '') {
+  let url = '/api/flashcards';
+  if (query) {
+    url += `?query=${query}`;
+  }
+  return fetchData(url);
 }
 
-// Function to fetch statistics
+// Function to get a specific flashcard by ID
+async function getFlashcard(flashcardId) {
+  const url = `/api/flashcards/${flashcardId}`;
+  return fetchData(url);
+}
+
+// Function to create a new review record
+async function createReview(flashcard_id, correct) {
+  const url = '/api/reviews';
+  const options = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ flashcard_id, correct }),
+  };
+
+  return fetchData(url, options);
+}
+
+// Function to get review statistics
 async function getStatistics() {
-    try {
-        const response = await fetch('/api/statistics');
+  const url = '/api/statistics';
+  return fetchData(url);
+}
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const statistics = await response.json();
-        return statistics;
-    } catch (error) {
-        console.error('Error fetching statistics:', error);
-        return null;
+// Function to update the displayed flashcard content
+function updateFlashcardDisplay(flashcard, frontElement, backElement) {
+    if (flashcard) {
+        frontElement.textContent = flashcard.front_text;
+        backElement.textContent = flashcard.back_text;
+    } else {
+        frontElement.textContent = "No flashcards found.";
+        backElement.textContent = "";
     }
 }
 
-// Function to display a message in a designated area (e.g., for success/error messages)
-function displayMessage(message, type = 'info') {
-    const messageArea = document.getElementById('message-area');
-    if (!messageArea) {
-        console.warn('Message area not found.');
-        return;
-    }
-
-    messageArea.textContent = message;
-    messageArea.className = `message ${type}`; // Use classes for styling based on message type (e.g., success, error)
-}
-
-// Function to clear a message in a designated area
-function clearMessage() {
-    const messageArea = document.getElementById('message-area');
-    if (messageArea) {
-        messageArea.textContent = '';
-        messageArea.className = ''; // Clear any existing classes
-    }
+// Function to display an error message
+function displayErrorMessage(message, container) {
+    const errorElement = document.createElement('p');
+    errorElement.className = 'error-message';
+    errorElement.textContent = message;
+    container.appendChild(errorElement);
 }

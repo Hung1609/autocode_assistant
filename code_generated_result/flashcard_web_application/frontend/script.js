@@ -1,157 +1,193 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const flashcardContainer = document.getElementById('flashcard-container');
-    const frontTextElement = document.getElementById('front-text');
-    const backTextElement = document.getElementById('back-text');
-    const flipButton = document.getElementById('flip-button');
-    const nextButton = document.getElementById('next-button');
-    const createForm = document.getElementById('create-form');
+    const flashcardsContainer = document.getElementById('flashcards-container');
     const searchInput = document.getElementById('search-input');
-    const searchResults = document.getElementById('search-results');
-    const reviewStats = document.getElementById('review-stats');
-    const cardCountElement = document.getElementById('card-count');
+    const createForm = document.getElementById('create-form');
+    const reviewCard = document.getElementById('review-card');
+    const frontText = document.getElementById('front-text');
+    const backText = document.getElementById('back-text');
+    const correctCountElement = document.getElementById('correct-count'); // Statistics
+    const totalCountElement = document.getElementById('total-count'); // Statistics
+    const flipButton = document.getElementById('flip-button');
 
     let flashcards = [];
-    let currentCardIndex = 0;
-    let correctCount = 0;
-    let totalReviewed = 0;
+    let currentFlashcardIndex = 0;
+    let correctCount = 0; // Statistics
+    let totalCount = 0; // Statistics
     let isFlipped = false;
 
-    // Function to fetch flashcards from the backend
-    async function fetchFlashcards(query = '') {
+    // Helper function to fetch data from the API
+    async function fetchData(url, method = 'GET', body = null) {
+        const options = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: body ? JSON.stringify(body) : null,
+        };
+
         try {
-            let url = '/api/flashcards';
-            if (query) {
-                url += `?query=${query}`;
-            }
-            const response = await fetch(url);
+            const response = await fetch(url, options);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-            flashcards = await response.json();
-            currentCardIndex = 0;
-            updateFlashcardDisplay();
-            updateCardCount();
+            return await response.json();
         } catch (error) {
-            console.error('Error fetching flashcards:', error);
-            flashcardContainer.textContent = 'Failed to load flashcards.';
+            console.error('Fetch error:', error);
+            return null;
         }
     }
 
-    // Function to update the flashcard display
-    function updateFlashcardDisplay() {
+    // Function to render flashcards
+    function renderFlashcards(flashcardsToRender) {
+        flashcardsContainer.innerHTML = '';
+        flashcardsToRender.forEach(flashcard => {
+            const cardDiv = document.createElement('div');
+            cardDiv.classList.add('flashcard');
+            cardDiv.innerHTML = `
+                <p>Front: ${flashcard.front_text}</p>
+                <p>Back: ${flashcard.back_text}</p>
+            `;
+            flashcardsContainer.appendChild(cardDiv);
+        });
+    }
+
+    // Load all flashcards on page load
+    async function loadFlashcards() {
+        flashcards = await fetchData('/api/flashcards');
+        if (flashcards) {
+            renderFlashcards(flashcards);
+        } else {
+            flashcardsContainer.innerHTML = '<p>Failed to load flashcards.</p>';
+        }
+    }
+
+    // Search functionality
+    searchInput.addEventListener('input', async (event) => {
+        const query = event.target.value;
+        const searchResults = await fetchData(`/api/flashcards?query=${query}`);
+        if (searchResults) {
+            renderFlashcards(searchResults);
+        } else {
+            flashcardsContainer.innerHTML = '<p>Failed to load search results.</p>';
+        }
+    });
+
+    // Create flashcard functionality
+    createForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const front = document.getElementById('front').value;
+        const back = document.getElementById('back').value;
+
+        const newFlashcard = {
+            front_text: front,
+            back_text: back,
+        };
+
+        const createdFlashcard = await fetchData('/api/flashcards', 'POST', newFlashcard);
+
+        if (createdFlashcard) {
+            document.getElementById('front').value = '';
+            document.getElementById('back').value = '';
+            loadFlashcards(); // Reload flashcards to include the new one
+            alert('Flashcard created successfully!');
+        } else {
+            alert('Failed to create flashcard.');
+        }
+    });
+
+    // Review functionality
+    function showFlashcard() {
         if (flashcards.length === 0) {
-            frontTextElement.textContent = 'No flashcards available. Create some!';
-            backTextElement.textContent = '';
+            reviewCard.innerHTML = '<p>No flashcards to review.</p>';
             return;
         }
 
-        const card = flashcards[currentCardIndex];
-        frontTextElement.textContent = card.front_text;
-        backTextElement.textContent = card.back_text;
+        const flashcard = flashcards[currentFlashcardIndex];
+        frontText.textContent = flashcard.front_text;
+        backText.textContent = flashcard.textContent = ''; // Initially hidden
         isFlipped = false;
-        flashcardContainer.classList.remove('flipped');
     }
 
-    // Function to update the card count display
-    function updateCardCount() {
-        cardCountElement.textContent = `Card ${currentCardIndex + 1} of ${flashcards.length}`;
-    }
-
-    // Function to handle flipping the flashcard
-    function flipCard() {
-        flashcardContainer.classList.toggle('flipped');
+    flipButton.addEventListener('click', () => {
         isFlipped = !isFlipped;
-    }
-
-    // Function to handle moving to the next flashcard
-    async function nextCard(correct) {
-        if (flashcards.length === 0) return;
-
-        totalReviewed++;
-        if (correct) {
-            correctCount++;
-        }
-
-        try {
-            const card = flashcards[currentCardIndex];
-            const response = await fetch('/api/reviews', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    flashcard_id: card.id,
-                    correct: correct
-                })
-            });
-
-            if (!response.ok) {
-                console.error('Failed to record review:', response.status);
-            }
-        } catch (error) {
-            console.error('Error recording review:', error);
-        }
-
-        currentCardIndex = (currentCardIndex + 1) % flashcards.length;
-        updateFlashcardDisplay();
-        updateCardCount();
-        updateReviewStats();
-    }
-
-    // Function to update review statistics
-    function updateReviewStats() {
-        const percentageCorrect = totalReviewed > 0 ? (correctCount / totalReviewed) * 100 : 0;
-        reviewStats.textContent = `Correct: ${percentageCorrect.toFixed(2)}% (${correctCount}/${totalReviewed})`;
-    }
-
-    // Event listener for flipping the card
-    flipButton.addEventListener('click', flipCard);
-
-    // Event listener for next card (correct)
-    document.getElementById('correct-button').addEventListener('click', () => nextCard(true));
-
-    // Event listener for next card (incorrect)
-    document.getElementById('incorrect-button').addEventListener('click', () => nextCard(false));
-
-
-    // Event listener for creating a new flashcard
-    createForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const frontText = document.getElementById('front').value;
-        const backText = document.getElementById('back').value;
-
-        try {
-            const response = await fetch('/api/flashcards', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    front_text: frontText,
-                    back_text: backText
-                })
-            });
-
-            if (response.ok) {
-                document.getElementById('front').value = '';
-                document.getElementById('back').value = '';
-                fetchFlashcards(); // Refresh flashcards after creating
-            } else {
-                console.error('Failed to create flashcard:', response.status);
-                alert('Failed to create flashcard. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error creating flashcard:', error);
-            alert('An error occurred while creating the flashcard.');
+        if (isFlipped) {
+            backText.textContent = flashcards[currentFlashcardIndex].back_text;
+            frontText.textContent = '';
+        } else {
+            frontText.textContent = flashcards[currentFlashcardIndex].front_text;
+            backText.textContent = '';
         }
     });
 
-    // Event listener for real-time search
-    searchInput.addEventListener('input', () => {
-        const query = searchInput.value.trim();
-        fetchFlashcards(query);
+    document.addEventListener('keydown', async (event) => {
+        if (event.key === 'ArrowRight') {
+            if (flashcards.length === 0) return;
+
+            const correct = confirm('Did you get it right?');
+
+            const reviewData = {
+                flashcard_id: flashcards[currentFlashcardIndex].id,
+                correct: correct,
+            };
+
+            const reviewResult = await fetchData('/api/reviews', 'POST', reviewData);
+
+            if (!reviewResult) {
+                console.error('Failed to save review data.');
+            }
+
+            totalCount++;
+            if (correct) {
+                correctCount++;
+            }
+            updateStatisticsDisplay();
+
+            currentFlashcardIndex = (currentFlashcardIndex + 1) % flashcards.length;
+            showFlashcard();
+        }
     });
 
-    // Initial fetch of flashcards
-    fetchFlashcards();
+    function updateStatisticsDisplay() {
+        if (correctCountElement && totalCountElement) {
+            correctCountElement.textContent = correctCount;
+            totalCountElement.textContent = totalCount;
+        }
+    }
+
+    async function loadReviewFlashcards() {
+        flashcards = await fetchData('/api/flashcards');
+        if (flashcards) {
+            currentFlashcardIndex = 0;
+            correctCount = 0;
+            totalCount = 0;
+            updateStatisticsDisplay();
+            showFlashcard();
+        } else {
+            reviewCard.innerHTML = '<p>Failed to load flashcards for review.</p>';
+        }
+    }
+
+    async function loadStatistics() {
+        const statistics = await fetchData('/api/statistics');
+        if(statistics) {
+            correctCount = statistics.correct_count;
+            totalCount = statistics.total_count;
+            updateStatisticsDisplay();
+        } else {
+            console.error("Failed to load statistics.");
+        }
+    }
+
+    // Call loadFlashcards and loadReviewFlashcards on page load to initialize the UI
+    if(flashcardsContainer){
+        loadFlashcards();
+    }
+
+    if(reviewCard){
+        loadReviewFlashcards();
+    }
+    
+    if (correctCountElement && totalCountElement) { //If Statistics Page
+        loadStatistics();
+    }
 });

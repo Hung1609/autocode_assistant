@@ -1,343 +1,155 @@
-2025-05-26 23:01:52,256 - INFO - Gemini API configured successfully.
-2025-05-26 23:01:52,256 - INFO - Initializing LLM model for code generation: gemini-2.0-flash
-2025-05-26 23:01:52,257 - INFO - Successfully initialized LLM: gemini-2.0-flash
-2025-05-26 23:01:52,257 - INFO - Scanning outputs directory for JSON files...
-2025-05-26 23:01:52,257 - INFO - Detected specification file: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs\to_do_web_app_20250516.spec.json
-2025-05-26 23:01:52,259 - INFO - Detected design file: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs\to_do_web_app_20250516.design.json
-2025-05-26 23:01:52,259 - INFO - Loading design file: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs\to_do_web_app_20250516.design.json
-2025-05-26 23:01:52,270 - INFO - Loading specification file: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs\to_do_web_app_20250516.spec.json
-2025-05-26 23:01:52,282 - INFO - Starting code generation pipeline using model: models/gemini-2.0-flash
-2025-05-26 23:01:52,282 - INFO - Generating scaffold plan from JSON design file.
-2025-05-26 23:01:52,282 - DEBUG - Validating JSON design file.
-2025-05-26 23:01:52,282 - DEBUG - JSON design validation successful.
-2025-05-26 23:01:52,282 - DEBUG - Validating JSON specification structure.
-2025-05-26 23:01:52,282 - DEBUG - JSON specification validation successful.
-2025-05-26 23:01:52,283 - INFO - Target project root directory: code_generated_result\to_do_web_app
-2025-05-26 23:01:52,283 - INFO - Detected backend module path: backend.main
-2025-05-26 23:01:52,283 - INFO - Detected frontend directory: frontend
-2025-05-26 23:01:52,283 - INFO - Detected CSS path: style.css
-2025-05-26 23:01:52,284 - INFO - Detected JS path: app.js
-2025-05-26 23:01:52,284 - INFO - Added setup_and_run.bat to scaffold plan: code_generated_result\to_do_web_app\setup_and_run.bat
-2025-05-26 23:01:52,284 - INFO - Scaffold plan generated successfully. Root: code_generated_result\to_do_web_app
-2025-05-26 23:01:52,284 - DEBUG - Directories planned: ['code_generated_result\\to_do_web_app\\backend', 'code_generated_result\\to_do_web_app\\frontend']
-2025-05-26 23:01:52,285 - DEBUG - Files planned: ['code_generated_result\\to_do_web_app\\requirements.txt', 'code_generated_result\\to_do_web_app\\.env', 'code_generated_result\\to_do_web_app\\backend/main.py', 'code_generated_result\\to_do_web_app\\backend/models.py', 'code_generated_result\\to_do_web_app\\backend/routes.py', 'code_generated_result\\to_do_web_app\\backend/database.py', 'code_generated_result\\to_do_web_app\\frontend/index.html', 'code_generated_result\\to_do_web_app\\frontend/style.css', 'code_generated_result\\to_do_web_app\\frontend/app.js', 'code_generated_result\\to_do_web_app\\setup_and_run.bat']
-2025-05-26 23:01:52,285 - DEBUG - Backend module path: backend.main, Frontend dir: frontend, CSS path: style.css, JS path: app.js
-2025-05-26 23:01:52,285 - INFO - Creating project structure in code_generated_result\to_do_web_app.
-2025-05-26 23:01:52,286 - INFO - Ensured base project directory exists: code_generated_result\to_do_web_app
-2025-05-26 23:01:52,287 - INFO - Created output directory: code_generated_result
-2025-05-26 23:01:52,287 - INFO - Created directory: code_generated_result\to_do_web_app\backend
-2025-05-26 23:01:52,288 - INFO - Created directory: code_generated_result\to_do_web_app\frontend
-2025-05-26 23:01:52,289 - INFO - Created empty file: code_generated_result\to_do_web_app\requirements.txt
-2025-05-26 23:01:52,291 - INFO - Created empty file: code_generated_result\to_do_web_app\.env
-2025-05-26 23:01:52,292 - INFO - Created empty file: code_generated_result\to_do_web_app\backend/main.py
-2025-05-26 23:01:52,293 - INFO - Created empty file: code_generated_result\to_do_web_app\backend/models.py
-2025-05-26 23:01:52,294 - INFO - Created empty file: code_generated_result\to_do_web_app\backend/routes.py
-2025-05-26 23:01:52,296 - INFO - Created empty file: code_generated_result\to_do_web_app\backend/database.py
-2025-05-26 23:01:52,298 - INFO - Created empty file: code_generated_result\to_do_web_app\frontend/index.html
-2025-05-26 23:01:52,299 - INFO - Created empty file: code_generated_result\to_do_web_app\frontend/style.css
-2025-05-26 23:01:52,301 - INFO - Created empty file: code_generated_result\to_do_web_app\frontend/app.js
-2025-05-26 23:01:52,303 - INFO - Created empty file: code_generated_result\to_do_web_app\setup_and_run.bat
-2025-05-26 23:01:52,303 - INFO - Project structure created successfully.
-2025-05-26 23:01:52,304 - INFO - Attempting to generate code for 10 file(s).
-2025-05-26 23:01:52,304 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\requirements.txt
-2025-05-26 23:01:52,304 - INFO - Generating content for backend requirements.txt: code_generated_result\to_do_web_app\requirements.txt
-2025-05-26 23:01:52,304 - INFO - Writing code to file: code_generated_result\to_do_web_app\requirements.txt
-2025-05-26 23:01:52,305 - INFO - Successfully wrote 59 characters to code_generated_result\to_do_web_app\requirements.txt
-2025-05-26 23:01:52,306 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\.env
-2025-05-26 23:01:52,306 - INFO - Generating content for .env: code_generated_result\to_do_web_app\.env
-2025-05-26 23:01:52,306 - INFO - Writing code to file: code_generated_result\to_do_web_app\.env
-2025-05-26 23:01:52,308 - INFO - Successfully wrote 31 characters to code_generated_result\to_do_web_app\.env
-2025-05-26 23:01:52,308 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\backend/main.py
-2025-05-26 23:01:52,308 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\backend/main.py
-2025-05-26 23:01:52,309 - INFO - Waiting for 5 seconds before API call for main.py...
-2025-05-26 23:01:57,310 - INFO - Sending generation request to model models/gemini-2.0-flash for main.py.
-2025-05-26 23:02:00,243 - INFO - Code successfully generated by LLM for main.py (691 chars).
-2025-05-26 23:02:00,243 - INFO - Writing code to file: code_generated_result\to_do_web_app\backend/main.py
-2025-05-26 23:02:00,244 - INFO - Successfully wrote 691 characters to code_generated_result\to_do_web_app\backend/main.py
-2025-05-26 23:02:00,245 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\backend/models.py
-2025-05-26 23:02:00,245 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\backend/models.py
-2025-05-26 23:02:00,245 - INFO - Waiting for 5 seconds before API call for models.py...
-2025-05-26 23:02:05,246 - INFO - Sending generation request to model models/gemini-2.0-flash for models.py.
-2025-05-26 23:02:08,821 - INFO - Code successfully generated by LLM for models.py (1601 chars).
-2025-05-26 23:02:08,822 - INFO - Writing code to file: code_generated_result\to_do_web_app\backend/models.py
-2025-05-26 23:02:08,823 - INFO - Successfully wrote 1601 characters to code_generated_result\to_do_web_app\backend/models.py
-2025-05-26 23:02:08,823 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\backend/routes.py
-2025-05-26 23:02:08,824 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\backend/routes.py
-2025-05-26 23:02:08,824 - INFO - Waiting for 5 seconds before API call for routes.py...
-2025-05-26 23:02:13,825 - INFO - Sending generation request to model models/gemini-2.0-flash for routes.py.
-2025-05-26 23:02:19,599 - INFO - Code successfully generated by LLM for routes.py (2859 chars).
-2025-05-26 23:02:19,599 - INFO - Writing code to file: code_generated_result\to_do_web_app\backend/routes.py
-2025-05-26 23:02:19,600 - INFO - Successfully wrote 2859 characters to code_generated_result\to_do_web_app\backend/routes.py
-2025-05-26 23:02:19,600 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\backend/database.py
-2025-05-26 23:02:19,600 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\backend/database.py
-2025-05-26 23:02:19,601 - INFO - Waiting for 5 seconds before API call for database.py...
-2025-05-26 23:02:24,602 - INFO - Sending generation request to model models/gemini-2.0-flash for database.py.
-2025-05-26 23:02:28,594 - INFO - Code successfully generated by LLM for database.py (1644 chars).
-2025-05-26 23:02:28,594 - INFO - Writing code to file: code_generated_result\to_do_web_app\backend/database.py
-2025-05-26 23:02:28,595 - INFO - Successfully wrote 1644 characters to code_generated_result\to_do_web_app\backend/database.py
-2025-05-26 23:02:28,595 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\frontend/index.html
-2025-05-26 23:02:28,595 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\frontend/index.html
-2025-05-26 23:02:28,596 - INFO - Waiting for 5 seconds before API call for index.html...
-2025-05-26 23:02:33,597 - INFO - Sending generation request to model models/gemini-2.0-flash for index.html.
-2025-05-26 23:02:35,801 - INFO - Code successfully generated by LLM for index.html (633 chars).
-2025-05-26 23:02:35,802 - INFO - Writing code to file: code_generated_result\to_do_web_app\frontend/index.html
-2025-05-26 23:02:35,803 - INFO - Successfully wrote 633 characters to code_generated_result\to_do_web_app\frontend/index.html
-2025-05-26 23:02:35,804 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\frontend/style.css
-2025-05-26 23:02:35,804 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\frontend/style.css
-2025-05-26 23:02:35,805 - INFO - Waiting for 5 seconds before API call for style.css...
-2025-05-26 23:02:40,806 - INFO - Sending generation request to model models/gemini-2.0-flash for style.css.
-2025-05-26 23:02:44,781 - INFO - Code successfully generated by LLM for style.css (1371 chars).
-2025-05-26 23:02:44,781 - INFO - Writing code to file: code_generated_result\to_do_web_app\frontend/style.css
-2025-05-26 23:02:44,782 - INFO - Successfully wrote 1371 characters to code_generated_result\to_do_web_app\frontend/style.css
-2025-05-26 23:02:44,782 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\frontend/app.js
-2025-05-26 23:02:44,782 - INFO - Proceeding with LLM generation for: code_generated_result\to_do_web_app\frontend/app.js
-2025-05-26 23:02:44,783 - INFO - Waiting for 5 seconds before API call for app.js...
-2025-05-26 23:02:49,784 - INFO - Sending generation request to model models/gemini-2.0-flash for app.js.
-2025-05-26 23:02:56,326 - INFO - Code successfully generated by LLM for app.js (4143 chars).
-2025-05-26 23:02:56,327 - INFO - Writing code to file: code_generated_result\to_do_web_app\frontend/app.js
-2025-05-26 23:02:56,328 - INFO - Successfully wrote 4143 characters to code_generated_result\to_do_web_app\frontend/app.js
-2025-05-26 23:02:56,328 - INFO - Attempting to generate code for file: code_generated_result\to_do_web_app\setup_and_run.bat
-2025-05-26 23:02:56,329 - INFO - Generating content for setup_and_run.bat: code_generated_result\to_do_web_app\setup_and_run.bat
-2025-05-26 23:02:56,329 - DEBUG - Generated setup_and_run.bat content:
-@echo off
-setlocal EnableDelayedExpansion
-
-:: Setup and run the generated application
-echo Setting up and running the application... > debug.log 2>&1
-
-:: Set project root
-set "PROJECT_ROOT=%~dp0"
-cd /d "%PROJECT_ROOT%" >> debug.log 2>&1
-if %ERRORLEVEL% neq 0 (
-    echo ERROR: Failed to change to project root directory %PROJECT_ROOT%. >> debug.log 2>&1
-    echo ERROR: Failed to change to project root directory %PROJECT_ROOT%.
-    pause
-    exit /b 1
-)
-echo Project root set to: %PROJECT_ROOT% >> debug.log 2>&1
-
-:: Check for Python
-echo Checking for Python... >> debug.log 2>&1
-"C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe" --version >> debug.log 2>&1
-if %ERRORLEVEL% neq 0 (
-    echo ERROR: Python is not installed at C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe. Please ensure Python 3.8+ is installed. >> debug.log 2>&1
-    echo ERROR: Python is not installed at C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe. Please ensure Python 3.8+ is installed.
-    pause
-    exit /b 1
-)
-echo Python found. >> debug.log 2>&1
-
-:: Create and activate virtual environment in project directory
-echo Setting up virtual environment in !PROJECT_ROOT!\venv... >> debug.log 2>&1
-if not exist "!PROJECT_ROOT!\venv" (
-    "C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe" -m venv "!PROJECT_ROOT!\venv" >> debug.log 2>&1
-    if %ERRORLEVEL% neq 0 (
-        echo ERROR: Failed to create virtual environment in !PROJECT_ROOT!\venv. >> debug.log 2>&1
-        echo ERROR: Failed to create virtual environment in !PROJECT_ROOT!\venv.
-        pause
-        exit /b 1
-    )
-)
-call "!PROJECT_ROOT!\venv\Scripts\activate.bat" >> debug.log 2>&1
-if %ERRORLEVEL% neq 0 (
-    echo ERROR: Failed to activate virtual environment. Check !PROJECT_ROOT!\venv\Scripts\activate.bat. >> debug.log 2>&1
-    echo ERROR: Failed to activate virtual environment. Check !PROJECT_ROOT!\venv\Scripts\activate.bat.
-    pause
-    exit /b 1
-)
-echo Virtual environment activated. >> debug.log 2>&1
-
-:: Install dependencies
-echo Installing dependencies... >> debug.log 2>&1
-if exist "requirements.txt" (
-    pip install -r requirements.txt >> debug.log 2>&1
-    if %ERRORLEVEL% neq 0 (
-        echo ERROR: Failed to install dependencies. Check requirements.txt. >> debug.log 2>&1
-        echo ERROR: Failed to install dependencies. Check requirements.txt.
-        pause
-        exit /b 1
-    )
-) else (
-    echo WARNING: requirements.txt not found. Skipping dependency installation. >> debug.log 2>&1
-    echo WARNING: requirements.txt not found. Skipping dependency installation.
-)
-echo Dependencies installed. >> debug.log 2>&1
-
-:: Run the application
-echo Starting the application... >> debug.log 2>&1
-python -m uvicorn backend.main:app --reload --port 8001 >> debug.log 2>&1
-if %ERRORLEVEL% neq 0 (
-    echo ERROR: Failed to start the application. Check backend/main.py and uvicorn configuration. >> debug.log 2>&1
-    echo ERROR: Failed to start the application. Check backend/main.py and uvicorn configuration.
-    pause
-    exit /b 1
-)
-echo Application started. >> debug.log 2>&1
-
-pause
-exit /b 0
-
-2025-05-26 23:02:56,330 - INFO - Writing code to file: code_generated_result\to_do_web_app\setup_and_run.bat
-2025-05-26 23:02:56,331 - INFO - Successfully wrote 3133 characters to code_generated_result\to_do_web_app\setup_and_run.bat
-2025-05-26 23:02:56,357 - INFO - Executing C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\to_do_web_app\setup_and_run.bat to setup and run the application...
-2025-05-27 15:47:33,506 - INFO - Gemini API configured successfully.
-2025-05-27 15:47:33,506 - INFO - Initializing LLM model for code generation: gemini-2.0-flash
-2025-05-27 15:47:33,506 - INFO - Successfully initialized LLM: gemini-2.0-flash
-2025-05-27 15:47:33,507 - INFO - Scanning outputs directory for JSON files...
-2025-05-27 15:47:33,507 - ERROR - Expected exactly one .spec.json file in 'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs', found 2: ['flashcard_web_application_20250527.spec.json', 'to_do_web_app_20250516.spec.json']
-2025-05-27 15:47:33,507 - ERROR - Configuration or Data Error: Expected exactly one .spec.json file, found 2
-2025-05-27 15:58:14,522 - INFO - Gemini API configured successfully.
-2025-05-27 15:58:14,522 - INFO - Initializing LLM model for code generation: gemini-2.0-flash
-2025-05-27 15:58:14,522 - INFO - Successfully initialized LLM: gemini-2.0-flash
-2025-05-27 15:58:14,522 - INFO - Scanning outputs directory for JSON files...
-2025-05-27 15:58:14,523 - INFO - Latest specification file found: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.spec.json
-2025-05-27 15:58:14,523 - INFO - Latest design file found: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.design.json
-2025-05-27 15:58:14,523 - INFO - Loading design file: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.design.json
-2025-05-27 15:58:14,537 - INFO - Loading specification file: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.spec.json
-2025-05-27 15:58:14,546 - INFO - Starting code generation pipeline using model: models/gemini-2.0-flash
-2025-05-27 15:58:14,546 - INFO - Generating scaffold plan from JSON design file.
-2025-05-27 15:58:14,546 - DEBUG - Validating JSON design file.
-2025-05-27 15:58:14,546 - DEBUG - JSON design validation successful.
-2025-05-27 15:58:14,546 - DEBUG - Validating JSON specification structure.
-2025-05-27 15:58:14,546 - DEBUG - JSON specification validation successful.
-2025-05-27 15:58:14,548 - INFO - Target project root directory: code_generated_result\flashcard_web_application
-2025-05-27 15:58:14,548 - WARNING - Path '/backend/main.py' started with '/'. Corrected to 'backend/main.py'. Ensure DESIGN_PROMPT output is correct.
-2025-05-27 15:58:14,548 - INFO - Detected backend module path: backend.main
-2025-05-27 15:58:14,548 - WARNING - Path '/backend/database.py' started with '/'. Corrected to 'backend/database.py'. Ensure DESIGN_PROMPT output is correct.
-2025-05-27 15:58:14,548 - WARNING - Path '/backend/models.py' started with '/'. Corrected to 'backend/models.py'. Ensure DESIGN_PROMPT output is correct.
-2025-05-27 15:58:14,548 - WARNING - Path '/backend/routers' started with '/'. Corrected to 'backend/routers'. Ensure DESIGN_PROMPT output is correct.
-2025-05-27 15:58:14,548 - WARNING - Path '/backend/routers/flashcards.py' started with '/'. Corrected to 'backend/routers/flashcards.py'. Ensure DESIGN_PROMPT output is correct.
-2025-05-27 15:58:14,548 - WARNING - Path '/backend/routers/reviews.py' started with '/'. Corrected to 'backend/routers/reviews.py'. Ensure DESIGN_PROMPT output is correct.
-2025-05-27 15:58:14,548 - WARNING - Path '/backend/schemas.py' started with '/'. Corrected to 'backend/schemas.py'. Ensure DESIGN_PROMPT output is correct.
-2025-05-27 15:58:14,548 - WARNING - Path '/frontend/index.html' started with '/'. Corrected to 'frontend/index.html'. Ensure DESIGN_PROMPT output is correct.
-2025-05-27 15:58:14,548 - INFO - Detected frontend directory: frontend
-2025-05-27 15:58:14,548 - WARNING - Path '/frontend/style.css' started with '/'. Corrected to 'frontend/style.css'. Ensure DESIGN_PROMPT output is correct.
-2025-05-27 15:58:14,548 - INFO - Detected CSS path: style.css
-2025-05-27 15:58:14,548 - WARNING - Path '/frontend/script.js' started with '/'. Corrected to 'frontend/script.js'. Ensure DESIGN_PROMPT output is correct.
-2025-05-27 15:58:14,548 - WARNING - Path '/frontend/utils.js' started with '/'. Corrected to 'frontend/utils.js'. Ensure DESIGN_PROMPT output is correct.
-2025-05-27 15:58:14,548 - WARNING - Path '/frontend/assets' started with '/'. Corrected to 'frontend/assets'. Ensure DESIGN_PROMPT output is correct.
-2025-05-27 15:58:14,548 - WARNING - No primary JS file (e.g., app.js) found in folder structure. Frontend may lack interactivity.
-2025-05-27 15:58:14,548 - INFO - Added logs directory to scaffold plan: code_generated_result\flashcard_web_application\logs
-2025-05-27 15:58:14,548 - INFO - Added setup_and_run.bat to scaffold plan: code_generated_result\flashcard_web_application\setup_and_run.bat
-2025-05-27 15:58:14,549 - INFO - Scaffold plan generated successfully. Root: code_generated_result\flashcard_web_application
-2025-05-27 15:58:14,549 - DEBUG - Directories planned: ['code_generated_result\\flashcard_web_application\\backend', 'code_generated_result\\flashcard_web_application\\backend/routers', 'code_generated_result\\flashcard_web_application\\frontend', 'code_generated_result\\flashcard_web_application\\frontend/assets', 'code_generated_result\\flashcard_web_application\\logs']
-2025-05-27 15:58:14,549 - DEBUG - Files planned: ['code_generated_result\\flashcard_web_application\\requirements.txt', 'code_generated_result\\flashcard_web_application\\README.md', 'code_generated_result\\flashcard_web_application\\.gitignore', 'code_generated_result\\flashcard_web_application\\backend/main.py', 'code_generated_result\\flashcard_web_application\\backend/database.py', 'code_generated_result\\flashcard_web_application\\backend/models.py', 'code_generated_result\\flashcard_web_application\\backend/routers/flashcards.py', 'code_generated_result\\flashcard_web_application\\backend/routers/reviews.py', 'code_generated_result\\flashcard_web_application\\backend/schemas.py', 'code_generated_result\\flashcard_web_application\\frontend/index.html', 'code_generated_result\\flashcard_web_application\\frontend/style.css', 'code_generated_result\\flashcard_web_application\\frontend/script.js', 'code_generated_result\\flashcard_web_application\\frontend/utils.js', 'code_generated_result\\flashcard_web_application\\setup_and_run.bat']
-2025-05-27 15:58:14,549 - DEBUG - Backend module path: backend.main, Frontend dir: frontend, CSS path: style.css, JS path: app.js
-2025-05-27 15:58:14,549 - INFO - Creating project structure in code_generated_result\flashcard_web_application.
-2025-05-27 15:58:14,550 - INFO - Ensured base project directory exists: code_generated_result\flashcard_web_application
-2025-05-27 15:58:14,550 - INFO - Created output directory: code_generated_result
-2025-05-27 15:58:14,550 - INFO - Created directory: code_generated_result\flashcard_web_application\backend
-2025-05-27 15:58:14,551 - INFO - Created directory: code_generated_result\flashcard_web_application\backend/routers
-2025-05-27 15:58:14,551 - INFO - Created directory: code_generated_result\flashcard_web_application\frontend
-2025-05-27 15:58:14,552 - INFO - Created directory: code_generated_result\flashcard_web_application\frontend/assets
-2025-05-27 15:58:14,552 - INFO - Created directory: code_generated_result\flashcard_web_application\logs
-2025-05-27 15:58:14,552 - INFO - Created empty file: code_generated_result\flashcard_web_application\requirements.txt
-2025-05-27 15:58:14,554 - INFO - Created empty file: code_generated_result\flashcard_web_application\README.md
-2025-05-27 15:58:14,555 - INFO - Created empty file: code_generated_result\flashcard_web_application\.gitignore
-2025-05-27 15:58:14,556 - INFO - Created empty file: code_generated_result\flashcard_web_application\backend/main.py
-2025-05-27 15:58:14,556 - INFO - Created empty file: code_generated_result\flashcard_web_application\backend/database.py
-2025-05-27 15:58:14,557 - INFO - Created empty file: code_generated_result\flashcard_web_application\backend/models.py
-2025-05-27 15:58:14,557 - INFO - Created empty file: code_generated_result\flashcard_web_application\backend/routers/flashcards.py
-2025-05-27 15:58:14,558 - INFO - Created empty file: code_generated_result\flashcard_web_application\backend/routers/reviews.py
-2025-05-27 15:58:14,559 - INFO - Created empty file: code_generated_result\flashcard_web_application\backend/schemas.py
-2025-05-27 15:58:14,560 - INFO - Created empty file: code_generated_result\flashcard_web_application\frontend/index.html
-2025-05-27 15:58:14,560 - INFO - Created empty file: code_generated_result\flashcard_web_application\frontend/style.css
-2025-05-27 15:58:14,561 - INFO - Created empty file: code_generated_result\flashcard_web_application\frontend/script.js
-2025-05-27 15:58:14,561 - INFO - Created empty file: code_generated_result\flashcard_web_application\frontend/utils.js
-2025-05-27 15:58:14,562 - INFO - Created empty file: code_generated_result\flashcard_web_application\setup_and_run.bat
-2025-05-27 15:58:14,562 - INFO - Project structure created successfully.
-2025-05-27 15:58:14,562 - INFO - Attempting to generate code for 14 file(s).
-2025-05-27 15:58:14,562 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\requirements.txt
-2025-05-27 15:58:14,562 - INFO - Generating content for backend requirements.txt: code_generated_result\flashcard_web_application\requirements.txt
-2025-05-27 15:58:14,562 - INFO - Writing code to file: code_generated_result\flashcard_web_application\requirements.txt
-2025-05-27 15:58:14,562 - INFO - Successfully wrote 69 characters to code_generated_result\flashcard_web_application\requirements.txt
-2025-05-27 15:58:14,563 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\README.md
-2025-05-27 15:58:14,563 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\README.md
-2025-05-27 15:58:14,563 - INFO - Waiting for 5 seconds before API call for README.md...
-2025-05-27 15:58:19,564 - INFO - Sending generation request to model models/gemini-2.0-flash for README.md.
-2025-05-27 15:58:24,869 - INFO - Code successfully generated by LLM for README.md (3008 chars).
-2025-05-27 15:58:24,869 - INFO - Writing code to file: code_generated_result\flashcard_web_application\README.md
-2025-05-27 15:58:24,870 - INFO - Successfully wrote 3008 characters to code_generated_result\flashcard_web_application\README.md
-2025-05-27 15:58:24,870 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\.gitignore
-2025-05-27 15:58:24,871 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\.gitignore
-2025-05-27 15:58:24,872 - INFO - Waiting for 5 seconds before API call for .gitignore...
-2025-05-27 15:58:29,872 - INFO - Sending generation request to model models/gemini-2.0-flash for .gitignore.
-2025-05-27 15:58:33,877 - INFO - Code successfully generated by LLM for .gitignore (608 chars).
-2025-05-27 15:58:33,878 - INFO - Writing code to file: code_generated_result\flashcard_web_application\.gitignore
-2025-05-27 15:58:33,879 - INFO - Successfully wrote 608 characters to code_generated_result\flashcard_web_application\.gitignore
-2025-05-27 15:58:33,879 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\backend/main.py
-2025-05-27 15:58:33,880 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\backend/main.py
-2025-05-27 15:58:33,881 - INFO - Waiting for 5 seconds before API call for main.py...
-2025-05-27 15:58:38,882 - INFO - Sending generation request to model models/gemini-2.0-flash for main.py.
-2025-05-27 15:58:45,268 - INFO - Code successfully generated by LLM for main.py (3085 chars).
-2025-05-27 15:58:45,268 - INFO - Writing code to file: code_generated_result\flashcard_web_application\backend/main.py
-2025-05-27 15:58:45,270 - INFO - Successfully wrote 3085 characters to code_generated_result\flashcard_web_application\backend/main.py
-2025-05-27 15:58:45,270 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\backend/database.py
-2025-05-27 15:58:45,271 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\backend/database.py
-2025-05-27 15:58:45,273 - INFO - Waiting for 5 seconds before API call for database.py...
-2025-05-27 15:58:50,273 - INFO - Sending generation request to model models/gemini-2.0-flash for database.py.
-2025-05-27 15:58:54,172 - INFO - Code successfully generated by LLM for database.py (1984 chars).
-2025-05-27 15:58:54,172 - INFO - Writing code to file: code_generated_result\flashcard_web_application\backend/database.py
-2025-05-27 15:58:54,173 - INFO - Successfully wrote 1984 characters to code_generated_result\flashcard_web_application\backend/database.py
-2025-05-27 15:58:54,173 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\backend/models.py
-2025-05-27 15:58:54,174 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\backend/models.py
-2025-05-27 15:58:54,176 - INFO - Waiting for 5 seconds before API call for models.py...
-2025-05-27 15:58:59,176 - INFO - Sending generation request to model models/gemini-2.0-flash for models.py.
-2025-05-27 15:59:03,804 - INFO - Code successfully generated by LLM for models.py (1777 chars).
-2025-05-27 15:59:03,805 - INFO - Writing code to file: code_generated_result\flashcard_web_application\backend/models.py
-2025-05-27 15:59:03,807 - INFO - Successfully wrote 1777 characters to code_generated_result\flashcard_web_application\backend/models.py
-2025-05-27 15:59:03,807 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\backend/routers/flashcards.py
-2025-05-27 15:59:03,807 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\backend/routers/flashcards.py
-2025-05-27 15:59:03,809 - INFO - Waiting for 5 seconds before API call for flashcards.py...
-2025-05-27 15:59:08,809 - INFO - Sending generation request to model models/gemini-2.0-flash for flashcards.py.
-2025-05-27 15:59:15,353 - INFO - Code successfully generated by LLM for flashcards.py (2768 chars).
-2025-05-27 15:59:15,354 - INFO - Writing code to file: code_generated_result\flashcard_web_application\backend/routers/flashcards.py
-2025-05-27 15:59:15,356 - INFO - Successfully wrote 2768 characters to code_generated_result\flashcard_web_application\backend/routers/flashcards.py
-2025-05-27 15:59:15,356 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\backend/routers/reviews.py
-2025-05-27 15:59:15,356 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\backend/routers/reviews.py
-2025-05-27 15:59:15,357 - INFO - Waiting for 5 seconds before API call for reviews.py...
-2025-05-27 15:59:20,358 - INFO - Sending generation request to model models/gemini-2.0-flash for reviews.py.
-2025-05-27 15:59:23,339 - INFO - Code successfully generated by LLM for reviews.py (1020 chars).
-2025-05-27 15:59:23,340 - INFO - Writing code to file: code_generated_result\flashcard_web_application\backend/routers/reviews.py
-2025-05-27 15:59:23,341 - INFO - Successfully wrote 1020 characters to code_generated_result\flashcard_web_application\backend/routers/reviews.py
-2025-05-27 15:59:23,341 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\backend/schemas.py
-2025-05-27 15:59:23,342 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\backend/schemas.py
-2025-05-27 15:59:23,344 - INFO - Waiting for 5 seconds before API call for schemas.py...
-2025-05-27 15:59:28,346 - INFO - Sending generation request to model models/gemini-2.0-flash for schemas.py.
-2025-05-27 15:59:30,367 - INFO - Code successfully generated by LLM for schemas.py (530 chars).
-2025-05-27 15:59:30,368 - INFO - Writing code to file: code_generated_result\flashcard_web_application\backend/schemas.py
-2025-05-27 15:59:30,368 - INFO - Successfully wrote 530 characters to code_generated_result\flashcard_web_application\backend/schemas.py
-2025-05-27 15:59:30,370 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\frontend/index.html
-2025-05-27 15:59:30,370 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\frontend/index.html
-2025-05-27 15:59:30,372 - INFO - Waiting for 5 seconds before API call for index.html...
-2025-05-27 15:59:35,373 - INFO - Sending generation request to model models/gemini-2.0-flash for index.html.
-2025-05-27 15:59:39,273 - INFO - Code successfully generated by LLM for index.html (1993 chars).
-2025-05-27 15:59:39,274 - INFO - Writing code to file: code_generated_result\flashcard_web_application\frontend/index.html
-2025-05-27 15:59:39,275 - INFO - Successfully wrote 1993 characters to code_generated_result\flashcard_web_application\frontend/index.html
-2025-05-27 15:59:39,276 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\frontend/style.css
-2025-05-27 15:59:39,277 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\frontend/style.css
-2025-05-27 15:59:39,278 - INFO - Waiting for 5 seconds before API call for style.css...
-2025-05-27 15:59:44,280 - INFO - Sending generation request to model models/gemini-2.0-flash for style.css.
-2025-05-27 15:59:50,791 - INFO - Code successfully generated by LLM for style.css (2402 chars).
-2025-05-27 15:59:50,793 - INFO - Writing code to file: code_generated_result\flashcard_web_application\frontend/style.css
-2025-05-27 15:59:50,794 - INFO - Successfully wrote 2402 characters to code_generated_result\flashcard_web_application\frontend/style.css
-2025-05-27 15:59:50,795 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\frontend/script.js
-2025-05-27 15:59:50,795 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\frontend/script.js
-2025-05-27 15:59:50,797 - INFO - Waiting for 5 seconds before API call for script.js...
-2025-05-27 15:59:55,797 - INFO - Sending generation request to model models/gemini-2.0-flash for script.js.
-2025-05-27 16:00:04,156 - INFO - Code successfully generated by LLM for script.js (5679 chars).
-2025-05-27 16:00:04,157 - INFO - Writing code to file: code_generated_result\flashcard_web_application\frontend/script.js
-2025-05-27 16:00:04,158 - INFO - Successfully wrote 5679 characters to code_generated_result\flashcard_web_application\frontend/script.js
-2025-05-27 16:00:04,159 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\frontend/utils.js
-2025-05-27 16:00:04,159 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\frontend/utils.js
-2025-05-27 16:00:04,159 - INFO - Waiting for 5 seconds before API call for utils.js...
-2025-05-27 16:00:09,160 - INFO - Sending generation request to model models/gemini-2.0-flash for utils.js.
-2025-05-27 16:00:14,929 - INFO - Code successfully generated by LLM for utils.js (3091 chars).
-2025-05-27 16:00:14,929 - INFO - Writing code to file: code_generated_result\flashcard_web_application\frontend/utils.js
-2025-05-27 16:00:14,931 - INFO - Successfully wrote 3091 characters to code_generated_result\flashcard_web_application\frontend/utils.js
-2025-05-27 16:00:14,931 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\setup_and_run.bat
-2025-05-27 16:00:14,932 - INFO - Generating content for setup_and_run.bat: code_generated_result\flashcard_web_application\setup_and_run.bat
-2025-05-27 16:00:14,933 - DEBUG - Generated setup_and_run.bat content:
+2025-05-29 11:20:02,452 - INFO - Gemini API configured successfully.
+2025-05-29 11:20:02,452 - INFO - Initializing LLM model for code generation: gemini-2.0-flash
+2025-05-29 11:20:02,452 - INFO - Successfully initialized LLM: gemini-2.0-flash
+2025-05-29 11:20:02,452 - INFO - Scanning outputs directory for JSON files...
+2025-05-29 11:20:02,453 - INFO - Latest specification file found: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.spec.json
+2025-05-29 11:20:02,453 - INFO - Latest design file found: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.design.json
+2025-05-29 11:20:02,453 - INFO - Loading design file: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.design.json
+2025-05-29 11:20:02,454 - INFO - Loading specification file: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.spec.json
+2025-05-29 11:20:02,454 - INFO - Starting code generation pipeline using model: models/gemini-2.0-flash
+2025-05-29 11:20:02,454 - INFO - Generating scaffold plan from JSON design file.
+2025-05-29 11:20:02,454 - DEBUG - Validating JSON design file.
+2025-05-29 11:20:02,454 - DEBUG - JSON design validation successful.
+2025-05-29 11:20:02,454 - DEBUG - Validating JSON specification structure.
+2025-05-29 11:20:02,454 - DEBUG - JSON specification validation successful.
+2025-05-29 11:20:02,454 - INFO - Target project root directory: code_generated_result\flashcard_web_application
+2025-05-29 11:20:02,454 - WARNING - Path '/backend/main.py' started with '/'. Corrected to 'backend/main.py'. Ensure DESIGN_PROMPT output is correct.
+2025-05-29 11:20:02,454 - INFO - Detected backend module path: backend.main
+2025-05-29 11:20:02,454 - WARNING - Path '/backend/database.py' started with '/'. Corrected to 'backend/database.py'. Ensure DESIGN_PROMPT output is correct.
+2025-05-29 11:20:02,455 - WARNING - Path '/backend/models.py' started with '/'. Corrected to 'backend/models.py'. Ensure DESIGN_PROMPT output is correct.
+2025-05-29 11:20:02,455 - WARNING - Path '/backend/routers' started with '/'. Corrected to 'backend/routers'. Ensure DESIGN_PROMPT output is correct.
+2025-05-29 11:20:02,455 - WARNING - Path '/backend/routers/flashcards.py' started with '/'. Corrected to 'backend/routers/flashcards.py'. Ensure DESIGN_PROMPT output is correct.
+2025-05-29 11:20:02,455 - WARNING - Path '/backend/routers/reviews.py' started with '/'. Corrected to 'backend/routers/reviews.py'. Ensure DESIGN_PROMPT output is correct.
+2025-05-29 11:20:02,455 - WARNING - Path '/backend/schemas.py' started with '/'. Corrected to 'backend/schemas.py'. Ensure DESIGN_PROMPT output is correct.
+2025-05-29 11:20:02,455 - WARNING - Path '/frontend/index.html' started with '/'. Corrected to 'frontend/index.html'. Ensure DESIGN_PROMPT output is correct.
+2025-05-29 11:20:02,455 - INFO - Detected frontend directory: frontend
+2025-05-29 11:20:02,455 - WARNING - Path '/frontend/style.css' started with '/'. Corrected to 'frontend/style.css'. Ensure DESIGN_PROMPT output is correct.
+2025-05-29 11:20:02,455 - INFO - Detected CSS path: style.css
+2025-05-29 11:20:02,455 - WARNING - Path '/frontend/script.js' started with '/'. Corrected to 'frontend/script.js'. Ensure DESIGN_PROMPT output is correct.
+2025-05-29 11:20:02,455 - WARNING - Path '/frontend/utils.js' started with '/'. Corrected to 'frontend/utils.js'. Ensure DESIGN_PROMPT output is correct.
+2025-05-29 11:20:02,455 - WARNING - Path '/frontend/assets' started with '/'. Corrected to 'frontend/assets'. Ensure DESIGN_PROMPT output is correct.
+2025-05-29 11:20:02,455 - WARNING - No primary JS file (e.g., app.js) found in folder structure. Frontend may lack interactivity.
+2025-05-29 11:20:02,455 - INFO - Added logs directory to scaffold plan: code_generated_result\flashcard_web_application\logs
+2025-05-29 11:20:02,455 - INFO - Added setup_and_run.bat to scaffold plan: code_generated_result\flashcard_web_application\setup_and_run.bat
+2025-05-29 11:20:02,455 - INFO - Scaffold plan generated successfully. Root: code_generated_result\flashcard_web_application
+2025-05-29 11:20:02,455 - DEBUG - Directories planned: ['code_generated_result\\flashcard_web_application\\backend', 'code_generated_result\\flashcard_web_application\\backend/routers', 'code_generated_result\\flashcard_web_application\\frontend', 'code_generated_result\\flashcard_web_application\\frontend/assets', 'code_generated_result\\flashcard_web_application\\logs']
+2025-05-29 11:20:02,456 - DEBUG - Files planned: ['code_generated_result\\flashcard_web_application\\requirements.txt', 'code_generated_result\\flashcard_web_application\\README.md', 'code_generated_result\\flashcard_web_application\\.gitignore', 'code_generated_result\\flashcard_web_application\\backend/main.py', 'code_generated_result\\flashcard_web_application\\backend/database.py', 'code_generated_result\\flashcard_web_application\\backend/models.py', 'code_generated_result\\flashcard_web_application\\backend/routers/flashcards.py', 'code_generated_result\\flashcard_web_application\\backend/routers/reviews.py', 'code_generated_result\\flashcard_web_application\\backend/schemas.py', 'code_generated_result\\flashcard_web_application\\frontend/index.html', 'code_generated_result\\flashcard_web_application\\frontend/style.css', 'code_generated_result\\flashcard_web_application\\frontend/script.js', 'code_generated_result\\flashcard_web_application\\frontend/utils.js', 'code_generated_result\\flashcard_web_application\\setup_and_run.bat']
+2025-05-29 11:20:02,456 - DEBUG - Backend module path: backend.main, Frontend dir: frontend, CSS path: style.css, JS path: app.js
+2025-05-29 11:20:02,456 - INFO - Creating project structure in code_generated_result\flashcard_web_application.
+2025-05-29 11:20:02,456 - INFO - Ensured base project directory exists: code_generated_result\flashcard_web_application
+2025-05-29 11:20:02,456 - INFO - Created output directory: code_generated_result
+2025-05-29 11:20:02,456 - INFO - Created directory: code_generated_result\flashcard_web_application\backend
+2025-05-29 11:20:02,456 - INFO - Created directory: code_generated_result\flashcard_web_application\backend/routers
+2025-05-29 11:20:02,457 - INFO - Created directory: code_generated_result\flashcard_web_application\frontend
+2025-05-29 11:20:02,457 - INFO - Created directory: code_generated_result\flashcard_web_application\frontend/assets
+2025-05-29 11:20:02,457 - INFO - Created directory: code_generated_result\flashcard_web_application\logs
+2025-05-29 11:20:02,459 - INFO - Created empty file: code_generated_result\flashcard_web_application\requirements.txt
+2025-05-29 11:20:02,460 - INFO - Created empty file: code_generated_result\flashcard_web_application\README.md
+2025-05-29 11:20:02,460 - INFO - Created empty file: code_generated_result\flashcard_web_application\.gitignore
+2025-05-29 11:20:02,461 - INFO - Created empty file: code_generated_result\flashcard_web_application\backend/main.py
+2025-05-29 11:20:02,461 - INFO - Created empty file: code_generated_result\flashcard_web_application\backend/database.py
+2025-05-29 11:20:02,462 - INFO - Created empty file: code_generated_result\flashcard_web_application\backend/models.py
+2025-05-29 11:20:02,462 - INFO - Created empty file: code_generated_result\flashcard_web_application\backend/routers/flashcards.py
+2025-05-29 11:20:02,462 - INFO - Created empty file: code_generated_result\flashcard_web_application\backend/routers/reviews.py
+2025-05-29 11:20:02,463 - INFO - Created empty file: code_generated_result\flashcard_web_application\backend/schemas.py
+2025-05-29 11:20:02,464 - INFO - Created empty file: code_generated_result\flashcard_web_application\frontend/index.html
+2025-05-29 11:20:02,464 - INFO - Created empty file: code_generated_result\flashcard_web_application\frontend/style.css
+2025-05-29 11:20:02,464 - INFO - Created empty file: code_generated_result\flashcard_web_application\frontend/script.js
+2025-05-29 11:20:02,465 - INFO - Created empty file: code_generated_result\flashcard_web_application\frontend/utils.js
+2025-05-29 11:20:02,465 - INFO - Created empty file: code_generated_result\flashcard_web_application\setup_and_run.bat
+2025-05-29 11:20:02,465 - INFO - Project structure created successfully.
+2025-05-29 11:20:02,465 - INFO - Attempting to generate code for 14 file(s).
+2025-05-29 11:20:02,466 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\requirements.txt
+2025-05-29 11:20:02,466 - INFO - Generating content for backend requirements.txt: code_generated_result\flashcard_web_application\requirements.txt
+2025-05-29 11:20:02,466 - INFO - Writing code to file: code_generated_result\flashcard_web_application\requirements.txt
+2025-05-29 11:20:02,466 - INFO - Successfully wrote 69 characters to code_generated_result\flashcard_web_application\requirements.txt
+2025-05-29 11:20:02,466 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\README.md
+2025-05-29 11:20:02,466 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\README.md
+2025-05-29 11:20:02,467 - INFO - Waiting for 5 seconds before API call for README.md...
+2025-05-29 11:20:07,467 - INFO - Sending generation request to model models/gemini-2.0-flash for README.md.
+2025-05-29 11:20:14,063 - INFO - Code successfully generated by LLM for README.md (2927 chars).
+2025-05-29 11:20:14,064 - INFO - Writing code to file: code_generated_result\flashcard_web_application\README.md
+2025-05-29 11:20:14,066 - INFO - Successfully wrote 2927 characters to code_generated_result\flashcard_web_application\README.md
+2025-05-29 11:20:14,066 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\.gitignore
+2025-05-29 11:20:14,066 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\.gitignore
+2025-05-29 11:20:14,066 - INFO - Waiting for 5 seconds before API call for .gitignore...
+2025-05-29 11:20:19,067 - INFO - Sending generation request to model models/gemini-2.0-flash for .gitignore.
+2025-05-29 11:20:22,159 - INFO - Code successfully generated by LLM for .gitignore (563 chars).
+2025-05-29 11:20:22,159 - INFO - Writing code to file: code_generated_result\flashcard_web_application\.gitignore
+2025-05-29 11:20:22,161 - INFO - Successfully wrote 563 characters to code_generated_result\flashcard_web_application\.gitignore
+2025-05-29 11:20:22,161 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\backend/main.py
+2025-05-29 11:20:22,162 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\backend/main.py
+2025-05-29 11:20:22,163 - INFO - Waiting for 5 seconds before API call for main.py...
+2025-05-29 11:20:27,164 - INFO - Sending generation request to model models/gemini-2.0-flash for main.py.
+2025-05-29 11:20:34,311 - INFO - Code successfully generated by LLM for main.py (3849 chars).
+2025-05-29 11:20:34,311 - INFO - Writing code to file: code_generated_result\flashcard_web_application\backend/main.py
+2025-05-29 11:20:34,311 - INFO - Successfully wrote 3849 characters to code_generated_result\flashcard_web_application\backend/main.py
+2025-05-29 11:20:34,313 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\backend/database.py
+2025-05-29 11:20:34,313 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\backend/database.py
+2025-05-29 11:20:34,314 - INFO - Waiting for 5 seconds before API call for database.py...
+2025-05-29 11:20:39,314 - INFO - Sending generation request to model models/gemini-2.0-flash for database.py.
+2025-05-29 11:20:43,619 - INFO - Code successfully generated by LLM for database.py (2016 chars).
+2025-05-29 11:20:43,619 - INFO - Writing code to file: code_generated_result\flashcard_web_application\backend/database.py
+2025-05-29 11:20:43,620 - INFO - Successfully wrote 2016 characters to code_generated_result\flashcard_web_application\backend/database.py
+2025-05-29 11:20:43,621 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\backend/models.py
+2025-05-29 11:20:43,621 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\backend/models.py
+2025-05-29 11:20:43,622 - INFO - Waiting for 5 seconds before API call for models.py...
+2025-05-29 11:20:48,622 - INFO - Sending generation request to model models/gemini-2.0-flash for models.py.
+2025-05-29 11:20:51,828 - INFO - Code successfully generated by LLM for models.py (1183 chars).
+2025-05-29 11:20:51,828 - INFO - Writing code to file: code_generated_result\flashcard_web_application\backend/models.py
+2025-05-29 11:20:51,829 - INFO - Successfully wrote 1183 characters to code_generated_result\flashcard_web_application\backend/models.py
+2025-05-29 11:20:51,829 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\backend/routers/flashcards.py
+2025-05-29 11:20:51,830 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\backend/routers/flashcards.py
+2025-05-29 11:20:51,831 - INFO - Waiting for 5 seconds before API call for flashcards.py...
+2025-05-29 11:20:56,832 - INFO - Sending generation request to model models/gemini-2.0-flash for flashcards.py.
+2025-05-29 11:21:02,436 - INFO - Code successfully generated by LLM for flashcards.py (2663 chars).
+2025-05-29 11:21:02,437 - INFO - Writing code to file: code_generated_result\flashcard_web_application\backend/routers/flashcards.py
+2025-05-29 11:21:02,438 - INFO - Successfully wrote 2663 characters to code_generated_result\flashcard_web_application\backend/routers/flashcards.py
+2025-05-29 11:21:02,438 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\backend/routers/reviews.py
+2025-05-29 11:21:02,440 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\backend/routers/reviews.py
+2025-05-29 11:21:02,441 - INFO - Waiting for 5 seconds before API call for reviews.py...
+2025-05-29 11:21:07,443 - INFO - Sending generation request to model models/gemini-2.0-flash for reviews.py.
+2025-05-29 11:21:10,376 - INFO - Code successfully generated by LLM for reviews.py (1017 chars).
+2025-05-29 11:21:10,376 - INFO - Writing code to file: code_generated_result\flashcard_web_application\backend/routers/reviews.py
+2025-05-29 11:21:10,377 - INFO - Successfully wrote 1017 characters to code_generated_result\flashcard_web_application\backend/routers/reviews.py
+2025-05-29 11:21:10,377 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\backend/schemas.py
+2025-05-29 11:21:10,377 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\backend/schemas.py
+2025-05-29 11:21:10,378 - INFO - Waiting for 5 seconds before API call for schemas.py...
+2025-05-29 11:21:15,378 - INFO - Sending generation request to model models/gemini-2.0-flash for schemas.py.
+2025-05-29 11:21:17,547 - INFO - Code successfully generated by LLM for schemas.py (535 chars).
+2025-05-29 11:21:17,548 - INFO - Writing code to file: code_generated_result\flashcard_web_application\backend/schemas.py
+2025-05-29 11:21:17,549 - INFO - Successfully wrote 535 characters to code_generated_result\flashcard_web_application\backend/schemas.py
+2025-05-29 11:21:17,549 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\frontend/index.html
+2025-05-29 11:21:17,550 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\frontend/index.html
+2025-05-29 11:21:17,552 - INFO - Waiting for 5 seconds before API call for index.html...
+2025-05-29 11:21:22,553 - INFO - Sending generation request to model models/gemini-2.0-flash for index.html.
+2025-05-29 11:21:26,561 - INFO - Code successfully generated by LLM for index.html (1765 chars).
+2025-05-29 11:21:26,561 - INFO - Writing code to file: code_generated_result\flashcard_web_application\frontend/index.html
+2025-05-29 11:21:26,562 - INFO - Successfully wrote 1765 characters to code_generated_result\flashcard_web_application\frontend/index.html
+2025-05-29 11:21:26,562 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\frontend/style.css
+2025-05-29 11:21:26,562 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\frontend/style.css
+2025-05-29 11:21:26,563 - INFO - Waiting for 5 seconds before API call for style.css...
+2025-05-29 11:21:31,564 - INFO - Sending generation request to model models/gemini-2.0-flash for style.css.
+2025-05-29 11:21:37,591 - INFO - Code successfully generated by LLM for style.css (2441 chars).
+2025-05-29 11:21:37,591 - INFO - Writing code to file: code_generated_result\flashcard_web_application\frontend/style.css
+2025-05-29 11:21:37,593 - INFO - Successfully wrote 2441 characters to code_generated_result\flashcard_web_application\frontend/style.css
+2025-05-29 11:21:37,594 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\frontend/script.js
+2025-05-29 11:21:37,594 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\frontend/script.js
+2025-05-29 11:21:37,596 - INFO - Waiting for 5 seconds before API call for script.js...
+2025-05-29 11:21:42,597 - INFO - Sending generation request to model models/gemini-2.0-flash for script.js.
+2025-05-29 11:21:51,745 - INFO - Code successfully generated by LLM for script.js (6536 chars).
+2025-05-29 11:21:51,745 - INFO - Writing code to file: code_generated_result\flashcard_web_application\frontend/script.js
+2025-05-29 11:21:51,747 - INFO - Successfully wrote 6536 characters to code_generated_result\flashcard_web_application\frontend/script.js
+2025-05-29 11:21:51,749 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\frontend/utils.js
+2025-05-29 11:21:51,749 - INFO - Proceeding with LLM generation for: code_generated_result\flashcard_web_application\frontend/utils.js
+2025-05-29 11:21:51,751 - INFO - Waiting for 5 seconds before API call for utils.js...
+2025-05-29 11:21:56,752 - INFO - Sending generation request to model models/gemini-2.0-flash for utils.js.
+2025-05-29 11:22:01,198 - INFO - Code successfully generated by LLM for utils.js (2239 chars).
+2025-05-29 11:22:01,198 - INFO - Writing code to file: code_generated_result\flashcard_web_application\frontend/utils.js
+2025-05-29 11:22:01,201 - INFO - Successfully wrote 2239 characters to code_generated_result\flashcard_web_application\frontend/utils.js
+2025-05-29 11:22:01,201 - INFO - Attempting to generate code for file: code_generated_result\flashcard_web_application\setup_and_run.bat
+2025-05-29 11:22:01,202 - INFO - Generating content for setup_and_run.bat: code_generated_result\flashcard_web_application\setup_and_run.bat
+2025-05-29 11:22:01,203 - DEBUG - Generated setup_and_run.bat content:
 @echo off
 setlocal EnableDelayedExpansion
 
@@ -416,6 +228,6 @@ echo Application started. >> debug.log 2>&1
 pause
 exit /b 0
 
-2025-05-27 16:00:14,935 - INFO - Writing code to file: code_generated_result\flashcard_web_application\setup_and_run.bat
-2025-05-27 16:00:14,936 - INFO - Successfully wrote 3149 characters to code_generated_result\flashcard_web_application\setup_and_run.bat
-2025-05-27 16:00:14,962 - INFO - Executing C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\setup_and_run.bat to setup and run the application...
+2025-05-29 11:22:01,204 - INFO - Writing code to file: code_generated_result\flashcard_web_application\setup_and_run.bat
+2025-05-29 11:22:01,205 - INFO - Successfully wrote 3149 characters to code_generated_result\flashcard_web_application\setup_and_run.bat
+2025-05-29 11:22:01,207 - INFO - Executing C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\setup_and_run.bat to setup and run the application...

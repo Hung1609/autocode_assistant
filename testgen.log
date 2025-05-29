@@ -1,0 +1,115 @@
+2025-05-29 14:28:26,055 - INFO - Gemini API configured successfully for test generator.
+2025-05-29 14:28:26,056 - INFO - Detecting project and framework...
+2025-05-29 14:28:26,056 - INFO - Using most recent project folder: code_generated_result\flashcard_web_application
+2025-05-29 14:28:26,057 - INFO - Loaded latest design file: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.design.json
+2025-05-29 14:28:26,057 - INFO - Loaded latest specification file: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.spec.json
+2025-05-29 14:28:26,057 - INFO - Detected app package from JSON design: backend
+2025-05-29 14:28:26,059 - INFO - Detected framework from JSON specification: fastapi
+2025-05-29 14:28:26,059 - INFO - Final detected project: flashcard_web_application, Framework: fastapi, App Package: backend
+2025-05-29 14:28:26,059 - INFO - Created/Updated pytest.ini in code_generated_result\flashcard_web_application with asyncio and cachedir configurations.
+2025-05-29 14:28:26,059 - INFO - Ensured test output directory exists: code_generated_result\flashcard_web_application\tests
+2025-05-29 14:28:26,059 - INFO - Ensuring __init__.py files in main application package: code_generated_result\flashcard_web_application\backend
+2025-05-29 14:28:26,060 - DEBUG - __init__.py already exists in code_generated_result\flashcard_web_application\backend
+2025-05-29 14:28:26,060 - DEBUG - __init__.py already exists in code_generated_result\flashcard_web_application\backend\routers
+2025-05-29 14:28:26,060 - INFO - Ensuring __init__.py files in test output directory: code_generated_result\flashcard_web_application\tests
+2025-05-29 14:28:26,061 - INFO - All required test dependencies (pytest, pytest-mock, pytest-asyncio) are already present in requirements.txt. No update needed.
+2025-05-29 14:28:26,061 - INFO - No new test dependencies detected in requirements.txt. Skipping dependency installation.
+2025-05-29 14:28:26,062 - INFO - Scanning 'code_generated_result\flashcard_web_application\backend\database.py' for functions and methods to test...
+2025-05-29 14:28:26,062 - DEBUG - Generating unit tests for function: create_db_and_tables in module: backend.database
+2025-05-29 14:28:26,062 - INFO - Using model: gemini-2.0-flash for unit test generation for 'create_db_and_tables'.
+2025-05-29 14:28:33,968 - INFO - Saved unit tests to code_generated_result\flashcard_web_application\tests\test_create_db_and_tables.py
+2025-05-29 14:28:33,970 - DEBUG - Generating unit tests for function: get_db in module: backend.database
+2025-05-29 14:28:33,970 - INFO - Using model: gemini-2.0-flash for unit test generation for 'get_db'.
+2025-05-29 14:28:40,867 - INFO - Saved unit tests to code_generated_result\flashcard_web_application\tests\test_get_db.py
+2025-05-29 14:28:40,870 - INFO - Scanning 'code_generated_result\flashcard_web_application\backend\main.py' for functions and methods to test...
+2025-05-29 14:28:40,871 - DEBUG - Generating unit tests for function: setup_logging in module: backend.main
+2025-05-29 14:28:40,871 - INFO - Using model: gemini-2.0-flash for unit test generation for 'setup_logging'.
+2025-05-29 14:28:50,564 - INFO - Saved unit tests to code_generated_result\flashcard_web_application\tests\test_setup_logging.py
+2025-05-29 14:28:50,567 - DEBUG - Generating unit tests for function: log_requests in module: backend.main
+2025-05-29 14:28:50,567 - INFO - Using model: gemini-2.0-flash for unit test generation for 'log_requests'.
+2025-05-29 14:29:00,226 - INFO - Saved unit tests to code_generated_result\flashcard_web_application\tests\test_log_requests.py
+2025-05-29 14:29:00,228 - DEBUG - Generating unit tests for function: health_check in module: backend.main
+2025-05-29 14:29:00,228 - INFO - Using model: gemini-2.0-flash for unit test generation for 'health_check'.
+2025-05-29 14:29:06,551 - INFO - Saved unit tests to code_generated_result\flashcard_web_application\tests\test_health_check.py
+2025-05-29 14:29:06,554 - DEBUG - Generating unit tests for method: CustomJsonFormatter.format in module: backend.main
+2025-05-29 14:29:06,554 - INFO - Using model: gemini-2.0-flash for unit test generation for 'format'.
+2025-05-29 14:29:17,169 - INFO - Saved unit tests to code_generated_result\flashcard_web_application\tests\test_CustomJsonFormatter_format.py
+2025-05-29 14:29:17,170 - DEBUG - Generating unit tests for method: RequestIDFilter.filter in module: backend.main
+2025-05-29 14:29:17,170 - INFO - Using model: gemini-2.0-flash for unit test generation for 'filter'.
+2025-05-29 14:29:24,035 - INFO - Saved unit tests to code_generated_result\flashcard_web_application\tests\test_RequestIDFilter_filter.py
+2025-05-29 14:29:24,037 - DEBUG - Generating unit tests for method: RequestIDMiddleware.dispatch in module: backend.main
+2025-05-29 14:29:24,038 - INFO - Using model: gemini-2.0-flash for unit test generation for 'dispatch'.
+2025-05-29 14:29:33,908 - INFO - Saved unit tests to code_generated_result\flashcard_web_application\tests\test_RequestIDMiddleware_dispatch.py
+2025-05-29 14:29:33,910 - INFO - Scanning 'code_generated_result\flashcard_web_application\backend\models.py' for functions and methods to test...
+2025-05-29 14:29:33,911 - INFO - Scanning 'code_generated_result\flashcard_web_application\backend\schemas.py' for functions and methods to test...
+2025-05-29 14:29:33,912 - INFO - Scanning 'code_generated_result\flashcard_web_application\backend\routers\flashcards.py' for functions and methods to test...
+2025-05-29 14:29:33,913 - DEBUG - Generating unit tests for function: create_flashcard in module: backend.routers.flashcards
+2025-05-29 14:29:33,913 - INFO - Using model: gemini-2.0-flash for unit test generation for 'create_flashcard'.
+2025-05-29 14:29:42,791 - INFO - Saved unit tests to code_generated_result\flashcard_web_application\tests\test_create_flashcard.py
+2025-05-29 14:29:42,793 - DEBUG - Generating unit tests for function: read_flashcards in module: backend.routers.flashcards
+2025-05-29 14:29:42,793 - INFO - Using model: gemini-2.0-flash for unit test generation for 'read_flashcards'.
+2025-05-29 14:29:52,466 - INFO - Saved unit tests to code_generated_result\flashcard_web_application\tests\test_read_flashcards.py
+2025-05-29 14:29:52,467 - DEBUG - Generating unit tests for function: read_flashcard in module: backend.routers.flashcards
+2025-05-29 14:29:52,469 - INFO - Using model: gemini-2.0-flash for unit test generation for 'read_flashcard'.
+2025-05-29 14:30:02,791 - INFO - Saved unit tests to code_generated_result\flashcard_web_application\tests\test_read_flashcard.py
+2025-05-29 14:30:02,793 - INFO - Scanning 'code_generated_result\flashcard_web_application\backend\routers\reviews.py' for functions and methods to test...
+2025-05-29 14:30:02,794 - DEBUG - Generating unit tests for function: create_review in module: backend.routers.reviews
+2025-05-29 14:30:02,794 - INFO - Using model: gemini-2.0-flash for unit test generation for 'create_review'.
+2025-05-29 14:30:12,707 - INFO - Saved unit tests to code_generated_result\flashcard_web_application\tests\test_create_review.py
+2025-05-29 14:30:12,708 - INFO - Extracted 5 API endpoints from design file for integration testing.
+2025-05-29 14:30:12,709 - INFO - Generating integration tests for backend using gemini-2.0-flash
+2025-05-29 14:30:26,146 - INFO - Saved integration tests to code_generated_result\flashcard_web_application\tests\test_integration.py
+2025-05-29 14:30:26,147 - INFO - Running pytest in code_generated_result\flashcard_web_application\tests from project root: code_generated_result\flashcard_web_application
+2025-05-29 14:30:27,471 - DEBUG - Attempting to map test 'test_CustomJsonFormatter_format_with_exception' from 'code_generated_result\flashcard_web_application\tests\test_CustomJsonFormatter_format.py' to source.
+2025-05-29 14:30:27,472 - DEBUG - Attempting to map test 'test_RequestIDFilter_filter_success' from 'code_generated_result\flashcard_web_application\tests\test_RequestIDFilter_filter.py' to source.
+2025-05-29 14:30:27,472 - DEBUG - Attempting to map test 'test_RequestIDFilter_filter_no_request_id' from 'code_generated_result\flashcard_web_application\tests\test_RequestIDFilter_filter.py' to source.
+2025-05-29 14:30:27,472 - DEBUG - Attempting to map test 'test_RequestIDMiddleware_dispatch_success' from 'code_generated_result\flashcard_web_application\tests\test_RequestIDMiddleware_dispatch.py' to source.
+2025-05-29 14:30:27,473 - DEBUG - Attempting to map test 'test_RequestIDMiddleware_dispatch_exception' from 'code_generated_result\flashcard_web_application\tests\test_RequestIDMiddleware_dispatch.py' to source.
+2025-05-29 14:30:27,473 - DEBUG - Attempting to map test 'test_create_flashcard_empty_front_text' from 'code_generated_result\flashcard_web_application\tests\test_create_flashcard.py' to source.
+2025-05-29 14:30:27,474 - DEBUG - Attempting to map test 'test_create_flashcard_empty_back_text' from 'code_generated_result\flashcard_web_application\tests\test_create_flashcard.py' to source.
+2025-05-29 14:30:27,474 - DEBUG - Attempting to map test 'test_create_review_success' from 'code_generated_result\flashcard_web_application\tests\test_create_review.py' to source.
+2025-05-29 14:30:27,476 - DEBUG - Attempting to map test 'test_create_review_db_error' from 'code_generated_result\flashcard_web_application\tests\test_create_review.py' to source.
+2025-05-29 14:30:27,476 - DEBUG - Attempting to map test 'test_create_review_invalid_input' from 'code_generated_result\flashcard_web_application\tests\test_create_review.py' to source.
+2025-05-29 14:30:27,477 - DEBUG - Attempting to map test 'test_create_flashcard_success' from 'code_generated_result\flashcard_web_application\tests\test_integration.py' to source.
+2025-05-29 14:30:27,477 - DEBUG - Attempting to map test 'test_create_flashcard_missing_front_text' from 'code_generated_result\flashcard_web_application\tests\test_integration.py' to source.
+2025-05-29 14:30:27,478 - DEBUG - Attempting to map test 'test_create_flashcard_missing_back_text' from 'code_generated_result\flashcard_web_application\tests\test_integration.py' to source.
+2025-05-29 14:30:27,478 - DEBUG - Attempting to map test 'test_get_flashcards_empty' from 'code_generated_result\flashcard_web_application\tests\test_integration.py' to source.
+2025-05-29 14:30:27,479 - DEBUG - Attempting to map test 'test_get_flashcards_with_data' from 'code_generated_result\flashcard_web_application\tests\test_integration.py' to source.
+2025-05-29 14:30:27,479 - DEBUG - Attempting to map test 'test_get_flashcards_with_query' from 'code_generated_result\flashcard_web_application\tests\test_integration.py' to source.
+2025-05-29 14:30:27,480 - DEBUG - Attempting to map test 'test_get_flashcard_by_id_success' from 'code_generated_result\flashcard_web_application\tests\test_integration.py' to source.
+2025-05-29 14:30:27,481 - DEBUG - Attempting to map test 'test_create_review_success' from 'code_generated_result\flashcard_web_application\tests\test_integration.py' to source.
+2025-05-29 14:30:27,481 - DEBUG - Attempting to map test 'test_create_review_invalid_flashcard_id' from 'code_generated_result\flashcard_web_application\tests\test_integration.py' to source.
+2025-05-29 14:30:27,481 - DEBUG - Attempting to map test 'test_create_review_missing_flashcard_id' from 'code_generated_result\flashcard_web_application\tests\test_integration.py' to source.
+2025-05-29 14:30:27,482 - DEBUG - Attempting to map test 'test_create_review_missing_correct' from 'code_generated_result\flashcard_web_application\tests\test_integration.py' to source.
+2025-05-29 14:30:27,483 - DEBUG - Attempting to map test 'test_get_statistics_success' from 'code_generated_result\flashcard_web_application\tests\test_integration.py' to source.
+2025-05-29 14:30:27,483 - DEBUG - Attempting to map test 'test_read_flashcard_success' from 'code_generated_result\flashcard_web_application\tests\test_read_flashcard.py' to source.
+2025-05-29 14:30:27,484 - DEBUG - Attempting to map test 'test_read_flashcard_not_found' from 'code_generated_result\flashcard_web_application\tests\test_read_flashcard.py' to source.
+2025-05-29 14:30:27,484 - DEBUG - Attempting to map test 'test_read_flashcards_with_empty_query_success' from 'code_generated_result\flashcard_web_application\tests\test_read_flashcards.py' to source.
+2025-05-29 14:30:27,485 - DEBUG - Attempting to map test 'test_setup_logging_json_logger_available' from 'code_generated_result\flashcard_web_application\tests\test_setup_logging.py' to source.
+2025-05-29 14:30:27,485 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_CustomJsonFormatter_format.py::test_CustomJsonFormatter_format_with_exception
+2025-05-29 14:30:27,485 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_RequestIDFilter_filter.py::test_RequestIDFilter_filter_success
+2025-05-29 14:30:27,485 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_RequestIDFilter_filter.py::test_RequestIDFilter_filter_no_request_id
+2025-05-29 14:30:27,485 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_RequestIDMiddleware_dispatch.py::test_RequestIDMiddleware_dispatch_success
+2025-05-29 14:30:27,485 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_RequestIDMiddleware_dispatch.py::test_RequestIDMiddleware_dispatch_exception
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_create_flashcard.py::test_create_flashcard_empty_front_text
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_create_flashcard.py::test_create_flashcard_empty_back_text
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_create_review.py::test_create_review_success - pydantic_cor...
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_create_review.py::test_create_review_db_error - pydantic_co...
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_create_review.py::test_create_review_invalid_input - pydant...
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_integration.py::test_create_flashcard_success - assert 405 ...
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_integration.py::test_create_flashcard_missing_front_text - ...
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_integration.py::test_create_flashcard_missing_back_text - a...
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_integration.py::test_get_flashcards_empty - assert 404 == 200
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_integration.py::test_get_flashcards_with_data - assert 405 ...
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_integration.py::test_get_flashcards_with_query - assert 405...
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_integration.py::test_get_flashcard_by_id_success - assert 4...
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_integration.py::test_create_review_success - assert 405 == 201
+2025-05-29 14:30:27,486 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_integration.py::test_create_review_invalid_flashcard_id - a...
+2025-05-29 14:30:27,487 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_integration.py::test_create_review_missing_flashcard_id - a...
+2025-05-29 14:30:27,487 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_integration.py::test_create_review_missing_correct - assert...
+2025-05-29 14:30:27,487 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_integration.py::test_get_statistics_success - assert 404 ==...
+2025-05-29 14:30:27,487 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_read_flashcard.py::test_read_flashcard_success - AssertionE...
+2025-05-29 14:30:27,487 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_read_flashcard.py::test_read_flashcard_not_found - Assertio...
+2025-05-29 14:30:27,487 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_read_flashcards.py::test_read_flashcards_with_empty_query_success
+2025-05-29 14:30:27,487 - WARNING - Could not parse potential pytest failure line: FAILED tests/test_setup_logging.py::test_setup_logging_json_logger_available
+2025-05-29 14:30:27,488 - ERROR - Found 26 test failures. Check code_generated_result\flashcard_web_application\test_results.log for details.

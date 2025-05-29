@@ -7,7 +7,7 @@ from sqlalchemy.sql import func
 
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = "sqlite:///./flashcard.db"
+DATABASE_URL = "sqlite:///./flashcards.db"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
@@ -25,10 +25,9 @@ class Flashcard(Base):
     reviews = relationship("Review", back_populates="flashcard")
 
     def __init__(self, front_text: str, back_text: str):
-        logger.info(f"Entering Flashcard.__init__ with args: front_text='{front_text}', back_text='{back_text}'")
         self.front_text = front_text
         self.back_text = back_text
-        logger.info("Exiting Flashcard.__init__")
+
 
 class Review(Base):
     __tablename__ = "reviews"
@@ -36,17 +35,25 @@ class Review(Base):
     id = Column(Integer, primary_key=True, index=True)
     flashcard_id = Column(Integer, ForeignKey("flashcards.id", ondelete="CASCADE"), nullable=False)
     correct = Column(Boolean, nullable=False)
-    review_timestamp = Column(DateTime, server_default=func.now())
+    review_timestamp = Column(DateTime(timezone=True), server_default=func.now())
 
     flashcard = relationship("Flashcard", back_populates="reviews")
 
     def __init__(self, flashcard_id: int, correct: bool):
-        logger.info(f"Entering Review.__init__ with args: flashcard_id={flashcard_id}, correct={correct}")
         self.flashcard_id = flashcard_id
         self.correct = correct
-        logger.info("Exiting Review.__init__")
 
-Base.metadata.create_all(bind=engine)
+
+def create_db_and_tables():
+    logger.info("Entering create_db_and_tables")
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database and tables created successfully.")
+    except Exception as e:
+        logger.error(f"Error creating database and tables: {e}", exc_info=True)
+    finally:
+        logger.info("Exiting create_db_and_tables")
+
 
 def get_db():
     logger.info("Entering get_db")

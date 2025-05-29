@@ -7,52 +7,33 @@ __pycache__/
 *.so
 
 # Distribution / packaging
-.Python
-env/
-venv/
-ENV/
+.eggs/
+dist/
+build/
+sdist/
 *.egg-info/
-.installed.cfg
-*.egg
 MANIFEST
 
 # PyInstaller
-#  Usually these files are written into a dist/ folder, but PyInstaller does not enforce this.
-#/dist/
-#/build/
-/dist/*
-/build/*
-# sdist
-/develop-eggs/
-/eggs/
-*.egg-info/
-/.installed.cfg
-*~
-# Packaging
-/.Python
-/lib/
-/lib64/
-/parts/
-/sdist/
-/var/
-/wheels/
-/share/
-/installed.cfg
-*.egg-info/
-/MANIFEST
+#  Usually these files are written into a _MEIPASS folder, but if we
+#  run pyinstaller in --onefile mode, we don't want the source folder
+#  to be littered with these files from a previous run.
+_MEIPASS/
+_MEIPASS2/
 
-# Translations
-/*.mo
+# dotenv environment variable files
+.env
+*.env
 
-# JetBrains IDE
-.idea/
-*.iws
-*.iml
-*.ipr
+# Poetry environment
+.venv
 
-# VS Code
-.vscode/
+# Unit test reports
+reports/
+
+# OS generated files
+.DS_Store
+Thumbs.db
 
 # Logs
 logs/
-*.log

@@ -6,54 +6,51 @@ body {
 }
 
 .container {
-    width: 80%;
-    margin: auto;
-    overflow: hidden;
+    display: flex;
+    height: 100vh;
 }
 
-/* Sidebar */
+/* Sidebar styles */
 .sidebar {
     width: 200px;
-    height: 100vh;
-    background: #333;
-    color: #fff;
+    background-color: #333;
+    color: white;
     padding: 20px;
-    position: fixed;
-    left: 0;
-    top: 0;
 }
 
 .sidebar ul {
-    padding: 0;
     list-style: none;
+    padding: 0;
 }
 
 .sidebar li {
-    padding: 15px 0;
-    border-bottom: 1px solid #444;
+    margin-bottom: 10px;
 }
 
 .sidebar a {
-    color: #fff;
+    color: white;
     text-decoration: none;
+    display: block;
+    padding: 10px;
+    border-radius: 5px;
 }
 
 .sidebar a:hover {
-    color: #bbb;
+    background-color: #555;
 }
 
-/* Content */
-.content {
-    margin-left: 240px; /* Adjust based on sidebar width */
+/* Main content styles */
+.main-content {
+    flex: 1;
     padding: 20px;
 }
 
-/* Flashcard Styles */
+/* Flashcard styles */
 .flashcard {
     width: 300px;
     height: 200px;
     perspective: 1000px;
-    margin: 20px auto;
+    margin-bottom: 20px;
 }
 
 .flashcard-inner {
@@ -74,45 +71,44 @@ body {
     height: 100%;
     backface-visibility: hidden;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     font-size: 20px;
     border-radius: 10px;
-    background: #fff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .flashcard-front {
+    background-color: #eee;
     color: #333;
 }
 
 .flashcard-back {
-    background: #ddd;
+    background-color: #ddd;
     color: #333;
     transform: rotateY(180deg);
 }
 
-/* Form Styles */
-form {
+/* Create flashcard form styles */
+.create-form {
     margin-bottom: 20px;
 }
 
-form label {
+.create-form label {
     display: block;
     margin-bottom: 5px;
 }
 
-form input[type="text"],
-form textarea {
+.create-form input[type="text"] {
     width: 100%;
     padding: 8px;
     margin-bottom: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid #ccc;
     border-radius: 4px;
 }
 
-form button {
-    background-color: #5cb85c;
+.create-form button {
+    background-color: #4CAF50;
     color: white;
     padding: 10px 15px;
     border: none;
@@ -120,37 +116,41 @@ form button {
     cursor: pointer;
 }
 
-form button:hover {
-    background-color: #449d44;
+.create-form button:hover {
+    background-color: #3e8e41;
 }
 
-/* Search Styles */
+/* Search styles */
 #search-input {
-    width: 80%;
-    padding: 10px;
+    width: 100%;
+    padding: 8px;
     margin-bottom: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid #ccc;
     border-radius: 4px;
 }
 
-/* Statistics Styles */
-#statistics-container {
-    margin-top: 20px;
+/* Statistics styles */
+.statistics {
+    margin-bottom: 20px;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
+/* Utility classes */
+.hidden {
+    display: none;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
     .container {
-        width: 95%;
+        flex-direction: column;
     }
 
     .sidebar {
         width: 100%;
-        position: static;
-        height: auto;
+        padding: 10px;
     }
 
-    .content {
-        margin-left: 0;
+    .main-content {
+        padding: 10px;
     }
 }

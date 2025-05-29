@@ -3,7 +3,7 @@ import logging.handlers
 import json
 import contextvars
 import uuid
-import os
+import sys
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -11,14 +11,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
 
-# Attempt to import python-json-logger and handle ImportError gracefully
+# Attempt to import python-json-logger, provide fallback if it fails
 try:
     from pythonjsonlogger import jsonlogger
-    HAS_JSON_LOGGER = True
+    has_json_logger = True
 except ImportError:
-    HAS_JSON_LOGGER = False
+    has_json_logger = False
 
-# Define a custom JSON formatter
+# Custom JSON Formatter
 class CustomJsonFormatter(logging.Formatter):
     def format(self, record):
         log_record = {
@@ -28,7 +28,7 @@ class CustomJsonFormatter(logging.Formatter):
             'message': record.getMessage(),
             'pathname': record.pathname,
             'funcName': record.funcName,
-            'lineno': record.lineno,
+            'lineno': record.lineno
         }
 
         if hasattr(record, 'request_id'):
@@ -36,77 +36,89 @@ class CustomJsonFormatter(logging.Formatter):
 
         if record.exc_info:
             log_record['exc_info'] = self.formatException(record.exc_info)
-
         return json.dumps(log_record)
 
 
-# Configure logging
-LOG_DIR = "logs"
-if not os.path.exists(LOG_DIR):
-    os.makedirs(LOG_DIR)
-
-# Instantiate the FastAPI application
-app = FastAPI()
-
-# Request ID context
+# Request ID Context Variable
 request_id_ctx = contextvars.ContextVar("request_id")
 
 
-# Request ID Middleware
-class RequestIdMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        request_id = str(uuid.uuid4())
-        request_id_ctx.set(request_id)
-        try:
-            response: Response = await call_next(request)
-        finally:
-            request_id_ctx.reset()
-        return response
-
-
-# Logging Filter to add request_id to log records
-class RequestIdFilter(logging.Filter):
+# Logging Filter to add request_id to each log record
+class RequestIDFilter(logging.Filter):
     def filter(self, record):
         record.request_id = request_id_ctx.get()
         return True
 
 
-# Logging Configuration
-log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
-if HAS_JSON_LOGGER:
-    try:
-        log_formatter_json = jsonlogger.JsonFormatter()
-    except Exception as e:
-        log_formatter_json = CustomJsonFormatter()
-else:
-    log_formatter_json = CustomJsonFormatter()
+# FastAPI Middleware to generate and store Request ID
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        request_id = str(uuid.uuid4())
+        token = request_id_ctx.set(request_id)
+        try:
+            response: Response = await call_next(request)
+        finally:
+            request_id_ctx.reset(token)
+        return response
 
-log_handler = logging.handlers.RotatingFileHandler(
-    os.path.join(LOG_DIR, "app.log"),
-    maxBytes=10 * 1024 * 1024,  # 10MB
-    backupCount=5,
-    encoding="utf8",
-)
-log_handler.setFormatter(log_formatter_json)
 
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(log_formatter)
+# Configure Logging
+def setup_logging():
+    log_dir = "logs"  # Relative to the project root
+    import os
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
 
-logging.basicConfig(level=logging.DEBUG, handlers=[log_handler, stream_handler])
+    log_file = os.path.join(log_dir, "app.log")
+    max_bytes = 10 * 1024 * 1024  # 10MB
+    backup_count = 5
 
-logger = logging.getLogger(__name__)
-logger.addFilter(RequestIdFilter())
+    # Configure RotatingFileHandler
+    rotating_handler = logging.handlers.RotatingFileHandler(
+        log_file, maxBytes=max_bytes, backupCount=backup_count, encoding="utf8"
+    )
 
-# Mount the frontend
-app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
+    # Set formatter for RotatingFileHandler
+    if has_json_logger:
+        formatter = jsonlogger.JsonFormatter('%(timestamp)s %(level)s %(name)s %(message)s %(pathname)s %(funcName)s %(lineno)d')
+    else:
+        formatter = CustomJsonFormatter()  # Use custom formatter if python-json-logger is not available
+    rotating_handler.setFormatter(formatter)
+
+    # Configure StreamHandler (console output)
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+    stream_handler.setFormatter(stream_formatter)
+
+    # Configure Root Logger
+    logging.basicConfig(level=logging.DEBUG, handlers=[rotating_handler, stream_handler])
+
+    # Add Request ID Filter to the root logger
+    root_logger = logging.getLogger()
+    root_logger.addFilter(RequestIDFilter())
+
+    return logging.getLogger(__name__)
+
+
+# Initialize FastAPI
+app = FastAPI()
+
+# Setup Logging
+logger = setup_logging()
 
 # Add Request ID Middleware
-app.add_middleware(RequestIdMiddleware)
+app.add_middleware(RequestIDMiddleware)
 
-@app.get("/api/healthcheck")
+# Mount Static Files (Frontend)
+app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"Incoming request: {request.method} {request.url.path}")
+    response = await call_next(request)
+    logger.info(f"Outgoing response: {response.status_code} for {request.method} {request.url.path}")
+    return response
+
+@app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001, reload=True)

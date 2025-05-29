@@ -1,9 +1,11 @@
 import logging
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
-from backend import schemas, models
-from backend.database import get_db
+
+from .. import models, schemas
+from ..database import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +23,7 @@ def create_review(review: schemas.ReviewCreate, db: Session = Depends(get_db)):
     """
     logger.info(f"Entering create_review with args: {review}, kwargs: {{}}")
     try:
-        db_review = models.Review(**review.dict())
+        db_review = models.Review(**review.model_dump())
         db.add(db_review)
         db.commit()
         db.refresh(db_review)
