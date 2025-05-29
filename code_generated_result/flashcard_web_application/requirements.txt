@@ -4,7 +4,3 @@ SQLAlchemy
 pydantic
 aiosqlite
 uvicorn[standard]
-
-pytest
-pytest-mock
-pytest-asyncio
