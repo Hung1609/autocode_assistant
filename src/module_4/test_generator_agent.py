@@ -32,10 +32,10 @@ logger.info("Gemini API configured successfully for test generator.")
 DEFAULT_MODEL = 'gemini-2.0-flash'
 BASE_GENERATED_DIR = "code_generated_result"
 # company's computer
-# OUTPUTS_DIR = r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs'
+OUTPUTS_DIR = r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs'
 
 # my laptop
-OUTPUTS_DIR = r"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs"
+# OUTPUTS_DIR = r"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs"
 TEST_OUTPUT_DIR_NAME = "tests"
 TEST_LOG_FILE = "test_results.log"
 
@@ -361,41 +361,6 @@ def install_project_dependencies(project_root):
         # Re-raise the exception to stop the pipeline, as this is a critical error
         raise
 
-# def get_function_code(filepath, function_name):
-#     try:
-#         with open(filepath, 'r', encoding='utf-8') as f:
-#             source = f.read()
-#         tree = ast.parse(source)
-
-#         func_code_lines = []
-#         for node in ast.walk(tree):
-#             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == function_name:
-#                 start_line = node.lineno - 1
-#                 end_line = node.end_lineno
-#                 with open(filepath, 'r', encoding='utf-8') as f:
-#                     lines = f.readlines()
-#                 func_code_lines = lines[start_line:end_line]
-#                 break
-#             elif isinstance(node, ast.ClassDef): # Check methods within classes
-#                 for method in [n for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
-#                     if method.name == function_name:
-#                         start_line = method.lineno - 1
-#                         end_line = method.end_lineno
-#                         with open(filepath, 'r', encoding='utf-8') as f:
-#                             lines = f.readlines()
-#                         func_code_lines = lines[start_line:end_line]
-#                         break
-#         if not func_code_lines:
-#             logger.warning(f"Function '{function_name}' not found in '{filepath}'.")
-#             return None
-#         return "".join(func_code_lines)
-#     except FileNotFoundError:
-#         logger.error(f"File not found: {filepath}")
-#         return None
-#     except Exception as e:
-#         logger.error(f"Error extracting function '{function_name}' from '{filepath}': {e}", exc_info=True)
-#         return None
-
 def generate_unit_tests(function_code, function_name, module_path, framework, context, is_method=False, class_name=None):
     if not function_code:
         logger.warning(f"No function code provided for {function_name}. Skipping unit test generation.")
@@ -419,10 +384,10 @@ def generate_unit_tests(function_code, function_name, module_path, framework, co
 
     target_import = ""
     target_source_info = ""
+    test_file_prefix = "" # New variable for test file naming
+    
     if is_method and class_name:
-        # LLM should import the class, not the method directly
         target_import = f"from {module_path} import {class_name}"
-        # Source info format: module.Class.method
         target_source_info = f"{module_path}.{class_name}.{function_name}"
         method_context = (
             f"This is a method of class `{class_name}`. When testing, you will need to "
@@ -430,17 +395,18 @@ def generate_unit_tests(function_code, function_name, module_path, framework, co
             f"Mock `self` if necessary for the method's behavior. "
             f"The source info should be in the format: `module.ClassName.methodName`."
         )
+        test_file_prefix = f"test_{class_name}_" # e.g., test_Flashcard_to_dict.py
     else:
-        # Top-level function
         target_import = f"from {module_path} import {function_name}"
         target_source_info = f"{module_path}.{function_name}"
         method_context = f"This is a top-level function. The source info should be in the format: `module.functionName`."
+        test_file_prefix = f"test_{function_name}_" # e.g., test_get_db.py
 
     prompt = f"""
     You are an expert Python test engineer specializing in the pytest framework and testing {framework} applications.
     Your task is to generate comprehensive unit tests for the Python function/method below using the pytest framework and `pytest-mock`.
 
-    Function/Method Name: {function_name}
+    Function Name: {function_name}
     Module Path: {module_path}
     Framework: {framework}
     {method_context}
@@ -456,22 +422,27 @@ def generate_unit_tests(function_code, function_name, module_path, framework, co
 
     Requirements for Test Generation:
     1.  **Strictly Output Code Only**: Your response MUST be only the raw Python code for the test file. Do NOT include any explanations, comments outside the code blocks, or markdown formatting (like ```python ... ```).
-    2.  **Imports**: Include all necessary imports: `pytest`, `unittest.mock` (or `pytest-mock`'s `mocker` fixture), relevant modules from `{framework_specific['imports']}`, and **specifically import the target for testing: `{target_import}`.**
-    3.  **Mocking Dependencies**:
+    2.  **File Naming Convention**: The generated test file should be named based on the function/method, for example: `{test_file_prefix}test_scenario.py` or just `{test_file_prefix}scenarios.py`.
+    3.  **Test Naming Convention**: All test functions within the file MUST start with `test_` followed by the function/method name, and then a descriptive suffix for the test scenario. 
+        For example: `def test_{function_name}_success(...)`, `def test_{function_name}_invalid_input(...)`.
+        If testing a method (e.g., `{class_name}.{function_name}`), the test function name should be `test_{class_name}_{function_name}_scenario`.
+        Example: `def test_Flashcard_to_dict_success(...)`.
+    4.  **Imports**: Include all necessary imports: `pytest`, `unittest.mock` (or `pytest-mock`'s `mocker` fixture), relevant modules from `{framework_specific['imports']}`, and **specifically import the target for testing: `{target_import}`.**
+        - **Critical Import Note**: When importing functions/classes from modules, ensure the module path exactly matches `{module_path}`. For example, if `get_db` is in `backend.database`, import it as `from backend.database import get_db`, not `from backend.db import get_db`. LLM, always use the `Module Path` provided (`{module_path}`) for imports.
+    5.  **Mocking Dependencies**:
         -   Properly mock all external dependencies.
         -   Specifically mock: {framework_specific['mock_targets']}.
-        -   Crucially, ensure patches target the **correct module where the object is looked up by the function under test**, not just where it's defined. For example, if a function in `my_module.py` does `from another_module import SomeClass` and then uses `SomeClass`, you should mock `my_module.SomeClass`. If it uses a database session (e.g., `db: Session = Depends(get_db)`), mock `get_db` or the database session itself.
+        -   Crucially, ensure patches target the **correct module where the object is looked up by the function under test**, not just where it's defined.
         -   Use `pytest-mock`'s `mocker` fixture where appropriate, or `unittest.mock.patch`.
-    4.  **Test Scenarios**:
+    6.  **Test Scenarios**:
         -   Test the "happy path" where the function/method behaves as expected with valid inputs.
         -   Test edge cases, invalid inputs, and error conditions (e.g., missing data, database errors, HTTP exceptions).
         -   Verify that mocks for collaborators (like database session methods or external API calls) are called with the expected arguments.
         -   Assert the function/method's return value or expected side effects.
-    5.  **Test Naming and Structure**:
-        -   Write clear, well-named test functions (e.g., `test_{function_name}_success`, `test_{function_name}_invalid_input`). If testing a method, consider `test_{class_name}_{function_name}_success`.
-        -   Use pytest conventions (test functions prefixed with `test_`, fixtures).
-        -   **IMPORTANT**: Include a comment like `# source_info: {target_source_info}` at the beginning of each test function's body. This metadata is critical for tracing test failures back to the source.
-    6.  **Runnability**: Ensure tests are runnable with `pytest` from the project root.
+    7.  **Test Structure**:
+        -   Use pytest conventions (fixtures).
+        -   **Important for `map_test_to_source`**: Include a comment like `# source_info: {target_source_info}` at the beginning of each test function's body. This metadata is critical for tracing test failures back to the source.
+    8.  **Runnability**: Ensure tests are runnable with `pytest` from the project root.
 
     Generate the Python code for the test file now.
     """
@@ -498,7 +469,6 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
     model = GenerativeModel(DEFAULT_MODEL)
     logger.info(f"Generating integration tests for {app_package} using {DEFAULT_MODEL}")
     
-    # Corrected setup for FastAPI TestClient
     framework_specific = {
         "flask": {
             "client_import": "from flask.testing import FlaskClient",
@@ -530,9 +500,16 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
 
     Requirements for Test Generation:
     1.  **Strictly Output Code Only**: Your response MUST be only the raw Python code for the test file. Do NOT include any explanations, comments outside the code blocks, or markdown formatting (like ```python ... ```).
-    2.  **Imports**: Include all necessary imports: `pytest`, `{framework_specific['client_import']}`, `{framework_specific['app_import']}` (to get the `app` instance for the client), and any other standard libraries like `json`, `os`, `uuid` if needed for test data.
-    3.  **Test Client Setup**: Set up a test client using `{framework_specific['client_setup']}`.
-    4.  **Test Scenarios**:
+    2.  **File Naming Convention**: The generated test file for integration tests should be named `test_integration.py`.
+    3.  **Test Naming Convention**: All test functions within `test_integration.py` MUST start with `test_` followed by the API action and scenario (e.g., `test_create_flashcard_success`, `test_get_flashcards_empty`).
+    4.  **Crucial Source Information (for Debugging)**: For EACH test function in `test_integration.py`, you MUST include a comment indicating the source endpoint function it tests. This is CRITICAL for our automated debugging system.
+        The format MUST be: `# source_info: backend.routers.your_router_file.your_endpoint_function`
+        If the endpoint is in `backend.main.py`, use: `# source_info: backend.main.your_endpoint_function`
+        Example: For a test of `POST /api/flashcards` (handled by `create_flashcard` in `backend.routers.flashcards.py`), the comment in the test function should be `# source_info: backend.routers.flashcards.create_flashcard`.
+        **DO NOT OMIT THIS COMMENT.** Its presence and exact format are essential.
+    5.  **Imports**: Include all necessary imports: `pytest`, `{framework_specific['client_import']}`, `{framework_specific['app_import']}` (to get the `app` instance for the client), and any other standard libraries like `json`, `os`, `uuid` if needed for test data.
+    6.  **Test Client Setup**: Set up a test client using `{framework_specific['client_setup']}`.
+    7.  **Test Scenarios**:
         -   For each endpoint:
             -   Test with valid inputs and verify successful responses (status code 200/201, correct JSON payload).
             -   Test with invalid inputs (e.g., wrong data types, missing fields) and verify appropriate error responses (e.g., 400, 422).
@@ -541,11 +518,10 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
         -   Verify response status codes (e.g., `assert response.status_code == 200`).
         -   Verify JSON payloads (e.g., `assert response.json() == expected_data`).
         -   If database interaction is involved, consider setting up and tearing down a temporary test database using pytest fixtures.
-    5.  **Test Structure**:
-        -   Write clear, well-named test functions (e.g., `test_create_task_success`, `test_get_tasks_empty`).
+    8.  **Test Structure**:
         -   Use pytest fixtures for setup/teardown (e.g., for test client, temporary database).
         -   Organize tests logically.
-    6.  **Runnability**: Ensure tests are runnable with `pytest` from the project root (`{project_root}`).
+    9.  **Runnability**: Ensure tests are runnable with `pytest` from the project root (`{project_root}`).
 
     Generate the Python code for the integration test file now.
     """
@@ -600,30 +576,43 @@ def run_tests(project_root):
             sys.exit(1)
 
         failures = []
-        # Parse stdout for test failures
+        # Cải thiện phần Parsing output của pytest
+        # Regex này sẽ khớp với định dạng "path/to/file.py::test_function_name PASSED/FAILED"
+        # Rất quan trọng: đảm bảo regex này khớp chính xác các dòng bạn muốn parse
+        # Tôi sẽ điều chỉnh regex để cố gắng khớp với định dạng có cả PASSED và FAILED
+        # và chỉ quan tâm đến các dòng có '::'
+        test_result_pattern = re.compile(r"^(.*?)::(\w+)\s+(PASSED|FAILED|SKIPPED|XFAIL|XPASS)")
+
         for line in result.stdout.splitlines():
-            # Look for lines indicating a specific test failure
-            if "FAILED" in line and "::" in line and not line.startswith("="):
-                match = re.search(r"^(.*?)::(\w+)\s+FAILED", line)
+            # Chỉ xử lý các dòng có FAILED hoặc PASSED
+            if "FAILED" in line: # Chỉ quan tâm đến các dòng FAILED
+                match = test_result_pattern.search(line.strip())
                 if match:
                     test_file_rel_path = match.group(1) # e.g., 'tests/test_CustomJsonFormatter_format.py'
-                    test_name = match.group(2) # e.g., 'test_CustomJsonFormatter_format_success'
+                    test_name = match.group(2)          # e.g., 'test_CustomJsonFormatter_format_success'
+                    status = match.group(3)             # e.g., 'FAILED'
+
+                    # Chỉ thêm vào danh sách failures nếu status là FAILED
+                    if status == "FAILED":
+                        test_file_full_path = os.path.join(project_root, test_file_rel_path.replace('/', os.sep))
+                        
+                        # Thêm kiểm tra này để đảm bảo file thực sự tồn tại
+                        if not os.path.exists(test_file_full_path):
+                            logger.warning(f"Parsed test file path '{test_file_full_path}' does not exist for test '{test_name}'. Skipping mapping.")
+                            continue # Bỏ qua dòng này nếu file không tồn tại
+                        
+                        source_file, source_func = map_test_to_source(test_name, test_file_full_path)
+
+                        failures.append({
+                            "test": test_name,
+                            "source_file": source_file,
+                            "source_function": source_func,
+                            "error_line": line # Dòng gốc từ pytest
+                        })
                 else:
-                    # Fallback if regex doesn't match expected pattern (shouldn't happen often)
-                    test_file_rel_path = "unknown_test_file.py"
-                    test_name_match = re.search(r"::(\w+)\s+FAILED", line)
-                    test_name = test_name_match.group(1) if test_name_match else "UnknownTest"
-
-                test_file_full_path = os.path.join(project_root, test_file_rel_path.replace('/', os.sep))
-
-                source_file, source_func = map_test_to_source(test_name, test_file_full_path)
-
-                failures.append({
-                    "test": test_name,
-                    "source_file": source_file,
-                    "source_function": source_func,
-                    "error_line": line
-                })
+                    # Nếu dòng có FAILED nhưng không khớp với pattern, có thể là một dòng traceback
+                    # hoặc tóm tắt. Log cảnh báo và bỏ qua.
+                    logger.warning(f"Could not parse potential pytest failure line: {line.strip()}")
 
         if failures:
             with open(log_file, 'a', encoding='utf-8') as f:
@@ -716,67 +705,6 @@ def map_test_to_source(test_name, specific_test_file_path):
         return "test_integration.py", heuristic_func_name
     
     return "unknown_file.py", heuristic_func_name
-
-    # for root, _, files in os.walk(test_dir):
-    #     for file_name in files:
-    #         if file_name.startswith("test_") and file_name.endswith(".py"):
-    #             test_file_path = os.path.join(root, file_name)
-    #             try:
-    #                 with open(test_file_path, 'r', encoding='utf-8') as f:
-    #                     test_content = f.read()
-
-    #                 # Find the specific test function block using the exact test_name
-    #                 # This regex is corrected to avoid unbalanced parenthesis and correctly capture the block
-    #                 # It matches from 'def test_name(...):' up to the start of the next 'def test_' or end of file.
-    #                 test_func_pattern = rf"(def\s+{re.escape(test_name)}\s*\(.*?\):\s*\n(?:(?:\s*#.*|\s*).*?\n)*?)(?=\n\s*def\s+test_|\Z)"
-    #                 test_func_match = re.search(test_func_pattern, test_content, re.DOTALL | re.MULTILINE)
-
-    #                 if test_func_match:
-    #                     func_block_content = test_func_match.group(1)
-                        
-    #                     # Search for source_info within the captured function block
-    #                     source_info_match = re.search(r"#\s*source_info:\s*([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)", func_block_content)
-                        
-    #                     if source_info_match:
-    #                         full_source_path = source_info_match.group(1)
-    #                         parts = full_source_path.split('.')
-                            
-    #                         if len(parts) >= 2:
-    #                             source_func_or_method_name = parts[-1]
-    #                             parent_name = parts[-2]
-
-    #                             if parent_name[0].isupper() and parent_name.isalpha():
-    #                                 if len(parts) >= 3:
-    #                                     module_part = ".".join(parts[:-2])
-    #                                     return f"{module_part.replace('.', os.sep)}.py", f"{parent_name}.{source_func_or_method_name}"
-    #                                 else:
-    #                                     logger.warning(f"Malformed source_info (Class.method without full module path) in {test_file_path} for {test_name}: {full_source_path}")
-    #                                     return "unknown_file.py", f"{parent_name}.{source_func_or_method_name}"
-    #                             else:
-    #                                 module_part = ".".join(parts[:-1])
-    #                                 return f"{module_part.replace('.', os.sep)}.py", source_func_or_method_name
-    #                         else:
-    #                             logger.warning(f"Malformed source_info (too few parts) in {test_file_path} for {test_name}: {full_source_path}. Expected module.function or module.Class.method.")
-    #                     else:
-    #                         logger.debug(f"No # source_info comment found within test function block for '{test_name}' in '{test_file_path}'.")
-    #                 else:
-    #                     logger.debug(f"Test function definition for '{test_name}' not found in '{test_file_path}'. This might indicate a pytest collection issue or a malformed test file.")
-
-    #             except re.error as re_err: # Catch regex specific errors
-    #                 logger.error(f"Regex error in map_test_to_source for test '{test_name}' in '{test_file_path}': {re_err}")
-    #             except Exception as e:
-    #                 logger.warning(f"Error reading or parsing test file '{test_file_path}' for '{test_name}' source info: {e}", exc_info=True)
-
-    # # Fallback heuristic
-    # logger.warning(f"Failed to find reliable # source_info for '{test_name}' in any test file. Falling back to simple heuristic/unknown.")
-    
-    # heuristic_func_name_match = re.match(r"test_([a-zA-Z0-9_]+)(?:_|$)", test_name)
-    # heuristic_func_name = heuristic_func_name_match.group(1) if heuristic_func_name_match else "unknown_function"
-
-    # if test_name.startswith("test_integration"):
-    #     return "test_integration.py", heuristic_func_name
-    
-    # return "unknown_file.py", heuristic_func_name # Final fallback
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate and run tests for a generated application.")
@@ -939,43 +867,3 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"An unexpected error occurred during test generation pipeline: {e}", exc_info=True)
         sys.exit(1)
-
-#     prompt = f"""
-#     You are an expert Python test engineer specializing in the pytest framework and testing Flask applications.
-#     Your task is to generate comprehensive pytest unit tests for the following Python function.
-
-#     Function Name: {function_name}
-#     Target Module for Imports within test: {full_module_path}(e.g., if function is in 'app.routes', tests will 'from app.routes import function_name')
-
-#     Function Code:
-#     ```python
-#     {function_code}
-
-#     Context and Instructions:
-#     {context_description}
-
-#     Please generate pytest unit tests that cover the following:
-#     1. Mocking Dependencies: Properly mock all external dependencies. For Flask routes, this typically includes:
-#     - flask.request (e.g., request.form, request.args, request.json).
-#     - Database sessions/objects (e.g., db.session.add, db.session.commit, db.session.delete, model query methods like Flashcard.query.get_or_404).
-#     - Flask utility functions like flask.render_template, flask.redirect, flask.url_for.
-#     - The Flashcard model constructor or any methods it might call if relevant to the function's logic beyond simple instantiation.
-#     - Use unittest.mock.patch or pytest fixtures with mocker (from pytest-mock) for mocking. 
-#     - Crucially, ensure patches target the correct module where the object is looked up by the function under test, not where it's defined (e.g., patch '{full_module_path}.request', '{full_module_path}.db', '{full_module_path}.Flashcard'). For example, if {full_module_path}.py contains from flask import request and uses request, you'd patch {full_module_path}.request. If it uses db.session.add after from . import db (where db is from app/__init__.py), you'd patch {full_module_path}.db.session.add.
-
-#     2. Test Scenarios:
-#     - Test the "happy path" where the function behaves as expected with valid inputs.
-#     - Test edge cases and error conditions (e.g., missing required form data, database errors if applicable, object not found).
-#     - Verify that mocks for collaborators (like db.session.add, db.session.commit) are called with the expected arguments.
-#     - Assert the function's return value (e.g., the response from render_template or redirect).
-
-#     3. Test Structure:
-#     - Write clear, well-named test functions (e.g., test_create_card_success, test_create_card_missing_front_content).
-#     - Use pytest conventions (e.g., test functions prefixed with test_).
-#     - Ensure necessary imports are included at the top of the test file (e.g., pytest, unittest.mock.patch, the function/module under test like from {full_module_path} import {function_name}, any necessary Flask objects if not fully mocked).
-#     - If testing Flask routes, using app.test_request_context() from a pytest fixture providing a Flask app instance is common, especially if url_for or other context-dependent Flask features are involved (even if also mocked).
-
-#     Output ONLY the Python code for the test file. Do not include any explanations or markdown formatting around the code block.
-#     The test code should be runnable using pytest when executed from the root directory of the application being tested (i.e., the directory containing the '{FLASK_APP_PACKAGE_NAME}' package).
-#     The function under test will be imported as from {full_module_path} import {function_name}.
-#     """

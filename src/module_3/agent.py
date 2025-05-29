@@ -36,12 +36,6 @@ PYTHON_PATH = r"C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\pytho
 # OUTPUTS_DIR = r"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs"
 # PYTHON_PATH = r"C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe"
 
-# parser = argparse.ArgumentParser(description="Generate an application from JSON design and specification files.")
-# parser.add_argument('design_file', help="Path to the JSON design file")
-# parser.add_argument('spec_file', help="Path to the JSON specification file")
-# parser.add_argument('--model', default=DEFAULT_MODEL, choices=SUPPORTED_MODELS, help=f"Gemini model to use for code generation (default: {DEFAULT_MODEL}).")
-
-
 # --- Main functions ---
 def slugify(text):
     text = text.lower()
@@ -360,8 +354,10 @@ exit /b 0
     # NOTE: The file_path passed to prompt is the absolute one.
     prompt = f"""
     Context:
-    You are an expert Senior Software Engineer acting as a meticulous code writer for a {project_name} with a {backend_language_framework} backend technology, {frontend_language_framework} frontend technology, and {storage_type} storage type.
-    Your task is to generate complete, syntactically correct code for the specified file, based on the JSON design file (technical implementation) and JSON specification file (requirements), adhering to additional rules for logging and FastAPI static file serving.
+    You are an expert Senior Software Engineer acting as a meticulous code writer for a {project_name} with a {backend_language_framework} 
+backend technology, {frontend_language_framework} frontend technology, and {storage_type} storage type.
+    Your task is to generate complete, syntactically correct code for the specified file, based on the JSON design file (technical implementation) 
+and JSON specification file (requirements), adhering to additional rules for logging and FastAPI static file serving.
 
     Target File Information:
     - Full Path of the file to generate: `{file_path}`
@@ -418,8 +414,8 @@ exit /b 0
             -   **`ContextVar`:** Declare a `contextvars.ContextVar` (e.g., `request_id_ctx`) to store the unique request ID for the current request context.
             -   **FastAPI Middleware:** Implement a `starlette.middleware.base.BaseHTTPMiddleware`.
                 -   Inside its `dispatch` method, generate a unique ID for each incoming request (e.g., using `uuid.uuid4()`).
-                -   Set this ID in `request_id_ctx` using `request_id_ctx.set()` **before** `call_next(request)`.
-                -   Reset the `ContextVar` using `request_id_ctx.reset()` in a `finally` block **after** `call_next(request)` to ensure context is cleaned up.
+                -   Set this ID in `request_id_ctx` using `token = request_id_ctx.set(request_id)`.
+                -   Reset the `ContextVar` using `request_id_ctx.reset(token)` in a `finally` block **after** `call_next(request)` to ensure context is cleaned up. This is CRITICAL for correct ContextVar behavior.
             -   **Logging Filter:** Create a custom `logging.Filter`.
                 -   Its `filter` method should retrieve the `request_id` from `request_id_ctx.get()` and attach it as an attribute to the `logging.LogRecord` (e.g., `record.request_id = request_id_value`).
             -   **Registration:** Register the custom middleware with the FastAPI `app` using `app.add_middleware()`. Also, add the custom logging filter to the root logger (e.g., `logger.addFilter(YourRequestIdFilter())`) after `basicConfig`.
@@ -460,6 +456,8 @@ exit /b 0
         -   **JSON Design (Technical Implementation Details)**:
             -   `system_Architecture`: Overall component layout.
             -   `data_Design.data_Models`: Define database schemas/models, considering the `storage_Type`.
+            -   **Pydantic Model Data Validation**: For Pydantic models, ensure that all required fields are provided correctly during instantiation. Pay close attention to field names (e.g., 'front_text' vs 'question') and whether a field is optional or required. If a field is `required`, it must always be present when creating an instance of the Pydantic model.
+            -   **SQLAlchemy Model Instantiation**: When defining Python classes that map to database tables (e.g., SQLAlchemy models), ensure that primary key fields (like 'id') are correctly defined as `primary_key=True` and are NOT passed as arguments during object instantiation. SQLAlchemy handles the ID generation upon commit.
             -   `interface_Design.api_Specifications`: For backend files, implement these API endpoints (routes, controllers, handlers). For frontend files, prepare to call these APIs.
             -   `workflow_Interaction`: Implement the logic described in these user/system flows.
             -   `dependencies`: Utilize libraries listed here where appropriate for the file's purpose.
@@ -484,7 +482,8 @@ exit /b 0
     {json.dumps(json_spec, indent=2)}
     ```
 
-    Now, generate the code for the file: `{file_path}`. Ensure it is complete and ready to run, includes advanced logging for Python functions tailored for a debug agent, and supports FastAPI StaticFiles for frontend serving in `{plan['backend_module_path'].replace('.', '/')}.py`. If any file should serve as an entry point or executable file, include the appropriate language-specific entry point code.
+    Now, generate the code for the file: `{file_path}`. Ensure it is complete and ready to run, includes advanced logging for Python functions tailored 
+for a debug agent, and supports FastAPI StaticFiles for frontend serving in `{plan['backend_module_path'].replace('.', '/')}.py`. If any file should serve as an entry point or executable file, include the appropriate language-specific entry point code.
     """
 
     if API_CALL_DELAY_SECONDS > 0:
