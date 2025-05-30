@@ -1,0 +1,70 @@
+2025-05-30 10:59:10,060 - INFO - Gemini API configured successfully for test generator.
+2025-05-30 10:59:10,061 - INFO - Detecting project and framework...
+2025-05-30 10:59:10,061 - INFO - Using most recent project folder: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application
+2025-05-30 10:59:10,062 - INFO - Loaded latest design file: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.design.json
+2025-05-30 10:59:10,062 - INFO - Loaded latest specification file: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs\flashcard_web_application_20250527.spec.json
+2025-05-30 10:59:10,062 - INFO - Detected app package from JSON design: backend
+2025-05-30 10:59:10,062 - INFO - Detected framework from JSON specification: fastapi
+2025-05-30 10:59:10,062 - INFO - Final detected project: flashcard_web_application, Framework: fastapi, App Package: backend
+2025-05-30 10:59:10,062 - INFO - Created/Updated pytest.ini in C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application with asyncio and cachedir configurations.
+2025-05-30 10:59:10,062 - INFO - Test generation flag not found. Generating tests...
+2025-05-30 10:59:10,063 - INFO - Ensured test output directory exists: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests
+2025-05-30 10:59:10,063 - INFO - Ensuring __init__.py files in main application package: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\backend
+2025-05-30 10:59:10,063 - DEBUG - __init__.py already exists in C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\backend
+2025-05-30 10:59:10,063 - DEBUG - __init__.py already exists in C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\backend\routers
+2025-05-30 10:59:10,063 - INFO - Ensuring __init__.py files in test output directory: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests
+2025-05-30 10:59:10,064 - INFO - All required test dependencies (pytest, pytest-mock, pytest-asyncio) are already present in requirements.txt. No update needed.
+2025-05-30 10:59:10,064 - INFO - No new test dependencies detected in requirements.txt. Skipping dependency installation.
+2025-05-30 10:59:10,064 - DEBUG - Generating unit tests for function: create_db_and_tables in module: backend.database
+2025-05-30 10:59:10,065 - INFO - Using model: gemini-2.0-flash for unit test generation for 'create_db_and_tables'.
+2025-05-30 10:59:19,671 - INFO - Saved unit tests to C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_create_db_and_tables.py
+2025-05-30 10:59:19,672 - DEBUG - Generating unit tests for function: get_db in module: backend.database
+2025-05-30 10:59:19,673 - INFO - Using model: gemini-2.0-flash for unit test generation for 'get_db'.
+2025-05-30 10:59:27,239 - INFO - Saved unit tests to C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_get_db.py
+2025-05-30 10:59:27,240 - DEBUG - Generating unit tests for function: setup_logging in module: backend.main
+2025-05-30 10:59:27,240 - INFO - Using model: gemini-2.0-flash for unit test generation for 'setup_logging'.
+2025-05-30 10:59:36,952 - INFO - Saved unit tests to C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_setup_logging.py
+2025-05-30 10:59:36,956 - DEBUG - Generating unit tests for function: log_requests in module: backend.main
+2025-05-30 10:59:36,956 - INFO - Using model: gemini-2.0-flash for unit test generation for 'log_requests'.
+2025-05-30 10:59:46,398 - INFO - Saved unit tests to C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_log_requests.py
+2025-05-30 10:59:46,401 - DEBUG - Generating unit tests for function: health_check in module: backend.main
+2025-05-30 10:59:46,401 - INFO - Using model: gemini-2.0-flash for unit test generation for 'health_check'.
+2025-05-30 10:59:52,390 - INFO - Saved unit tests to C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_health_check.py
+2025-05-30 10:59:52,393 - DEBUG - Generating unit tests for method: CustomJsonFormatter.format in module: backend.main
+2025-05-30 10:59:52,393 - INFO - Using model: gemini-2.0-flash for unit test generation for 'format'.
+2025-05-30 11:00:02,708 - INFO - Saved unit tests to C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_CustomJsonFormatter_format.py
+2025-05-30 11:00:02,709 - DEBUG - Generating unit tests for method: RequestIDFilter.filter in module: backend.main
+2025-05-30 11:00:02,709 - INFO - Using model: gemini-2.0-flash for unit test generation for 'filter'.
+2025-05-30 11:00:10,788 - INFO - Saved unit tests to C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_RequestIDFilter_filter.py
+2025-05-30 11:00:10,790 - DEBUG - Generating unit tests for method: RequestIDMiddleware.dispatch in module: backend.main
+2025-05-30 11:00:10,790 - INFO - Using model: gemini-2.0-flash for unit test generation for 'dispatch'.
+2025-05-30 11:00:20,420 - INFO - Saved unit tests to C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_RequestIDMiddleware_dispatch.py
+2025-05-30 11:00:20,423 - DEBUG - Generating unit tests for function: create_flashcard in module: backend.routers.flashcards
+2025-05-30 11:00:20,423 - INFO - Using model: gemini-2.0-flash for unit test generation for 'create_flashcard'.
+2025-05-30 11:00:30,304 - INFO - Saved unit tests to C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_create_flashcard.py
+2025-05-30 11:00:30,304 - DEBUG - Generating unit tests for function: read_flashcards in module: backend.routers.flashcards
+2025-05-30 11:00:30,304 - INFO - Using model: gemini-2.0-flash for unit test generation for 'read_flashcards'.
+2025-05-30 11:00:43,224 - INFO - Saved unit tests to C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_read_flashcards.py
+2025-05-30 11:00:43,226 - DEBUG - Generating unit tests for function: read_flashcard in module: backend.routers.flashcards
+2025-05-30 11:00:43,226 - INFO - Using model: gemini-2.0-flash for unit test generation for 'read_flashcard'.
+2025-05-30 11:00:54,516 - INFO - Saved unit tests to C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_read_flashcard.py
+2025-05-30 11:00:54,517 - DEBUG - Generating unit tests for function: create_review in module: backend.routers.reviews
+2025-05-30 11:00:54,519 - INFO - Using model: gemini-2.0-flash for unit test generation for 'create_review'.
+2025-05-30 11:01:06,712 - INFO - Saved unit tests to C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_create_review.py
+2025-05-30 11:01:06,712 - INFO - Extracted 5 API endpoints from design file for integration testing.
+2025-05-30 11:01:06,712 - INFO - Generating integration tests for backend using gemini-2.0-flash
+2025-05-30 11:01:20,784 - INFO - Saved integration tests to C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_integration.py
+2025-05-30 11:01:20,785 - INFO - Marked tests as generated: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\.test_generated
+2025-05-30 11:01:20,786 - INFO - Created run_tests.bat at C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\run_tests.bat
+2025-05-30 11:01:20,786 - INFO - Attempting to execute batch file: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\run_tests.bat
+2025-05-30 11:01:20,786 - INFO - Current working directory for batch: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application
+2025-05-30 11:01:20,786 - INFO - Executing run_tests.bat from C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application. Results will be in C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\test_results.log
+2025-05-30 11:01:22,022 - INFO - Pytest run completed. Batch script exit code: 0
+2025-05-30 11:01:22,026 - DEBUG - Attempting to map test 'test_RequestIDFilter_filter_success' from 'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_RequestIDFilter_filter.py' to source.
+2025-05-30 11:01:22,027 - ERROR - Found 1 test failures. Details below:
+2025-05-30 11:01:22,027 - ERROR -   Test: test_RequestIDFilter_filter_success
+2025-05-30 11:01:22,027 - ERROR -   Test File: tests\test_RequestIDFilter_filter.py
+2025-05-30 11:01:22,028 - ERROR -   Source File: backend\main.py
+2025-05-30 11:01:22,028 - ERROR -   Source Function: RequestIDFilter.filter
+2025-05-30 11:01:22,028 - ERROR -   Error Summary: tests/test_RequestIDFilter_filter.py::test_RequestIDFilter_filter_success FAILED [  9%]
+

@@ -29,8 +29,10 @@ logger.info("Gemini API configured successfully for debug agent.")
 DEFAULT_MODEL = 'gemini-2.0-flash'
 BASE_GENERATED_DIR = os.getenv('BASE_GENERATED_DIR', 'code_generated_result')
 OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs')
+# OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs')
 TEST_LOG_FILE = "test_results.log"
-DEBUG_LOG_FILE = "debug_results.log"
+DEBUG_LOG_FILE = "debug_results.log" # Log chi tiết quá trình debug (fix được đề xuất, v.v.)
+TEST_HISTORY_LOG_FILE = "test_results_history.log" # Log lịch sử test (được ghi bởi test_generator_agent)
 
 def detect_project_and_framework(specified_project=None):
     if not os.path.exists(BASE_GENERATED_DIR):
@@ -112,15 +114,22 @@ def parse_test_results(log_file):
     try:
         with open(log_file, 'r', encoding='utf-8') as f:
             content = f.read()
-        pattern = re.compile(r"Test: (\w+)\nSource File: (.+?)\nSource Function: (.+?)\nError Line: (.+?)(?=\nTest:|\Z)", re.DOTALL)
+        pattern = re.compile(r"Test: (\w+)\nTest File Path: (.+?)\nSource File: (.+?)\nSource Function: (.+?)\nError Line Summary: (.+?)(?=\nTest:|\Z)", re.DOTALL)
         match = pattern.search(content)
         if match:
-            return [{
+            failure = {
                 "test": match.group(1),
-                "source_file": match.group(2),
-                "source_function": match.group(3),
-                "error_line": match.group(4).strip()
-            }]
+                "test_file_path": match.group(2),
+                "source_file": match.group(3),
+                "source_function": match.group(4),
+                "error_line": match.group(5).strip()
+            }
+            # Lưu vào lịch sử
+            with open(os.path.join(os.path.dirname(log_file), TEST_HISTORY_LOG_FILE), 'a', encoding='utf-8') as f:
+                f.write(f"\n--- Failure ---\n")
+                for key, value in failure.items():
+                    f.write(f"{key}: {value}\n")
+            return [failure]
         logger.info(f"No test failures found in {log_file}")
         return []
     except Exception as e:
@@ -135,6 +144,10 @@ def get_function_code(filepath, function_name):
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == function_name:
                 return ast.get_source_segment(source, node)
+            elif isinstance(node, ast.ClassDef):
+                for method in node.body:
+                    if isinstance(method, (ast.FunctionDef, ast.AsyncFunctionDef)) and method.name == function_name:
+                        return ast.get_source_segment(source, method)
         logger.warning(f"Function {function_name} not found in {filepath}")
         return None
     except Exception as e:
@@ -221,6 +234,25 @@ def deploy_app(project_root, app_package):
     except Exception as e:
         logger.error(f"Failed to deploy application: {e}")
 
+def run_tests(project_root):
+    bat_file = os.path.join(project_root, "run_tests.bat")
+    if not os.path.exists(bat_file):
+        logger.error(f"run_tests.bat not found at {bat_file}")
+        return False
+    try:
+        result = subprocess.run(
+            f'"{bat_file}"',
+            shell=True,
+            capture_output=True,
+            text=True,
+            cwd=project_root
+        )
+        logger.info(f"Pytest exit code: {result.returncode}")
+        return result.returncode == 0
+    except Exception as e:
+        logger.error(f"Failed to run tests: {e}")
+        return False
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Debug generated application tests.")
@@ -233,7 +265,7 @@ if __name__ == "__main__":
     test_log_file = os.path.join(project_root, TEST_LOG_FILE)
     debug_log_file = os.path.join(project_root, DEBUG_LOG_FILE)
 
-    max_iterations = 10
+    max_iterations = 77
     iteration = 0
 
     while iteration < max_iterations:
@@ -274,8 +306,12 @@ if __name__ == "__main__":
             log.write("Mã đã sửa:\n```python\n{fixed_code}\n```\n")
 
         apply_fix(source_path, source_code, fixed_code)
-        run_tests(project_root)
-        iteration += 1
+        if not run_tests(project_root):
+            iteration += 1
+        else:
+            logger.info("Tests passed after fix. Deploying application.")
+            deploy_app(project_root, app_package)
+            break
 
     if iteration == max_iterations:
         logger.warning("Reached maximum debug iterations without resolving all issues.")

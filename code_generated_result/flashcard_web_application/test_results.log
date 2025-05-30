@@ -1,0 +1,57 @@
+============================= test session starts =============================
+platform win32 -- Python 3.10.10, pytest-8.3.5, pluggy-1.6.0 -- C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application
+configfile: pytest.ini
+plugins: anyio-4.9.0, asyncio-1.0.0, mock-3.14.1
+asyncio: mode=auto, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 64 items
+
+tests/test_CustomJsonFormatter_format.py::test_CustomJsonFormatter_format_success PASSED [  1%]
+tests/test_CustomJsonFormatter_format.py::test_CustomJsonFormatter_format_with_request_id PASSED [  3%]
+tests/test_CustomJsonFormatter_format.py::test_CustomJsonFormatter_format_with_exception_info PASSED [  4%]
+tests/test_CustomJsonFormatter_format.py::test_CustomJsonFormatter_format_empty_message PASSED [  6%]
+tests/test_CustomJsonFormatter_format.py::test_CustomJsonFormatter_format_none_message PASSED [  7%]
+tests/test_RequestIDFilter_filter.py::test_RequestIDFilter_filter_success FAILED [  9%]
+
+================================== FAILURES ===================================
+_____________________ test_RequestIDFilter_filter_success _____________________
+tests\test_RequestIDFilter_filter.py:13: in test_RequestIDFilter_filter_success
+    result = request_id_filter.filter(record)
+backend\main.py:49: in filter
+    record.request_id = request_id_ctx.get()
+E   LookupError: <ContextVar name='request_id' at 0x000001ADDB0BD4E0>
+============================== warnings summary ===============================
+venv\lib\site-packages\_pytest\config\__init__.py:1441
+  C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages\_pytest\config\__init__.py:1441: PytestConfigWarning: Unknown config option: cachedir
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+backend\database.py:16
+  C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\backend\database.py:16: MovedIn20Warning: The ``declarative_base()`` function is now available as sqlalchemy.orm.declarative_base(). (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    Base = declarative_base()
+
+venv\lib\site-packages\pydantic\_internal\_config.py:323
+venv\lib\site-packages\pydantic\_internal\_config.py:323
+  C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages\pydantic\_internal\_config.py:323: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+venv\lib\site-packages\pydantic\_internal\_config.py:373
+  C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages\pydantic\_internal\_config.py:373: UserWarning: Valid config keys have changed in V2:
+  * 'orm_mode' has been renamed to 'from_attributes'
+    warnings.warn(message, UserWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_RequestIDFilter_filter.py::test_RequestIDFilter_filter_success
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+=================== 1 failed, 5 passed, 5 warnings in 0.75s ===================
+
+
+--- Failure Summary (Mapped) ---
+Test: test_RequestIDFilter_filter_success
+Test File Path: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_RequestIDFilter_filter.py
+Source File: backend\main.py
+Source Function: RequestIDFilter.filter
+Error Line Summary: tests/test_RequestIDFilter_filter.py::test_RequestIDFilter_filter_success FAILED [  9%]
+
