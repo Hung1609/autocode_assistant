@@ -63,7 +63,7 @@ The output MUST be a single, valid JSON object. Do not include any introductory 
     // Additional non-functional requirements...
   ],
   "external_Interface_Requirements": {{
-    "user_Interfaces": ["Description of UI components and interactions, descripe as specifically as possible with layout structure, specific elements and their positions."],
+    "user_Interfaces": ["Description of UI components and interactions, describe as specifically as possible with layout structure, specific elements and their positions."],
     "hardware_Interfaces": ["List any specific hardware specifications or connectivity requirements if applicable. If there are no special requirements, write 'No specific hardware requirements, assuming standard computer/mobile device hardware.'"],
     "software_Interfaces": ["Describe integration requirements with other software systems. If it is a standalone web application, write 'Requires a modern web browser on the client side."],
     "communication_Interfaces": ["Identify the communication protocols that will be used between system components or with external systems. Include authentication methods if applicable."]
@@ -434,8 +434,8 @@ Do not include any introductory text, explanations, code comments, or markdown f
       // Additional workflows...
   ],
   "folder_Structure": {{
-    "description": "Proposed folder structure for the the entire project. **All paths listed in the 'structure' array are relative to a root project directory whose name should be derived from the project_Name(e.g., if project_Name is 'Personal Task Management Web App', the root directory would be 'personal_task_management_web_app').** The structure should includes dependency files for the chosen languages/frameworks and main subdirectories (e.g., /backend, /frontend). Adapt based on the chosen frameworks, project scale, or specific featetures. **The specific paths and file names listed in the 'structure' array below are examples; they MUST be adapted to the actual technology_Stack provided in Agent 1's input.** **IMPORTANT RULE:** For each item in the 'structure' array below, if the `path` represents a directory (a folder containing other files or folders), its `description` **MUST** include the word 'directory' (case-insensitive). If the `path` represents a specific file (like `server.js` or `App.js`), its `description` should describe the file's purpose and **MUST NOT** contain the word 'directory'. This is critical for the code generation script.",
-    "root_Project_Directory_Name": "A slugified version of project_Name from Agent 1's input (e.g., 'personal_task_management_web_app'). This will be the name of the main project folder.",
+    "description": "Proposed folder structure for the the entire project. **All paths listed in the 'structure' array are relative to a root project directory whose name should be derived from the project_Name(e.g., if project_Name is 'Personal Task Management Web App', the root directory would be 'personal_task_management_web_app').** The structure should includes dependency files for the chosen languages/frameworks and main subdirectories (e.g., /backend, /frontend). Adapt based on the chosen frameworks, project scale, or specific features. **The specific paths and file names listed in the 'structure' array below are examples; they MUST be adapted to the actual technology_Stack provided in Agent 1's input.** **IMPORTANT RULE:** For each item in the 'structure' array below, if the `path` represents a directory (a folder containing other files or folders), its `description` **MUST** include the word 'directory' (case-insensitive). If the `path` represents a specific file (like `server.js` or `App.js`), its `description` should describe the file's purpose and **MUST NOT** contain the word 'directory'. This is critical for the code generation script.",
+    "root_Project_Directory_Name": "A slugify version of project_Name from Agent 1's input (e.g., 'personal_task_management_web_app'). This will be the name of the main project folder.",
     "structure": [
       // --- Root Level Files ---
       {{ "path": "requirements.txt", "description": "Python backend dependencies file (if Python is used)." }},
@@ -523,7 +523,7 @@ PARTIAL EXPECTED OUTPUT:
           {{ "name": "due_date", "type": "Date", "description": "Optional due date for the task.", "constraints": ["nullable: true"] }},
           {{ "name": "is_complete", "type": "Boolean", "description": "Status of the task.", "constraints": ["required", "default: false"] }},
           {{ "name": "created_at", "type": "DateTime", "description": "Timestamp of task creation.", "constraints": ["default: func.now()"] }},
-          {{ "name": "updated_at", "type": "DateTime", "description": "Timestamp of last task update.", "constraints": ["default: func.now()", "onupdate: func.now()"] }}
+          {{ "name": "updated_at", "type": "DateTime", "description": "Timestamp of last task update.", "constraints": ["default: func.now()", "on_update: func.now()"] }}
         ],
         "relationships": [
           {{

@@ -7,6 +7,7 @@ import subprocess
 import re
 import argparse
 import sys
+
 from google.generativeai import GenerativeModel, configure
 from dotenv import load_dotenv
 
@@ -31,20 +32,15 @@ logger.info("Gemini API configured successfully for test generator.")
 DEFAULT_MODEL = 'gemini-2.0-flash'
 # Sử dụng os.getenv để linh hoạt cấu hình thư mục gốc
 BASE_GENERATED_DIR = os.getenv('BASE_GENERATED_DIR', 'code_generated_result')
-# OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs')
-OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs')
+OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs')
+# OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs')
 TEST_OUTPUT_DIR_NAME = "tests"
 TEST_LOG_FILE = "test_results.log"
+TEST_HISTORY_LOG_FILE = "test_results_history.log"
 TEST_GENERATED_FLAG = ".test_generated" # Cờ để đánh dấu test đã được sinh ra
 
 def create_pytest_ini(project_root):
-    """
-    Creates or updates pytest.ini in the project root with recommended configurations
-    for asyncio mode and cache directory to handle potential permission issues.
-    """
     pytest_ini_path = os.path.join(project_root, "pytest.ini")
-    
-    # Định nghĩa nội dung cho pytest.ini, bao gồm cachedir
     pytest_ini_content = """\
 [pytest]
 asyncio_mode = auto
@@ -75,49 +71,76 @@ cachedir = tmp_pytest_cache/
         logger.error(f"Failed to create/update pytest.ini in {project_root}: {e}")
 
 def generate_test_run_script(project_root, venv_python_path):
-    """
-    Creates a batch script to run pytest in the project's virtual environment.
-    """
     bat_file_path = os.path.join(project_root, "run_tests.bat")
     
     # Chú ý: Loại bỏ --exitfirst để thu thập tất cả lỗi
     # Chuyển hướng stdout và stderr của pytest vào TEST_LOG_FILE
-    bat_content = fr"""@echo off
+    bat_content = fr"""
+@echo off  REM Tắt echo lệnh để output Python capture dễ đọc hơn
 setlocal EnableDelayedExpansion
 
-echo Running tests... > debug_tests.log 2>&1
+REM Ghi trực tiếp ra stdout để Python capture được, không dùng file log ngay lập tức
+echo --- run_tests.bat STARTED ---
 
-set "PROJECT_ROOT=%~dp0"
-cd /d "%PROJECT_ROOT%" >> debug_tests.log 2>&1
+REM Các lệnh sau đó mới chuyển hướng vào debug_tests.log
+echo Current Directory (when batch started): "%CD%" > debug_tests.log 2>&1
+echo PROJECT_ROOT variable (calculated): "%~dp0" >> debug_tests.log 2>&1
+
+echo Changing directory to project root... >> debug_tests.log 2>&1
+cd /d "%~dp0" >> debug_tests.log 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Failed to change to project root directory %PROJECT_ROOT%. >> debug_tests.log 2>&1
+    echo ERROR: Failed to change to project root directory. Exiting with code %ERRORLEVEL%. >> debug_tests.log 2>&1
     exit /b 1
 )
+echo Current Directory (after cd): "%CD%" >> debug_tests.log 2>&1
 
-echo Checking for Python... >> debug_tests.log 2>&1
+echo Cleaning up previous test log file... >> debug_tests.log 2>&1
+if exist "{TEST_LOG_FILE}" (
+    del "{TEST_LOG_FILE}" >> debug_tests.log 2>&1
+    if %ERRORLEVEL% neq 0 (
+        echo WARNING: Failed to delete old test log file: "{TEST_LOG_FILE}". >> debug_tests.log 2>&1
+    ) else (
+        echo Old test log file deleted: "{TEST_LOG_FILE}". >> debug_tests.log 2>&1
+    )
+) else (
+    echo No old test log file to delete: "{TEST_LOG_FILE}". >> debug_tests.log 2>&1
+)
+
+echo Checking for Python at: "{venv_python_path}" >> debug_tests.log 2>&1
 "{venv_python_path}" --version >> debug_tests.log 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Python not found at {venv_python_path}. >> debug_tests.log 2>&1
+    echo ERROR: Python not found at "{venv_python_path}". Exiting with code %ERRORLEVEL%. >> debug_tests.log 2>&1
     exit /b 1
 )
 
-echo Activating virtual environment... >> debug_tests.log 2>&1
-call "%PROJECT_ROOT%venv\Scripts\activate.bat" >> debug_tests.log 2>&1
+echo Attempting to activate virtual environment... >> debug_tests.log 2>&1
+echo Activating script path: "%~dp0venv\Scripts\activate.bat" >> debug_tests.log 2>&1
+call "%~dp0venv\Scripts\activate.bat" >> debug_tests.log 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Failed to activate virtual environment. >> debug_tests.log 2>&1
+    echo ERROR: Failed to activate virtual environment. Error code: %ERRORLEVEL%. >> debug_tests.log 2>&1
+    echo Please ensure the venv\Scripts\activate.bat exists and is not corrupted. >> debug_tests.log 2>&1
     exit /b 1
 )
+echo Virtual environment activated successfully. >> debug_tests.log 2>&1
 
-echo Running pytest... >> debug_tests.log 2>&1
-rem Run pytest and redirect all output to {TEST_LOG_FILE}
+echo Now, checking python.exe in PATH from activated venv: >> debug_tests.log 2>&1
+where python.exe >> debug_tests.log 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo WARNING: python.exe not found in PATH after venv activation. This might indicate an issue with activate.bat. >> debug_tests.log 2>&1
+)
+
+echo Running pytest with --exitfirst... >> debug_tests.log 2>&1
 "{venv_python_path}" -m pytest tests --exitfirst --tb=short -v > "{TEST_LOG_FILE}" 2>&1
 set TEST_EXIT_CODE=%ERRORLEVEL%
 
 echo Deactivating virtual environment... >> debug_tests.log 2>&1
 deactivate >> debug_tests.log 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo WARNING: Failed to deactivate virtual environment. >> debug_tests.log 2>&1
+)
 
 if %TEST_EXIT_CODE% neq 0 (
-    echo ERROR: Tests failed. Check {TEST_LOG_FILE} for details. >> debug_tests.log 2>&1
+    echo ERROR: Tests failed. Check "{TEST_LOG_FILE}" for details. >> debug_tests.log 2>&1
     exit /b %TEST_EXIT_CODE%
 )
 
@@ -163,7 +186,7 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
             if project_name:
                 potential_project_root = os.path.join(BASE_GENERATED_DIR, project_name)
                 if os.path.isdir(potential_project_root):
-                    project_root = potential_project_root
+                    project_root = os.path.abspath(potential_project_root) # đường dẫn tuyệt đối
                     logger.info(f"Detected project root from specified design: {project_root}")
                 else:
                     logger.warning(f"Project directory '{potential_project_root}' from specified design not found in '{BASE_GENERATED_DIR}'.")
@@ -178,7 +201,7 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
     if not project_root and specified_project_name:
         potential_project_root = os.path.join(BASE_GENERATED_DIR, specified_project_name)
         if os.path.isdir(potential_project_root):
-            project_root = potential_project_root
+            project_root = os.path.abspath(potential_project_root)
             logger.info(f"Using specified project folder: {project_root}")
             
             relevant_design_files = [f for f in os.listdir(OUTPUTS_DIR) if f.endswith('.design.json') and specified_project_name in f]
@@ -212,7 +235,7 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
             raise ValueError(msg)
         
         project_dir_name = max(projects, key=lambda p: os.path.getctime(os.path.join(BASE_GENERATED_DIR, p)))
-        project_root = os.path.join(BASE_GENERATED_DIR, project_dir_name)
+        project_root = os.path.abspath(os.path.join(BASE_GENERATED_DIR, project_dir_name))
         logger.info(f"Using most recent project folder: {project_root}")
 
         all_design_files = [f for f in os.listdir(OUTPUTS_DIR) if f.endswith('.design.json')]
@@ -385,9 +408,6 @@ def update_requirements_for_testing(project_root):
         return False
 
 def install_project_dependencies(project_root):
-    """
-    Installs project dependencies from requirements.txt into the project's virtual environment.
-    """
     venv_python_path = os.path.join(project_root, "venv", "Scripts", "python.exe")
     requirements_file_name = "requirements.txt" # Chỉ lấy tên file
     requirements_path_full = os.path.join(project_root, requirements_file_name)
@@ -545,7 +565,7 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
     if not endpoints:
         logger.warning("No API endpoints provided for integration testing. Skipping integration test generation.")
         return None
-
+    
     # Khôi phục prompt template chi tiết hơn
     prompt = f"""
     You are an expert Python test engineer specializing in the pytest framework and testing {framework} applications.
@@ -578,7 +598,7 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
         -   Verify JSON payloads (e.g., `assert response.json() == expected_data`).
         -   If database interaction is involved, consider setting up and tearing down a temporary test database using pytest fixtures.
     8.  **Test Structure**:
-        -   Use pytest fixtures for setup/teardown (e.g., for test client, temporary database).
+        -   Use pytest conventions (fixtures).
         -   Organize tests logically.
     9.  **Runnability**: Ensure tests are runnable with `pytest` from the project root (`{project_root}`).
 
@@ -603,19 +623,20 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
         return None
 
 def run_tests(project_root):
-    """
-    Executes the run_tests.bat script and parses the test results from TEST_LOG_FILE.
-    Returns a list of dictionaries, where each dictionary represents a failed test
-    with its mapped source information.
-    """
     bat_file = os.path.join(project_root, "run_tests.bat")
     test_log_file = os.path.join(project_root, TEST_LOG_FILE)
 
+    logger.info(f"Attempting to execute batch file: {bat_file}")
+    logger.info(f"Current working directory for batch: {project_root}")
     if not os.path.exists(bat_file):
         logger.error(f"run_tests.bat not found at {bat_file}. Cannot run tests.")
         return [] # Return empty list if script not found
 
     logger.info(f"Executing run_tests.bat from {project_root}. Results will be in {test_log_file}")
+    
+    if os.path.exists(test_log_file):
+        os.remove(test_log_file)
+        logger.debug(f"Removed old test log file: {test_log_file}")
     
     try:
         # Chạy script batch. Nó sẽ ghi output của pytest vào test_results.log
@@ -623,7 +644,7 @@ def run_tests(project_root):
         result = subprocess.run(
             f'"{bat_file}"',
             shell=True,
-            capture_output=True, # Vẫn capture_output để xem debug_tests.log content nếu cần
+            capture_output=True, # Capture output/stderr of the batch script itself (e.g., debug_tests.log content)
             text=True,
             cwd=project_root,
             check=False # Không raise CalledProcessError, để chúng ta tự xử lý exit code
@@ -631,23 +652,34 @@ def run_tests(project_root):
         
         # Log stdout/stderr của script batch itself (debug_tests.log content)
         if result.stdout:
-            logger.debug(f"run_tests.bat stdout:\n{result.stdout}")
+            logger.debug(f"run_tests.bat stdout (from debug_tests.log):\n{result.stdout}")
         if result.stderr:
-            logger.error(f"run_tests.bat stderr:\n{result.stderr}")
-
+            logger.error(f"run_tests.bat stderr (from debug_tests.log):\n{result.stderr}")
+            
+        # 0 có nghĩa là script run_tests.bat tự nó đã hoàn thành việc thực thi mà không gặp lỗi nội bộ nào (như không tìm thấy file, cú pháp lỗi, v.v.), 
+        # và quá trình chuyển hướng output của pytest vào test_results.log đã thành công.
+        # 0 ở đây không có nghĩa là pytest đã pass tất cả các test
         logger.info(f"Pytest run completed. Batch script exit code: {result.returncode}")
-
-        failures = []
+        
+        
+        failures = [] # Sau khi batch script chạy xong, đọc test_results.log để phân tích lỗi
         if os.path.exists(test_log_file):
             with open(test_log_file, 'r', encoding='utf-8') as f:
                 pytest_output = f.read()
 
-            # Regex đã cải tiến để khớp các dòng FAILED có hoặc không có thông báo lỗi
-            # Thêm phần (?: - (.*))? để khớp phần thông báo lỗi tùy chọn
-            test_failure_pattern = re.compile(r"^(.*?)::(\w+)\s+FAILED\s*(?:-\s*.*)?$") # Updated regex
+            # This regex is more robust for pytest's output format.
+            # It captures:
+            # 1. (.*?) - The relative path to the test file (e.g., 'tests/test_CustomJsonFormatter_format.py')
+            # 2. (\w+) - The test function name (e.g., 'test_CustomJsonFormatter_format_success')
+            # 3. \s+FAILED\s* - The literal " FAILED" with surrounding whitespace
+            # 4. (?:\[\s*\d+%\s*\])? - Optional non-capturing group for the percentage part (e.g., '[  2%]')
+            # 5. \s*(?:-\s*.*)? - Optional non-capturing group for the error message part (e.g., '- TypeError: ...')
+            # 6. $ - End of line
+            test_failure_pattern = re.compile(r"^(.*?)::(\w+)\s+FAILED\s*(?:\[\s*\d+%\s*\])?\s*(?:(?:-\s*)?.*)?$")
 
+            found_first_failure = False
             for line in pytest_output.splitlines():
-                if "FAILED" in line:
+                if "FAILED" in line and not found_first_failure: # Only process the first FAILED line
                     match = test_failure_pattern.search(line.strip())
                     if match:
                         test_file_rel_path = match.group(1).strip()
@@ -657,21 +689,22 @@ def run_tests(project_root):
 
                         if not os.path.exists(test_file_full_path):
                             logger.warning(f"Parsed test file path '{test_file_full_path}' does not exist for test '{test_name}'. Skipping mapping for this failure.")
-                            continue # Bỏ qua dòng này nếu file không tồn tại
+                            continue
                         
                         source_file, source_func = map_test_to_source(test_name, test_file_full_path)
 
                         failures.append({
                             "test": test_name,
-                            "test_file_path": test_file_full_path, # Thêm đường dẫn đầy đủ của file test
+                            "test_file_path": test_file_full_path,
                             "source_file": source_file,
                             "source_function": source_func,
-                            "error_line_summary": line.strip() # Dòng tóm tắt lỗi từ pytest
+                            "error_line_summary": line.strip()
                         })
+                        found_first_failure = True # Mark as found, so only one is processed due to --exitfirst
                     else:
                         logger.warning(f"Could not parse specific test failure line: {line.strip()}")
         else:
-            logger.error(f"Pytest log file '{test_log_file}' not found after running tests.")
+            logger.error(f"Pytest log file '{test_log_file}' not found after running tests. This means pytest might not have executed or failed to write its output.")
 
         return failures
 
@@ -680,11 +713,6 @@ def run_tests(project_root):
         return [] # Return empty list on critical error
 
 def map_test_to_source(test_name, specific_test_file_path):
-    """
-    Attempts to map a test function name to its source file and function/method.
-    It now expects the specific test file path where the failure occurred.
-    Prioritizes reading 'source_info' comment from the test file.
-    """
     logger.debug(f"Attempting to map test '{test_name}' from '{specific_test_file_path}' to source.")
 
     test_file_path = specific_test_file_path
@@ -772,14 +800,12 @@ if __name__ == "__main__":
             os.makedirs(test_output_dir, exist_ok=True)
             logger.info(f"Ensured test output directory exists: {test_output_dir}")
 
-            # Ensure __init__.py files are present for Python package structure recursively
             logger.info(f"Ensuring __init__.py files in main application package: {os.path.join(project_root, app_package)}")
             ensure_init_py_recursive(os.path.join(project_root, app_package))
             
             logger.info(f"Ensuring __init__.py files in test output directory: {test_output_dir}")
             ensure_init_py_recursive(test_output_dir)
 
-            # Check and update requirements.txt for testing dependencies
             needs_test_deps_install = update_requirements_for_testing(project_root)
             
             if needs_test_deps_install:
@@ -805,24 +831,21 @@ if __name__ == "__main__":
                                 source = f.read()
                             tree = ast.parse(source)
                             
-                            # Collect top-level functions
                             top_level_functions = [
                                 n for n in tree.body
                                 if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
-                                and not n.name.startswith('_') # Skip private functions
+                                and not n.name.startswith('_')
                             ]
                             
-                            # Collect class methods
                             class_methods = []
                             for node in tree.body:
                                 if isinstance(node, ast.ClassDef):
                                     class_name = node.name
                                     for method_node in node.body:
                                         if isinstance(method_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                                            if not method_node.name.startswith('_'): # Skip private methods
+                                            if not method_node.name.startswith('_'):
                                                 class_methods.append((class_name, method_node))
                             
-                            # Process Top-Level Functions
                             for func_node in top_level_functions:
                                 func_name = func_node.name
                                 func_code = ast.get_source_segment(source, func_node)
@@ -847,7 +870,6 @@ if __name__ == "__main__":
                                 else:
                                     logger.warning(f"Could not extract code for function '{func_name}' from '{file_path}'. Skipping unit test generation.")
 
-                            # Process Class Methods
                             for class_name, method_node in class_methods:
                                 method_name = method_node.name
                                 method_code = ast.get_source_segment(source, method_node)
@@ -863,7 +885,7 @@ if __name__ == "__main__":
                                         class_name=class_name
                                     )
                                     if test_code:
-                                        test_file = os.path.join(test_output_dir, f"test_{class_name}_{method_name}.py") # Name test file by Class_Method
+                                        test_file = os.path.join(test_output_dir, f"test_{class_name}_{method_name}.py")
                                         with open(test_file, 'w', encoding='utf-8') as f:
                                             f.write(test_code)
                                         logger.info(f"Saved unit tests to {test_file}")
@@ -872,7 +894,6 @@ if __name__ == "__main__":
                                 else:
                                     logger.warning(f"Could not extract code for method '{class_name}.{method_name}' from '{file_path}'. Skipping unit test generation.")
 
-            # Generate integration tests for API endpoints
             endpoints = []
             if design_data and 'interface_Design' in design_data and 'api_Specifications' in design_data['interface_Design']:
                 endpoints = design_data['interface_Design']['api_Specifications']
@@ -889,7 +910,6 @@ if __name__ == "__main__":
             else:
                 logger.warning("No integration test code generated by LLM. Skipping file creation.")
 
-            # Tạo cờ .test_generated sau khi tất cả test đã được sinh ra
             with open(test_flag_file, 'w', encoding='utf-8') as f:
                 f.write("Tests generated successfully.")
             logger.info(f"Marked tests as generated: {test_flag_file}")
@@ -897,15 +917,11 @@ if __name__ == "__main__":
             logger.info(f"Test generation flag found at {test_flag_file}. Skipping test generation.")
 
 
-        # Tạo script batch để chạy test (luôn tạo lại để đảm bảo cập nhật venv_python_path)
         generate_test_run_script(project_root, venv_python_path)
-
-        # Chạy test và phân tích kết quả
         failed_tests_info = run_tests(project_root)
 
         if failed_tests_info:
             logger.error(f"Found {len(failed_tests_info)} test failures. Details below:")
-            # Ghi lại tóm tắt lỗi vào testgen.log và console
             for failure in failed_tests_info:
                 logger.error(f"  Test: {failure['test']}")
                 logger.error(f"  Test File: {os.path.relpath(failure['test_file_path'], project_root)}")
@@ -923,8 +939,23 @@ if __name__ == "__main__":
                     f.write(f"Source File: {failure['source_file']}\n")
                     f.write(f"Source Function: {failure['source_function']}\n")
                     f.write(f"Error Line Summary: {failure['error_line_summary']}\n\n")
+            
+            history_log_path = os.path.join(project_root, TEST_HISTORY_LOG_FILE)
+            with open(history_log_path, 'a', encoding='utf-8') as f:
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+                f.write(f"\n\n--- Test Run: {timestamp} - FAILED ---\n")
+                f.write(f"Project: {os.path.basename(project_root)}\n")
+                f.write(f"Framework: {framework}\n")
+                f.write(f"Number of failures: {len(failed_tests_info)}\n") 
+                for failure in failed_tests_info:
+                    f.write(f"  Test: {failure['test']}\n")
+                    f.write(f"  Test File Path: {failure['test_file_path']}\n")
+                    f.write(f"  Source File: {failure['source_file']}\n")
+                    f.write(f"  Source Function: {failure['source_function']}\n")
+                    f.write(f"  Error Summary: {failure['error_line_summary']}\n")
+                f.write("--- End of this run's failures ---\n")
 
-            sys.exit(1) # Dừng chương trình nếu có lỗi
+            sys.exit(1)
         else:
             logger.info("All tests passed successfully.")
 
@@ -941,3 +972,8 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"An unexpected error occurred during test generation pipeline: {e}", exc_info=True)
         sys.exit(1)
+        
+# Script thoát với sys.exit(1) khi có lỗi, nhưng không rõ ràng liệu Testing Agent có gọi Debug Agent hay không. Đề nghị thêm cơ chế gọi Debug Agent trực tiếp:
+#     if failed_tests_info:
+#     logger.error("Calling Debug Agent...")
+#     subprocess.run(["python", "debug_agent.py", "--project", os.path.basename(project_root)])
