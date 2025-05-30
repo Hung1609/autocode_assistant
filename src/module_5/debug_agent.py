@@ -51,26 +51,24 @@ def detect_project_and_framework(specified_project=None):
         specified_path = os.path.join(BASE_GENERATED_DIR, specified_project)
         if os.path.isdir(specified_path):
             project_dir = specified_project
-            design_file_name = f"{specified_project}_20250527.design.json"
-            design_file_path = os.path.join(OUTPUTS_DIR, design_file_name)
-            if os.path.exists(design_file_path):
-                design_file = design_file_path
+            design_files = [f for f in os.listdir(OUTPUTS_DIR) if f.startswith(f"{specified_project}_") and f.endswith('.design.json')]
+            if design_files:
+                design_file = os.path.join(OUTPUTS_DIR, max(design_files, key=lambda f: os.path.getmtime(os.path.join(OUTPUTS_DIR, f))))
                 logger.info(f"Using specified project folder: {project_dir} with design file: {design_file}")
             else:
-                logger.warning(f"Design file '{design_file_path}' not found for specified project.")
+                logger.warning(f"No design file found for specified project '{specified_project}'.")
         else:
             logger.warning(f"Specified project '{specified_project}' not found in '{BASE_GENERATED_DIR}'.")
 
     if not project_dir:
         project_times = [(p, os.path.getctime(os.path.join(BASE_GENERATED_DIR, p))) for p in projects]
         project_dir = max(project_times, key=lambda x: x[1])[0]
-        design_file_name = f"{project_dir}_20250527.design.json"
-        design_file_path = os.path.join(OUTPUTS_DIR, design_file_name)
-        if os.path.exists(design_file_path):
-            design_file = design_file_path
+        design_files = [f for f in os.listdir(OUTPUTS_DIR) if f.startswith(f"{project_dir}_") and f.endswith('.design.json')]
+        if design_files:
+            design_file = os.path.join(OUTPUTS_DIR, max(design_files, key=lambda f: os.path.getmtime(os.path.join(OUTPUTS_DIR, f))))
             logger.info(f"Using most recent project folder: {project_dir} with design file: {design_file}")
         else:
-            logger.warning(f"Design file '{design_file_path}' not found for most recent project.")
+            logger.warning(f"No design file found for most recent project '{project_dir}'.")
 
     project_root = os.path.join(BASE_GENERATED_DIR, project_dir)
     framework = "unknown"
@@ -124,7 +122,6 @@ def parse_test_results(log_file):
                 "source_function": match.group(4),
                 "error_line": match.group(5).strip()
             }
-            # Lưu vào lịch sử
             with open(os.path.join(os.path.dirname(log_file), TEST_HISTORY_LOG_FILE), 'a', encoding='utf-8') as f:
                 f.write(f"\n--- Failure ---\n")
                 for key, value in failure.items():
@@ -141,23 +138,71 @@ def get_function_code(filepath, function_name):
         with open(filepath, 'r', encoding='utf-8') as f:
             source = f.read()
         tree = ast.parse(source)
+        
+        # Handle ClassName.methodName format
+        class_name = None
+        method_name = function_name
+        if '.' in function_name:
+            class_name, method_name = function_name.split('.')
+        
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == function_name:
-                return ast.get_source_segment(source, node)
-            elif isinstance(node, ast.ClassDef):
-                for method in node.body:
-                    if isinstance(method, (ast.FunctionDef, ast.AsyncFunctionDef)) and method.name == function_name:
-                        return ast.get_source_segment(source, method)
-        logger.warning(f"Function {function_name} not found in {filepath}")
+            if class_name:
+                if isinstance(node, ast.ClassDef) and node.name == class_name:
+                    for method in node.body:
+                        if isinstance(method, (ast.FunctionDef, ast.AsyncFunctionDef)) and method.name == method_name:
+                            return ast.get_source_segment(source, method)
+            else:
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == function_name:
+                    return ast.get_source_segment(source, node)
+        
+        logger.warning(f"Function or method {function_name} not found in {filepath}")
         return None
     except Exception as e:
         logger.error(f"Error extracting function {function_name} from {filepath}: {e}")
         return None
 
-def generate_bug_fix(test_info, source_code, framework, app_package):
+def apply_fix(filepath, original_code, fixed_code):
+    if not os.access(filepath, os.W_OK):
+        logger.error(f"No write permission for {filepath}")
+        return False
+
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Validate that original_code appears exactly once
+        occurrences = content.count(original_code)
+        if occurrences != 1:
+            logger.error(f"Original code appears {occurrences} times in {filepath}. Aborting to avoid incorrect replacement.")
+            return False
+        
+        # Parse and replace using AST for precision
+        tree = ast.parse(content)
+        new_tree = tree  # Placeholder for AST manipulation
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and ast.get_source_segment(content, node) == original_code:
+                # Parse fixed_code into AST
+                fixed_ast = ast.parse(fixed_code).body[0]
+                # Replace node (simplified; actual replacement needs node matching)
+                # This is a placeholder; full AST replacement requires a custom visitor
+                content = content.replace(original_code, fixed_code)
+                break
+        
+        with open(filepath + '.bak', 'w', encoding='utf-8') as f:
+            f.write(content)
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+        logger.info(f"Applied fix to {filepath}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to apply fix to {filepath}: {e}")
+        return False
+
+def generate_bug_fix(test_info, source_code, framework, app_package, debug_history):
     model = GenerativeModel(DEFAULT_MODEL)
     prompt = f"""
     Phân tích lỗi kiểm tra sau:
+    Analyze the following error in testing
 
     Test: {test_info['test']}
     File: {test_info['source_file']}
@@ -168,6 +213,9 @@ def generate_bug_fix(test_info, source_code, framework, app_package):
     ```python
     {source_code}
     ```
+
+    Lịch sử debug trước đó:
+    {debug_history}
 
     Ngữ cảnh:
     - Framework: {framework}
@@ -190,19 +238,6 @@ def generate_bug_fix(test_info, source_code, framework, app_package):
     except Exception as e:
         logger.error(f"Failed to generate bug fix for {test_info['test']}: {e}")
         return None
-
-def apply_fix(filepath, original_code, fixed_code):
-    try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-        content = content.replace(original_code, fixed_code)
-        with open(filepath + '.bak', 'w', encoding='utf-8') as f:
-            f.write(content)
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(content)
-        logger.info(f"Applied fix to {filepath}")
-    except Exception as e:
-        logger.error(f"Failed to apply fix to {filepath}: {e}")
 
 def generate_deploy_script(project_root, app_package):
     bat_file_path = os.path.join(project_root, "deploy_app.bat")
@@ -265,8 +300,9 @@ if __name__ == "__main__":
     test_log_file = os.path.join(project_root, TEST_LOG_FILE)
     debug_log_file = os.path.join(project_root, DEBUG_LOG_FILE)
 
-    max_iterations = 77
+    max_iterations = 100
     iteration = 0
+    debug_history = ""
 
     while iteration < max_iterations:
         logger.info(f"Debug iteration {iteration + 1}/{max_iterations}")
@@ -283,7 +319,7 @@ if __name__ == "__main__":
             logger.warning(f"Could not extract code for {failure['source_function']} in {source_path}")
             break
 
-        fix_response = generate_bug_fix(failure, source_code, framework, app_package)
+        fix_response = generate_bug_fix(failure, source_code, framework, app_package, debug_history)
         if not fix_response:
             logger.warning(f"No fix generated for {failure['test']}")
             break
@@ -304,14 +340,20 @@ if __name__ == "__main__":
             log.write(f"Nguyên nhân: {cause}\n")
             log.write(f"Giải pháp: {solution}\n")
             log.write("Mã đã sửa:\n```python\n{fixed_code}\n```\n")
+        
+        debug_history += f"\nIteration {iteration + 1}:\nTest: {failure['test']}\nFix Attempt:\n{fixed_code}\nOutcome: Pending\n"
 
-        apply_fix(source_path, source_code, fixed_code)
-        if not run_tests(project_root):
-            iteration += 1
+        if apply_fix(source_path, source_code, fixed_code):
+            if run_tests(project_root):
+                logger.info("Tests passed after fix. Deploying application.")
+                deploy_app(project_root, app_package)
+                break
+            else:
+                debug_history = debug_history.replace("Outcome: Pending", "Outcome: Failed")
         else:
-            logger.info("Tests passed after fix. Deploying application.")
-            deploy_app(project_root, app_package)
-            break
+            logger.warning("Fix application failed. Continuing to next iteration.")
+        
+        iteration += 1
 
     if iteration == max_iterations:
         logger.warning("Reached maximum debug iterations without resolving all issues.")
