@@ -566,7 +566,6 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
         logger.warning("No API endpoints provided for integration testing. Skipping integration test generation.")
         return None
     
-    # Khôi phục prompt template chi tiết hơn
     prompt = f"""
     You are an expert Python test engineer specializing in the pytest framework and testing {framework} applications.
     Your task is to generate comprehensive pytest integration tests for the {framework} application.
