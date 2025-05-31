@@ -28,8 +28,8 @@ logger.info("Gemini API configured successfully for debug agent.")
 
 DEFAULT_MODEL = 'gemini-2.0-flash'
 BASE_GENERATED_DIR = os.getenv('BASE_GENERATED_DIR', 'code_generated_result')
-OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs')
-# OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs')
+# OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs')
+OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs')
 TEST_LOG_FILE = "test_results.log"
 DEBUG_LOG_FILE = "debug_results.log" # Log chi tiết quá trình debug (fix được đề xuất, v.v.)
 TEST_HISTORY_LOG_FILE = "test_results_history.log" # Log lịch sử test (được ghi bởi test_generator_agent)
