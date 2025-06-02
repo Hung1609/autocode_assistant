@@ -1,0 +1,18 @@
+
+--- Debug Agent Run: 2025-06-02 10:36:50 ---
+Parsed Test Failure:
+  test_name: test_RequestIDFilter_filter_success
+  test_file_path_full: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_RequestIDFilter_filter.py
+  source_file_relative: backend\main.py
+  source_function_mapped: RequestIDFilter.filter
+  error_summary_line: tests/test_RequestIDFilter_filter.py::test_RequestIDFilter_filter_success FAILED [  9%]
+---
+
+--- Debug Agent Run: 2025-06-02 10:37:19 ---
+Parsed Test Failure:
+  test_name: test_RequestIDFilter_filter_success
+  test_file_path_full: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_RequestIDFilter_filter.py
+  source_file_relative: backend\main.py
+  source_function_mapped: RequestIDFilter.filter
+  error_summary_line: tests/test_RequestIDFilter_filter.py::test_RequestIDFilter_filter_success FAILED [  9%]
+---

@@ -26,10 +26,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 API_CALL_DELAY_SECONDS = 5
-DEFAULT_MODEL = 'gemini-2.0-flash'
+DEFAULT_MODEL = 'gemini-2.0-flash' # gemini-2.5-flash-preview-04-17, gemini-2.0-flash (somehow, gemini-2.5-flash-preview-04-17 doesn't work)
 BASE_GENERATED_DIR = os.getenv('BASE_GENERATED_DIR', 'code_generated_result')
-# OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs')
-OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs')
+OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs')
+# OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs')
 TEST_LOG_FILE = "test_results.log"
 DEBUG_LOG_FILE = "debug_results.log"
 TEST_HISTORY_LOG_FILE = "test_results_history.log"
@@ -481,7 +481,7 @@ def main():
         logger.info(f"Agent executing with prompt for iteration {iteration + 1}...")
         
         try:
-            final_agent_message = agent.run(agent_master_prompt)
+            final_agent_message = agent.invoke(agent_master_prompt)
             logger.info(f"Agent finished iteration {iteration + 1}. Final message: {final_agent_message}")
 
             if "No failed tests found" in final_agent_message or \

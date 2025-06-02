@@ -24,7 +24,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 API_CALL_DELAY_SECONDS = 5
-
 api_key = os.getenv('GEMINI_API_KEY')
 configure(api_key=api_key)
 logger.info("Gemini API configured successfully for test generator.")
@@ -37,7 +36,7 @@ OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\Hoang Duy\Documents\Phan Lac H
 TEST_OUTPUT_DIR_NAME = "tests"
 TEST_LOG_FILE = "test_results.log"
 TEST_HISTORY_LOG_FILE = "test_results_history.log"
-TEST_GENERATED_FLAG = ".test_generated" # Cờ để đánh dấu test đã được sinh ra
+TEST_GENERATED_FLAG = ".test_generated" # Đánh dấu các file test đã được sinh ra
 
 def create_pytest_ini(project_root):
     pytest_ini_path = os.path.join(project_root, "pytest.ini")
@@ -70,90 +69,87 @@ cachedir = tmp_pytest_cache/
     except Exception as e:
         logger.error(f"Failed to create/update pytest.ini in {project_root}: {e}")
 
-def generate_test_run_script(project_root, venv_python_path):
-    bat_file_path = os.path.join(project_root, "run_tests.bat")
-    
-    # Chú ý: Loại bỏ --exitfirst để thu thập tất cả lỗi
-    # Chuyển hướng stdout và stderr của pytest vào TEST_LOG_FILE
+def generate_run_test_bat_script(project_root, venv_python_path):
+    bat_file_path = os.path.join(project_root, "run_test.bat")
     bat_content = fr"""
-@echo off  REM Tắt echo lệnh để output Python capture dễ đọc hơn
+@echo off  REM Turn off echo to make Python capture output easier to read
 setlocal EnableDelayedExpansion
 
-REM Ghi trực tiếp ra stdout để Python capture được, không dùng file log ngay lập tức
-echo --- run_tests.bat STARTED ---
+REM Write directly to stdout so Python can capture, don't use log file immediately
+echo --- run_test.bat STARTED ---
 
-REM Các lệnh sau đó mới chuyển hướng vào debug_tests.log
-echo Current Directory (when batch started): "%CD%" > debug_tests.log 2>&1
-echo PROJECT_ROOT variable (calculated): "%~dp0" >> debug_tests.log 2>&1
+REM The following commands are redirected to debug_test_agent.log
+echo Current Directory (when batch started): "%CD%" > debug_test_agent.log 2>&1
+echo PROJECT_ROOT variable (calculated): "%~dp0" >> debug_test_agent.log 2>&1
 
-echo Changing directory to project root... >> debug_tests.log 2>&1
-cd /d "%~dp0" >> debug_tests.log 2>&1
+echo Changing directory to project root... >> debug_test_agent.log 2>&1
+cd /d "%~dp0" >> debug_test_agent.log 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Failed to change to project root directory. Exiting with code %ERRORLEVEL%. >> debug_tests.log 2>&1
+    echo ERROR: Failed to change to project root directory. Exiting with code %ERRORLEVEL%. >> debug_test_agent.log 2>&1
     exit /b 1
 )
-echo Current Directory (after cd): "%CD%" >> debug_tests.log 2>&1
+echo Current Directory (after cd): "%CD%" >> debug_test_agent.log 2>&1
 
-echo Cleaning up previous test log file... >> debug_tests.log 2>&1
+echo Cleaning up previous test log file... >> debug_test_agent.log 2>&1
 if exist "{TEST_LOG_FILE}" (
-    del "{TEST_LOG_FILE}" >> debug_tests.log 2>&1
+    del "{TEST_LOG_FILE}" >> debug_test_agent.log 2>&1
     if %ERRORLEVEL% neq 0 (
-        echo WARNING: Failed to delete old test log file: "{TEST_LOG_FILE}". >> debug_tests.log 2>&1
+        echo WARNING: Failed to delete old test log file: "{TEST_LOG_FILE}". >> debug_test_agent.log 2>&1
     ) else (
-        echo Old test log file deleted: "{TEST_LOG_FILE}". >> debug_tests.log 2>&1
+        echo Old test log file deleted: "{TEST_LOG_FILE}". >> debug_test_agent.log 2>&1
     )
 ) else (
-    echo No old test log file to delete: "{TEST_LOG_FILE}". >> debug_tests.log 2>&1
+    echo No old test log file to delete: "{TEST_LOG_FILE}". >> debug_test_agent.log 2>&1
 )
 
-echo Checking for Python at: "{venv_python_path}" >> debug_tests.log 2>&1
-"{venv_python_path}" --version >> debug_tests.log 2>&1
+echo Checking for Python at: "{venv_python_path}" >> debug_test_agent.log 2>&1
+"{venv_python_path}" --version >> debug_test_agent.log 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Python not found at "{venv_python_path}". Exiting with code %ERRORLEVEL%. >> debug_tests.log 2>&1
+    echo ERROR: Python not found at "{venv_python_path}". Exiting with code %ERRORLEVEL%. >> debug_test_agent.log 2>&1
     exit /b 1
 )
 
-echo Attempting to activate virtual environment... >> debug_tests.log 2>&1
-echo Activating script path: "%~dp0venv\Scripts\activate.bat" >> debug_tests.log 2>&1
-call "%~dp0venv\Scripts\activate.bat" >> debug_tests.log 2>&1
+echo Attempting to activate virtual environment... >> debug_test_agent.log 2>&1
+echo Activating script path: "%~dp0venv\Scripts\activate.bat" >> debug_test_agent.log 2>&1
+call "%~dp0venv\Scripts\activate.bat" >> debug_test_agent.log 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Failed to activate virtual environment. Error code: %ERRORLEVEL%. >> debug_tests.log 2>&1
-    echo Please ensure the venv\Scripts\activate.bat exists and is not corrupted. >> debug_tests.log 2>&1
+    echo ERROR: Failed to activate virtual environment. Error code: %ERRORLEVEL%. >> debug_test_agent.log 2>&1
+    echo Please ensure the venv\Scripts\activate.bat exists and is not corrupted. >> debug_test_agent.log 2>&1
     exit /b 1
 )
-echo Virtual environment activated successfully. >> debug_tests.log 2>&1
+echo Virtual environment activated successfully. >> debug_test_agent.log 2>&1
 
-echo Now, checking python.exe in PATH from activated venv: >> debug_tests.log 2>&1
-where python.exe >> debug_tests.log 2>&1
+echo Now, checking python.exe in PATH from activated venv: >> debug_test_agent.log 2>&1
+where python.exe >> debug_test_agent.log 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo WARNING: python.exe not found in PATH after venv activation. This might indicate an issue with activate.bat. >> debug_tests.log 2>&1
+    echo WARNING: python.exe not found in PATH after venv activation. This might indicate an issue with activate.bat. >> debug_test_agent.log 2>&1
 )
 
-echo Running pytest with --exitfirst... >> debug_tests.log 2>&1
-"{venv_python_path}" -m pytest tests --exitfirst --tb=short -v > "{TEST_LOG_FILE}" 2>&1
+echo Running pytest with --exitfirst and --tb=long... >> debug_test_agent.log 2>&1
+"{venv_python_path}" -m pytest tests --exitfirst --tb=long -v > "{TEST_LOG_FILE}" 2>&1
 set TEST_EXIT_CODE=%ERRORLEVEL%
 
-echo Deactivating virtual environment... >> debug_tests.log 2>&1
-deactivate >> debug_tests.log 2>&1
+echo Deactivating virtual environment... >> debug_test_agent.log 2>&1
+deactivate >> debug_test_agent.log 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo WARNING: Failed to deactivate virtual environment. >> debug_tests.log 2>&1
+    echo WARNING: Failed to deactivate virtual environment. >> debug_test_agent.log 2>&1
 )
 
 if %TEST_EXIT_CODE% neq 0 (
-    echo ERROR: Tests failed. Check "{TEST_LOG_FILE}" for details. >> debug_tests.log 2>&1
+    echo ERROR: Tests failed. Check "{TEST_LOG_FILE}" for details. >> debug_test_agent.log 2>&1
     exit /b %TEST_EXIT_CODE%
 )
 
-echo Tests completed successfully. >> debug_tests.log 2>&1
+echo Tests completed successfully. >> debug_test_agent.log 2>&1
 exit /b 0
 """
     try:
         with open(bat_file_path, 'w', encoding='utf-8') as f:
             f.write(bat_content)
-        logger.info(f"Created run_tests.bat at {bat_file_path}")
+        logger.info(f"Created run_test.bat at {bat_file_path}")
         return bat_file_path
     except Exception as e:
-        logger.error(f"Failed to create run_tests.bat: {e}")
+        logger.error(f"Failed to create run_test.bat: {e}")
         raise
 
 def detect_project_and_framework(specified_project_name=None, design_file_path=None, spec_file_path=None):
@@ -566,6 +562,7 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
         logger.warning("No API endpoints provided for integration testing. Skipping integration test generation.")
         return None
     
+    # Khôi phục prompt template chi tiết hơn
     prompt = f"""
     You are an expert Python test engineer specializing in the pytest framework and testing {framework} applications.
     Your task is to generate comprehensive pytest integration tests for the {framework} application.
@@ -621,69 +618,62 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
         logger.error(f"Failed to generate integration tests for {app_package}: {e}", exc_info=True)
         return None
 
-def run_tests(project_root):
-    bat_file = os.path.join(project_root, "run_tests.bat")
+def run_test(project_root):
+    bat_file = os.path.join(project_root, "run_test.bat")
     test_log_file = os.path.join(project_root, TEST_LOG_FILE)
 
     logger.info(f"Attempting to execute batch file: {bat_file}")
     logger.info(f"Current working directory for batch: {project_root}")
     if not os.path.exists(bat_file):
-        logger.error(f"run_tests.bat not found at {bat_file}. Cannot run tests.")
+        logger.error(f"run_test.bat not found at {bat_file}. Cannot run tests.")
         return [] # Return empty list if script not found
 
-    logger.info(f"Executing run_tests.bat from {project_root}. Results will be in {test_log_file}")
-    
-    if os.path.exists(test_log_file):
-        os.remove(test_log_file)
-        logger.debug(f"Removed old test log file: {test_log_file}")
+    logger.info(f"Executing run_test.bat from {project_root}. Results will be in {test_log_file}")
     
     try:
         # Chạy script batch. Nó sẽ ghi output của pytest vào test_results.log
-        # shell=True là cần thiết để chạy .bat file
         result = subprocess.run(
             f'"{bat_file}"',
             shell=True,
-            capture_output=True, # Capture output/stderr of the batch script itself (e.g., debug_tests.log content)
+            capture_output=True,
             text=True,
             cwd=project_root,
-            check=False # Không raise CalledProcessError, để chúng ta tự xử lý exit code
+            check=False
         )
         
-        # Log stdout/stderr của script batch itself (debug_tests.log content)
+        # Log stdout/stderr của script batch
         if result.stdout:
-            logger.debug(f"run_tests.bat stdout (from debug_tests.log):\n{result.stdout}")
+            logger.debug(f"run_test.bat stdout (from debug_test_agent.log):\n{result.stdout}")
         if result.stderr:
-            logger.error(f"run_tests.bat stderr (from debug_tests.log):\n{result.stderr}")
-            
-        # 0 có nghĩa là script run_tests.bat tự nó đã hoàn thành việc thực thi mà không gặp lỗi nội bộ nào (như không tìm thấy file, cú pháp lỗi, v.v.), 
-        # và quá trình chuyển hướng output của pytest vào test_results.log đã thành công.
-        # 0 ở đây không có nghĩa là pytest đã pass tất cả các test
+            logger.error(f"run_test.bat stderr (from debug_test_agent.log):\n{result.stderr}")
+
         logger.info(f"Pytest run completed. Batch script exit code: {result.returncode}")
-        
-        
-        failures = [] # Sau khi batch script chạy xong, đọc test_results.log để phân tích lỗi
+
+        failures = []
         if os.path.exists(test_log_file):
             with open(test_log_file, 'r', encoding='utf-8') as f:
                 pytest_output = f.read()
 
-            # This regex is more robust for pytest's output format.
-            # It captures:
-            # 1. (.*?) - The relative path to the test file (e.g., 'tests/test_CustomJsonFormatter_format.py')
-            # 2. (\w+) - The test function name (e.g., 'test_CustomJsonFormatter_format_success')
-            # 3. \s+FAILED\s* - The literal " FAILED" with surrounding whitespace
-            # 4. (?:\[\s*\d+%\s*\])? - Optional non-capturing group for the percentage part (e.g., '[  2%]')
-            # 5. \s*(?:-\s*.*)? - Optional non-capturing group for the error message part (e.g., '- TypeError: ...')
-            # 6. $ - End of line
             test_failure_pattern = re.compile(r"^(.*?)::(\w+)\s+FAILED\s*(?:\[\s*\d+%\s*\])?\s*(?:(?:-\s*)?.*)?$")
+            error_details = []
+            capture_error = False
+            test_name = None
+            test_file_rel_path = None
 
-            found_first_failure = False
             for line in pytest_output.splitlines():
-                if "FAILED" in line and not found_first_failure: # Only process the first FAILED line
+                if "FAILED" in line and not capture_error:
                     match = test_failure_pattern.search(line.strip())
                     if match:
                         test_file_rel_path = match.group(1).strip()
                         test_name = match.group(2).strip()
-                        
+                        error_details.append(line.strip())
+                        capture_error = True
+                        continue
+                if capture_error:
+                    if line.strip() and not line.startswith("="):
+                        error_details.append(line.strip())
+                    else:
+                        capture_error = False
                         test_file_full_path = os.path.join(project_root, test_file_rel_path.replace('/', os.sep))
 
                         if not os.path.exists(test_file_full_path):
@@ -697,15 +687,41 @@ def run_tests(project_root):
                             "test_file_path": test_file_full_path,
                             "source_file": source_file,
                             "source_function": source_func,
-                            "error_line_summary": line.strip()
+                            "error_line_summary": "\n".join(error_details)
                         })
-                        found_first_failure = True # Mark as found, so only one is processed due to --exitfirst
-                    else:
-                        logger.warning(f"Could not parse specific test failure line: {line.strip()}")
-        else:
-            logger.error(f"Pytest log file '{test_log_file}' not found after running tests. This means pytest might not have executed or failed to write its output.")
+                        error_details = []
+                        test_name = None
+                        test_file_rel_path = None
 
-        return failures
+            # Handle case where error capture was not terminated
+            if capture_error and test_name:
+                test_file_full_path = os.path.join(project_root, test_file_rel_path.replace('/', os.sep))
+                if os.path.exists(test_file_full_path):
+                    source_file, source_func = map_test_to_source(test_name, test_file_full_path)
+                    failures.append({
+                        "test": test_name,
+                        "test_file_path": test_file_full_path,
+                        "source_file": source_file,
+                        "source_function": source_func,
+                        "error_line_summary": "\n".join(error_details)
+                    })
+
+            if not failures and "FAILED" in pytest_output:
+                logger.warning("Failed to parse test failures from pytest output.")
+
+            if "no tests ran" in pytest_output.lower():
+                logger.error("No tests were executed. Check test configuration.")
+                return []
+
+            if failures:
+                logger.error(f"Tests failed. Returning failure information.")
+                return failures
+            else:
+                logger.info("All tests passed successfully.")
+                return []
+        else:
+            logger.error(f"Pytest log file '{test_log_file}' not found after running tests. Batch script output: {result.stdout}\nErrors: {result.stderr}")
+            return []
 
     except Exception as e:
         logger.error(f"An unexpected error occurred during test execution or result parsing: {e}", exc_info=True)
@@ -771,7 +787,6 @@ def map_test_to_source(test_name, specific_test_file_path):
         return "test_integration.py", heuristic_func_name
     
     return "unknown_file.py", heuristic_func_name
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate and run tests for a generated application.")
@@ -915,9 +930,8 @@ if __name__ == "__main__":
         else:
             logger.info(f"Test generation flag found at {test_flag_file}. Skipping test generation.")
 
-
         generate_test_run_script(project_root, venv_python_path)
-        failed_tests_info = run_tests(project_root)
+        failed_tests_info = run_test(project_root)
 
         if failed_tests_info:
             logger.error(f"Found {len(failed_tests_info)} test failures. Details below:")
@@ -954,10 +968,13 @@ if __name__ == "__main__":
                     f.write(f"  Error Summary: {failure['error_line_summary']}\n")
                 f.write("--- End of this run's failures ---\n")
 
+            # Để tự động gọi Debug Agent khi có lỗi, bỏ comment đoạn code sau:
+            # logger.error("Calling Debug Agent...")
+            # subprocess.run(["python", "debug_agent.py", "--project", os.path.basename(project_root)])
+
             sys.exit(1)
         else:
             logger.info("All tests passed successfully.")
-
 
     except FileNotFoundError as e:
         logger.error(f"File/Directory not found error: {e}")
@@ -971,8 +988,3 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"An unexpected error occurred during test generation pipeline: {e}", exc_info=True)
         sys.exit(1)
-        
-# Script thoát với sys.exit(1) khi có lỗi, nhưng không rõ ràng liệu Testing Agent có gọi Debug Agent hay không. Đề nghị thêm cơ chế gọi Debug Agent trực tiếp:
-#     if failed_tests_info:
-#     logger.error("Calling Debug Agent...")
-#     subprocess.run(["python", "debug_agent.py", "--project", os.path.basename(project_root)])
