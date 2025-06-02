@@ -1,115 +1,150 @@
 import pytest
-import unittest.mock
 import json
 import logging
-
+from unittest import mock
 from fastapi import Request, HTTPException, Depends
 from backend.main import CustomJsonFormatter
 
-
-def test_CustomJsonFormatter_format_success():
+def test_CustomJsonFormatter_format_success(mocker):
     # source_info: backend.main.CustomJsonFormatter.format
     formatter = CustomJsonFormatter()
     record = logging.LogRecord(
         name='test_logger',
         level=logging.INFO,
-        pathname='test_path',
+        pathname='/test/path',
         lineno=10,
         msg='Test message',
         args=(),
         exc_info=None,
-        func='test_func',
-        sinfo=None
+        func='test_func'
     )
+    mocker.patch.object(formatter, 'formatTime', return_value='2023-10-26T10:00:00')
+    
+    result = formatter.format(record)
+    
+    expected_log_record = {
+        'timestamp': '2023-10-26T10:00:00',
+        'level': 'INFO',
+        'logger_name': 'test_logger',
+        'message': 'Test message',
+        'pathname': '/test/path',
+        'funcName': 'test_func',
+        'lineno': 10
+    }
+    assert json.loads(result) == expected_log_record
 
-    formatted_record = json.loads(formatter.format(record))
-
-    assert formatted_record['level'] == 'INFO'
-    assert formatted_record['logger_name'] == 'test_logger'
-    assert formatted_record['message'] == 'Test message'
-    assert formatted_record['pathname'] == 'test_path'
-    assert formatted_record['funcName'] == 'test_func'
-    assert formatted_record['lineno'] == 10
-
-
-def test_CustomJsonFormatter_format_with_request_id():
+def test_CustomJsonFormatter_format_with_request_id(mocker):
     # source_info: backend.main.CustomJsonFormatter.format
     formatter = CustomJsonFormatter()
     record = logging.LogRecord(
         name='test_logger',
         level=logging.INFO,
-        pathname='test_path',
+        pathname='/test/path',
         lineno=10,
         msg='Test message',
         args=(),
         exc_info=None,
-        func='test_func',
-        sinfo=None
+        func='test_func'
     )
     record.request_id = 'test_request_id'
+    mocker.patch.object(formatter, 'formatTime', return_value='2023-10-26T10:00:00')
 
-    formatted_record = json.loads(formatter.format(record))
+    result = formatter.format(record)
+    
+    expected_log_record = {
+        'timestamp': '2023-10-26T10:00:00',
+        'level': 'INFO',
+        'logger_name': 'test_logger',
+        'message': 'Test message',
+        'pathname': '/test/path',
+        'funcName': 'test_func',
+        'lineno': 10,
+        'request_id': 'test_request_id'
+    }
+    assert json.loads(result) == expected_log_record
 
-    assert formatted_record['request_id'] == 'test_request_id'
-
-
-def test_CustomJsonFormatter_format_with_exception_info():
+def test_CustomJsonFormatter_format_with_exception(mocker):
     # source_info: backend.main.CustomJsonFormatter.format
     formatter = CustomJsonFormatter()
     record = logging.LogRecord(
         name='test_logger',
         level=logging.ERROR,
-        pathname='test_path',
+        pathname='/test/path',
         lineno=10,
         msg='Test message',
         args=(),
         exc_info=(ValueError, ValueError('Test exception'), None),
-        func='test_func',
-        sinfo=None
+        func='test_func'
     )
+    mocker.patch.object(formatter, 'formatTime', return_value='2023-10-26T10:00:00')
+    mocker.patch.object(formatter, 'formatException', return_value='Test formatted exception')
 
-    formatted_record = json.loads(formatter.format(record))
+    result = formatter.format(record)
+    
+    expected_log_record = {
+        'timestamp': '2023-10-26T10:00:00',
+        'level': 'ERROR',
+        'logger_name': 'test_logger',
+        'message': 'Test message',
+        'pathname': '/test/path',
+        'funcName': 'test_func',
+        'lineno': 10,
+        'exc_info': 'Test formatted exception'
+    }
+    assert json.loads(result) == expected_log_record
 
-    assert 'exc_info' in formatted_record
-    assert isinstance(formatted_record['exc_info'], str)
-
-
-def test_CustomJsonFormatter_format_empty_message():
+def test_CustomJsonFormatter_format_empty_message(mocker):
     # source_info: backend.main.CustomJsonFormatter.format
     formatter = CustomJsonFormatter()
     record = logging.LogRecord(
         name='test_logger',
         level=logging.INFO,
-        pathname='test_path',
+        pathname='/test/path',
         lineno=10,
         msg='',
         args=(),
         exc_info=None,
-        func='test_func',
-        sinfo=None
+        func='test_func'
     )
+    mocker.patch.object(formatter, 'formatTime', return_value='2023-10-26T10:00:00')
 
-    formatted_record = json.loads(formatter.format(record))
+    result = formatter.format(record)
 
-    assert formatted_record['message'] == ''
+    expected_log_record = {
+        'timestamp': '2023-10-26T10:00:00',
+        'level': 'INFO',
+        'logger_name': 'test_logger',
+        'message': '',
+        'pathname': '/test/path',
+        'funcName': 'test_func',
+        'lineno': 10
+    }
+    assert json.loads(result) == expected_log_record
 
-
-def test_CustomJsonFormatter_format_none_message():
+def test_CustomJsonFormatter_format_no_exception_no_request_id(mocker):
     # source_info: backend.main.CustomJsonFormatter.format
     formatter = CustomJsonFormatter()
     record = logging.LogRecord(
         name='test_logger',
         level=logging.INFO,
-        pathname='test_path',
+        pathname='/test/path',
         lineno=10,
-        msg=None,
+        msg='Test message',
         args=(),
         exc_info=None,
-        func='test_func',
-        sinfo=None
+        func='test_func'
     )
-    record.getMessage = unittest.mock.MagicMock(return_value='')
+    mocker.patch.object(formatter, 'formatTime', return_value='2023-10-26T10:00:00')
 
-    formatted_record = json.loads(formatter.format(record))
+    result = formatter.format(record)
 
-    assert formatted_record['message'] == ''
+    expected_log_record = {
+        'timestamp': '2023-10-26T10:00:00',
+        'level': 'INFO',
+        'logger_name': 'test_logger',
+        'message': 'Test message',
+        'pathname': '/test/path',
+        'funcName': 'test_func',
+        'lineno': 10
+    }
+    assert json.loads(result) == expected_log_record

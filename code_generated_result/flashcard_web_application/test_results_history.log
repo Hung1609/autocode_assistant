@@ -1,18 +1,12 @@
 
---- Debug Agent Run: 2025-06-02 10:36:50 ---
-Parsed Test Failure:
-  test_name: test_RequestIDFilter_filter_success
-  test_file_path_full: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_RequestIDFilter_filter.py
-  source_file_relative: backend\main.py
-  source_function_mapped: RequestIDFilter.filter
-  error_summary_line: tests/test_RequestIDFilter_filter.py::test_RequestIDFilter_filter_success FAILED [  9%]
----
 
---- Debug Agent Run: 2025-06-02 10:37:19 ---
-Parsed Test Failure:
-  test_name: test_RequestIDFilter_filter_success
-  test_file_path_full: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_RequestIDFilter_filter.py
-  source_file_relative: backend\main.py
-  source_function_mapped: RequestIDFilter.filter
-  error_summary_line: tests/test_RequestIDFilter_filter.py::test_RequestIDFilter_filter_success FAILED [  9%]
----
+--- Test Run: 2025-06-02 22:29:25 - FAILED ---
+Project: flashcard_web_application
+Framework: fastapi
+Number of failures: 1
+  Test: test_RequestIDMiddleware_dispatch_success
+  Test File Path: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_RequestIDMiddleware_dispatch.py
+  Source File: backend\main.py
+  Source Function: RequestIDMiddleware.dispatch
+  Error Summary: tests/test_RequestIDMiddleware_dispatch.py::test_RequestIDMiddleware_dispatch_success FAILED [ 16%]
+--- End of this run's failures ---

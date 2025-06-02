@@ -179,10 +179,10 @@ class DebuggingTools:
             return_direct=False
         )
 
-        self.run_tests_tool = StructuredTool.from_function(
-            func=self._run_tests_internal, # Bind method to instance
-            name="run_tests",
-            description="Runs the project's test suite by executing the run_tests.bat file. Returns 'All tests passed.' or 'Tests failed. Check test_results.log for details.'",
+        self.run_test_tool = StructuredTool.from_function(
+            func=self._run_test_internal, # Bind method to instance
+            name="run_test",
+            description="Runs the project's test suite by executing the run_test.bat file. Returns 'All tests passed.' or 'Tests failed. Check test_results.log for details.'",
             args_schema=EmptyInput, # Explicitly no input args for the agent
             return_direct=False
         )
@@ -303,15 +303,15 @@ class DebuggingTools:
             logger.error(f"Failed to apply fix to {full_file_path}: {e}", exc_info=True)
             return f"Error applying code fix: {str(e)}"
 
-    # Internal implementation for run_tests tool
-    def _run_tests_internal(self) -> str:
-        """Internal method for run_tests tool."""
-        bat_file = os.path.join(self.project_root, "run_tests.bat")
+    # Internal implementation for run_test tool
+    def _run_test_internal(self) -> str:
+        """Internal method for run_test tool."""
+        bat_file = os.path.join(self.project_root, "run_test.bat")
         test_log_file = os.path.join(self.project_root, TEST_LOG_FILE)
 
         if not os.path.exists(bat_file):
-            logger.error(f"run_tests.bat not found at {bat_file}")
-            return "run_tests.bat not found."
+            logger.error(f"run_test.bat not found at {bat_file}")
+            return "run_test.bat not found."
         
         # Pre-cleanup of the log file for this run, in case the bat script fails early
         if os.path.exists(test_log_file):
@@ -326,17 +326,17 @@ class DebuggingTools:
             result = subprocess.run(
                 f'"{bat_file}"',
                 shell=True,
-                capture_output=True, # Capture output/stderr of the batch script itself (e.g., debug_tests.log content)
+                capture_output=True, # Capture output/stderr of the batch script itself (e.g., debug_test_agent.log content)
                 text=True,
                 cwd=self.project_root,
                 check=False # Do not raise CalledProcessError as we handle exit code manually
             )
             
-            # Log stdout/stderr of the batch script itself (debug_tests.log content will also be here)
+            # Log stdout/stderr of the batch script itself (debug_test_agent.log content will also be here)
             if result.stdout:
-                logger.debug(f"run_tests.bat stdout (from debug_tests.log):\n{result.stdout}")
+                logger.debug(f"run_test.bat stdout (from debug_test_agent.log):\n{result.stdout}")
             if result.stderr:
-                logger.error(f"run_tests.bat stderr (from debug_tests.log):\n{result.stderr}")
+                logger.error(f"run_test.bat stderr (from debug_test_agent.log):\n{result.stderr}")
 
             logger.info(f"Pytest run completed. Batch script exit code: {result.returncode}")
 
@@ -407,7 +407,7 @@ def main():
         tools_instance.read_test_results_tool,
         tools_instance.read_source_code_tool,
         tools_instance.apply_code_fix_tool,
-        tools_instance.run_tests_tool,
+        tools_instance.run_test_tool,
         tools_instance.deploy_application_tool
     ]
 
@@ -461,10 +461,10 @@ def main():
                 - `explanation`: A concise summary of why the bug occurred and how your fix addresses it.
                 - `fixed_file_content`: **The complete, entire content of the source file after applying your fix.** This includes all imports, class definitions, functions, and top-level code. Ensure the triple backticks (` ``` `) and `python` language marker are included exactly as shown.
         5.  **Apply the Fix:** Use the `apply_code_fix` tool with the `source_file_relative` (from the test failure) and the `fixed_full_file_content` (the entire fixed file content you generated).
-        6.  **Verify the Fix:** Immediately after applying the fix, use the `run_tests` tool to execute the tests again and check if your fix was successful.
+        6.  **Verify the Fix:** Immediately after applying the fix, use the `run_test` tool to execute the tests again and check if your fix was successful.
         7.  **Iterate or Conclude:**
-            *   If `run_tests` returns "All tests passed.", then your fix worked. Proceed to call `deploy_application` and state task completion.
-            *   If `run_tests` returns "Tests failed.", analyze the new `test_results.log` (by calling `read_test_results` again). Consider the previous debug history (`Previous Debug History` section below) and adjust your strategy for the next attempt.
+            *   If `run_test` returns "All tests passed.", then your fix worked. Proceed to call `deploy_application` and state task completion.
+            *   If `run_test` returns "Tests failed.", analyze the new `test_results.log` (by calling `read_test_results` again). Consider the previous debug history (`Previous Debug History` section below) and adjust your strategy for the next attempt.
 
         **Important Guidelines:**
         -   Always provide a well-formed JSON output for your proposed fix.

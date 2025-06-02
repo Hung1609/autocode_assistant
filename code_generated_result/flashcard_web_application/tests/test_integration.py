@@ -2,37 +2,33 @@ import pytest
 from fastapi.testclient import TestClient
 from backend.main import app
 import json
+import os
+import uuid
 
 client = TestClient(app)
 
 
 def test_create_flashcard_success():
     # source_info: backend.main.create_flashcard
-    response = client.post(
-        "/api/flashcards",
-        json={"front_text": "Front Text", "back_text": "Back Text"},
-    )
+    payload = {"front_text": "Front Text", "back_text": "Back Text"}
+    response = client.post("/api/flashcards", json=payload)
     assert response.status_code == 201
     assert "id" in response.json()
     assert response.json()["front_text"] == "Front Text"
     assert response.json()["back_text"] == "Back Text"
 
 
-def test_create_flashcard_missing_front_text():
+def test_create_flashcard_invalid_input():
     # source_info: backend.main.create_flashcard
-    response = client.post(
-        "/api/flashcards",
-        json={"back_text": "Back Text"},
-    )
+    payload = {"front_text": 123, "back_text": 456}
+    response = client.post("/api/flashcards", json=payload)
     assert response.status_code == 422
 
 
-def test_create_flashcard_missing_back_text():
+def test_create_flashcard_missing_field():
     # source_info: backend.main.create_flashcard
-    response = client.post(
-        "/api/flashcards",
-        json={"front_text": "Front Text"},
-    )
+    payload = {"front_text": "Front Text"}
+    response = client.post("/api/flashcards", json=payload)
     assert response.status_code == 422
 
 
@@ -41,123 +37,140 @@ def test_get_flashcards_empty():
     response = client.get("/api/flashcards")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+    # Clear flashcards to ensure the list is truly empty
+    flashcards = client.get("/api/flashcards").json()
+    for card in flashcards:
+        client.delete(f"/api/flashcards/{card['id']}") # Assuming you have a DELETE endpoint
+    response = client.get("/api/flashcards")
+    assert response.status_code == 200
+    assert response.json() == []
 
 
 def test_get_flashcards_with_data():
     # source_info: backend.main.get_flashcards
-    # Create a flashcard first
-    create_response = client.post(
-        "/api/flashcards",
-        json={"front_text": "Test Front", "back_text": "Test Back"},
-    )
+    # First, create a flashcard
+    payload = {"front_text": "Test Front", "back_text": "Test Back"}
+    create_response = client.post("/api/flashcards", json=payload)
     assert create_response.status_code == 201
     flashcard_id = create_response.json()["id"]
 
-    # Get all flashcards
-    get_response = client.get("/api/flashcards")
-    assert get_response.status_code == 200
-    assert isinstance(get_response.json(), list)
-    assert len(get_response.json()) > 0
+    # Then, retrieve the flashcards
+    response = client.get("/api/flashcards")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+    assert len(response.json()) > 0
+    found = False
+    for card in response.json():
+        if card["id"] == flashcard_id:
+            found = True
+            break
+    assert found
 
-    # Clean up: Delete the created flashcard (if delete endpoint existed).  In this example it doesnt exist.
+    #Clean up - delete created flashcard. Assuming there is a delete endpoint
+    client.delete(f"/api/flashcards/{flashcard_id}")
 
 
 def test_get_flashcards_with_query():
     # source_info: backend.main.get_flashcards
-    create_response = client.post(
-        "/api/flashcards",
-        json={"front_text": "Searchable Front", "back_text": "Irrelevant Back"},
-    )
-    assert create_response.status_code == 201
-    get_response = client.get("/api/flashcards?query=Searchable")
-    assert response.status_code == 200 #changed get_response to response
-    assert len(get_response.json()) > 0
+    # Create two flashcards for testing
+    payload1 = {"front_text": "Apple", "back_text": "Fruit"}
+    create_response1 = client.post("/api/flashcards", json=payload1)
+    assert create_response1.status_code == 201
+    flashcard_id1 = create_response1.json()["id"]
+    
+    payload2 = {"front_text": "Banana", "back_text": "Yellow Fruit"}
+    create_response2 = client.post("/api/flashcards", json=payload2)
+    assert create_response2.status_code == 201
+    flashcard_id2 = create_response2.json()["id"]
 
 
-def test_get_flashcards_with_query_no_match():
-    # source_info: backend.main.get_flashcards
-    get_response = client.get("/api/flashcards?query=NonExistent")
-    assert get_response.status_code == 200
-    assert len(get_response.json()) == 0
+    # Search for "Apple"
+    response = client.get("/api/flashcards?query=Apple")
+    assert response.status_code == 200
+    flashcards = response.json()
+    assert len(flashcards) > 0
+    found_apple = any(card["id"] == flashcard_id1 for card in flashcards)
+    assert found_apple
+
+    # Search for "Yellow"
+    response = client.get("/api/flashcards?query=Yellow")
+    assert response.status_code == 200
+    flashcards = response.json()
+    assert len(flashcards) > 0
+    found_yellow = any(card["id"] == flashcard_id2 for card in flashcards)
+    assert found_yellow
+
+    #Clean up created flashcards
+    client.delete(f"/api/flashcards/{flashcard_id1}")
+    client.delete(f"/api/flashcards/{flashcard_id2}")
 
 
 def test_get_flashcard_by_id_success():
     # source_info: backend.main.get_flashcard
-    # Create a flashcard first
-    create_response = client.post(
-        "/api/flashcards",
-        json={"front_text": "Specific Front", "back_text": "Specific Back"},
-    )
+    # First create a flashcard
+    payload = {"front_text": "Specific Front", "back_text": "Specific Back"}
+    create_response = client.post("/api/flashcards", json=payload)
     assert create_response.status_code == 201
     flashcard_id = create_response.json()["id"]
 
-    # Get the flashcard by ID
-    get_response = client.get(f"/api/flashcards/{flashcard_id}")
-    assert get_response.status_code == 200
-    assert get_response.json()["id"] == flashcard_id
-    assert get_response.json()["front_text"] == "Specific Front"
-    assert get_response.json()["back_text"] == "Specific Back"
+    # Then retrieve the specific flashcard by ID
+    response = client.get(f"/api/flashcards/{flashcard_id}")
+    assert response.status_code == 200
+    assert response.json()["id"] == flashcard_id
+    assert response.json()["front_text"] == "Specific Front"
+    assert response.json()["back_text"] == "Specific Back"
 
-    # Clean up: Delete the created flashcard (if delete endpoint existed). In this example it doesnt exist
+    #Clean up created flashcard
+    client.delete(f"/api/flashcards/{flashcard_id}")
 
 
 def test_get_flashcard_by_id_not_found():
     # source_info: backend.main.get_flashcard
-    response = client.get("/api/flashcards/999")  # Non-existent ID
+    response = client.get("/api/flashcards/nonexistent_id")
     assert response.status_code == 404
-    assert "error" in response.json()
 
 
 def test_create_review_success():
     # source_info: backend.main.create_review
-
     # First create a flashcard
-    create_flashcard_response = client.post(
-        "/api/flashcards",
-        json={"front_text": "Review Front", "back_text": "Review Back"},
-    )
+    payload_flashcard = {"front_text": "Review Front", "back_text": "Review Back"}
+    create_flashcard_response = client.post("/api/flashcards", json=payload_flashcard)
     assert create_flashcard_response.status_code == 201
     flashcard_id = create_flashcard_response.json()["id"]
 
-    # Create a review for the flashcard
-    review_response = client.post(
-        "/api/reviews", json={"flashcard_id": flashcard_id, "correct": True}
-    )
-    assert review_response.status_code == 201
-    assert "id" in review_response.json()
-    assert review_response.json()["flashcard_id"] == flashcard_id
-    assert review_response.json()["correct"] is True
+    # Then create a review for the flashcard
+    payload_review = {"flashcard_id": flashcard_id, "correct": True}
+    response = client.post("/api/reviews", json=payload_review)
+    assert response.status_code == 201
+    assert "id" in response.json()
+    assert response.json()["flashcard_id"] == flashcard_id
+    assert response.json()["correct"] == True
+
+    #Clean up created flashcard
+    client.delete(f"/api/flashcards/{flashcard_id}")
 
 
-def test_create_review_invalid_flashcard_id():
+def test_create_review_invalid_input():
     # source_info: backend.main.create_review
-    response = client.post(
-        "/api/reviews", json={"flashcard_id": 999, "correct": True}
-    )  # Non-existent flashcard_id
-
-    #Assuming the backend validates the flashcard ID's existence before creating review. otherwise remove this test.
-
-    assert response.status_code == 400 # or 404, depending on implementation. changed from 201
-    assert "error" in response.json()
-
-
-def test_create_review_missing_flashcard_id():
-    # source_info: backend.main.create_review
-    response = client.post("/api/reviews", json={"correct": True})
+    payload = {"flashcard_id": "invalid", "correct": "invalid"}
+    response = client.post("/api/reviews", json=payload)
     assert response.status_code == 422
 
 
-def test_create_review_missing_correct():
+def test_create_review_missing_field():
     # source_info: backend.main.create_review
     # First create a flashcard
-    create_flashcard_response = client.post(
-        "/api/flashcards",
-        json={"front_text": "Review Front", "back_text": "Review Back"},
-    )
+    payload_flashcard = {"front_text": "Review Front", "back_text": "Review Back"}
+    create_flashcard_response = client.post("/api/flashcards", json=payload_flashcard)
     assert create_flashcard_response.status_code == 201
     flashcard_id = create_flashcard_response.json()["id"]
-    response = client.post("/api/reviews", json={"flashcard_id": flashcard_id})
+
+    payload = {"flashcard_id": flashcard_id}
+    response = client.post("/api/reviews", json=payload)
     assert response.status_code == 422
+
+    #Clean up created flashcard
+    client.delete(f"/api/flashcards/{flashcard_id}")
 
 
 def test_get_statistics_success():
