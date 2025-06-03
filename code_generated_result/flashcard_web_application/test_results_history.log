@@ -1,12 +1,21 @@
 
 
---- Test Run: 2025-06-02 22:29:25 - FAILED ---
+--- Test Run: 2025-06-03 15:19:30 - FAILED ---
 Project: flashcard_web_application
 Framework: fastapi
 Number of failures: 1
-  Test: test_RequestIDMiddleware_dispatch_success
-  Test File Path: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\test_RequestIDMiddleware_dispatch.py
+  Test: test_health_check
+  Test File Path: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\integration\test_integration.py
   Source File: backend\main.py
-  Source Function: RequestIDMiddleware.dispatch
-  Error Summary: tests/test_RequestIDMiddleware_dispatch.py::test_RequestIDMiddleware_dispatch_success FAILED [ 16%]
+  Source Function: health_check
+  Error Summary: tests/integration/test_integration.py::test_health_check FAILED          [  1%]
 --- End of this run's failures ---
+
+--- Debug Agent Run: 2025-06-03 15:27:21 ---
+Parsed Test Failure:
+  test_name: test_health_check
+  test_file_path_full: C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\code_generated_result\flashcard_web_application\tests\integration\test_integration.py
+  source_file_relative: backend\main.py
+  source_function_mapped: health_check
+  error_summary_line: tests/integration/test_integration.py::test_health_check FAILED          [  1%]
+---

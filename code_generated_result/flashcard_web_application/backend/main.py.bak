@@ -8,7 +8,7 @@ import sys
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response, JSONResponse
+from starlette.responses import Response
 
 
 # Attempt to import python-json-logger, provide fallback if it fails
@@ -121,4 +121,4 @@ async def log_requests(request: Request, call_next):
 
 @app.get("/api/health")
 async def health_check():
-    return JSONResponse({"status": "ok"})
+    return {"status": "ok"}
