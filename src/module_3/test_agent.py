@@ -7,7 +7,7 @@ import logging
 logging.disable(logging.CRITICAL)
 
 # Import the module to be tested
-import agent
+import coding_agent as agent
 
 # Disable logging for cleaner test output (optional)
 # logging.disable(logging.CRITICAL)
