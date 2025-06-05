@@ -25,7 +25,6 @@ api_key = os.getenv('GEMINI_API_KEY')
 configure(api_key=api_key)
 logger.info("Gemini API configured successfully.")
 
-SUPPORTED_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash']
 DEFAULT_MODEL = 'gemini-2.0-flash'
 BASE_OUTPUT_DIR = 'code_generated_result'
 # path in company's computer
@@ -37,7 +36,7 @@ PYTHON_PATH = r"C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\pytho
 # PYTHON_PATH = r"C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe"
 
 # --- Main functions ---
-def slugify(text):
+def slugify(text): # hiện đang không thấy được sử dụng, cần check lại
     text = text.lower()
     text = re.sub(r'\s+', '_', text)
     text = re.sub(r'[^\w_.-]', '', text)
@@ -142,7 +141,7 @@ def parse_json_and_generate_scaffold_plan(json_design, json_spec):
                 directories_to_create.add(parent_dir)
             files_to_create[current_path] = ""
 
-            # Detect backend directory (contains main.py)
+        # Detect backend directory (contains main.py)
         if relative_path.endswith('main.py'):
             backend_dir = os.path.dirname(relative_path)
             if backend_dir.startswith('/') and len(backend_dir) > 1: # Only remove if it's not just "/"
@@ -157,12 +156,12 @@ def parse_json_and_generate_scaffold_plan(json_design, json_spec):
 
         # Detect CSS file
         if relative_path.endswith('.css'):
-            css_path = relative_path[len(frontend_dir) + 1:] if frontend_dir and relative_path.startswith(frontend_dir) else relative_path
+            css_path = os.path.relpath(relative_path, frontend_dir).replace('\\', '/') if frontend_dir and relative_path.startswith(frontend_dir) else relative_path
             logger.info(f"Detected CSS path: {css_path}")
 
-        # Detect JS file (assume primary JS file is app.js or similar)
-        if relative_path.endswith('.js') and ('app.js' in relative_path or 'main.js' in relative_path):
-            js_path = relative_path[len(frontend_dir) + 1:] if frontend_dir and relative_path.startswith(frontend_dir) else relative_path
+        # Detect JS file
+        if relative_path.endswith('.js'):
+            js_path = os.path.relpath(relative_path, frontend_dir).replace('\\', '/') if frontend_dir and relative_path.startswith(frontend_dir) else relative_path
             logger.info(f"Detected JS path: {js_path}")
 
     # Validate detected paths
@@ -174,19 +173,19 @@ def parse_json_and_generate_scaffold_plan(json_design, json_spec):
         raise ValueError("Main frontend file 'index.html' not found in folder structure.")
     if not css_path:
         logger.warning("No CSS file found in folder structure. Frontend may lack styling.")
-        css_path = "style.css"  # Fallback
+        raise ValueError("Main css file not found in folder structure.")
     if not js_path:
         logger.warning("No primary JS file (e.g., app.js) found in folder structure. Frontend may lack interactivity.")
-        js_path = "app.js"  # Fallback
+        raise ValueError("Main js file not found in folder structure.")
 
     # Add the 'logs' directory to the directories to be created
     logs_dir_path = os.path.join(actual_project_root_dir, "logs")
     directories_to_create.add(logs_dir_path)
     logger.info(f"Added logs directory to scaffold plan: {logs_dir_path}")
 
-    bat_file_path = os.path.join(actual_project_root_dir, "setup_and_run.bat")
+    bat_file_path = os.path.join(actual_project_root_dir, "run.bat")
     files_to_create[bat_file_path] = ""
-    logger.info(f"Added setup_and_run.bat to scaffold plan: {bat_file_path}")
+    logger.info(f"Added run.bat to scaffold plan: {bat_file_path}")
 
     # Shell commands (for logging purposes)
     shell_commands_log = [f"mkdir -p \"{d}\"" for d in sorted(list(directories_to_create))] + [f"touch \"{f}\"" for f in files_to_create.keys()]
@@ -238,8 +237,8 @@ def generate_code_for_each_file(json_design, json_spec, file_path, project_root_
         raise ValueError("file_path must be a string.")
 
     relative_file_path = os.path.relpath(file_path, project_root_dir).replace('\\', '/')
-    if relative_file_path == 'setup_and_run.bat':
-        logger.info(f"Generating content for setup_and_run.bat: {file_path}")
+    if relative_file_path == 'run.bat':
+        logger.info(f"Generating content for run.bat: {file_path}")
         if not os.path.exists(PYTHON_PATH):
             logger.error(f"Python path {PYTHON_PATH} does not exist.")
             raise FileNotFoundError(f"Python path {PYTHON_PATH} does not exist.")
@@ -323,10 +322,10 @@ echo Application started. >> debug.log 2>&1
 pause
 exit /b 0
 """
-        logger.debug(f"Generated setup_and_run.bat content:\n{bat_content}")
+        logger.debug(f"Generated run.bat content:\n{bat_content}")
         if any(ord(char) > 127 for char in bat_content):
-            logger.error("Invalid non-ASCII characters detected in setup_and_run.bat content.")
-            raise ValueError("Generated setup_and_run.bat contains invalid non-ASCII characters.")
+            logger.error("Invalid non-ASCII characters detected in run.bat content.")
+            raise ValueError("Generated run.bat contains invalid non-ASCII characters.")
         return bat_content
 
     if relative_file_path == '.env':
@@ -353,62 +352,56 @@ exit /b 0
 
     # NOTE: The file_path passed to prompt is the absolute one.
     prompt = f"""
-    Context:
-    You are an expert Senior Software Engineer acting as a meticulous code writer for a {project_name} with a {backend_language_framework} 
-backend technology, {frontend_language_framework} frontend technology, and {storage_type} storage type.
-    Your task is to generate complete, syntactically correct code for the specified file, based on the JSON design file (technical implementation) 
-and JSON specification file (requirements), adhering to additional rules for logging and FastAPI static file serving.
+    CONTEXT:
+    - You are an expert Senior Software Engineer acting as a meticulous code writer for a `{project_name}` with a `{backend_language_framework}` backend technology, `{frontend_language_framework}` frontend technology, and `{storage_type}` storage type.
+    - Your task is to generate complete, syntactically correct code for the specified file, based on the JSON design file (technical implementation) and JSON specification file (requirements), adhering to additional rules for logging and FastAPI static file serving.
 
-    Target File Information:
-    - Full Path of the file to generate: `{file_path}`
-    - This file is part of the project structure defined in the `folder_Structure` section of the JSON Design. The `folder_Structure.root_Project_Directory_Name` indicates the main project folder. The `folder_Structure.structure` lists all files and directories relative to that root.
-    - Backend module path: `{plan['backend_module_path']}` (e.g., 'backend.main' or 'app.main').
-    - Frontend directory: `{plan['frontend_dir']}` (e.g., 'frontend').
-    - CSS file path relative to frontend directory: `{plan['css_path']}` (e.g., 'style.css' or 'css/style.css').
-    - JS file path relative to frontend directory: `{plan['js_path']}` (e.g., 'app.js' or 'js/app.js').
+
+    TARGET FILE INFORMATION:
+    - Full Path of the File to Generate: `{file_path}`
+    - Project Structure: This file is part of the project structure defined in the `folder_Structure` section of the JSON Design. The `folder_Structure.root_Project_Directory_Name` indicates the main project folder, and `folder_Structure.structure` lists all files and directories relative to that root.
+    - Backend Module Path: `{plan['backend_module_path']}` (e.g., 'backend.main' or 'app.main').
+    - Frontend Directory: `{plan['frontend_dir']}` (e.g., 'frontend').
+    - CSS File Path: Relative to frontend directory, `{plan['css_path']}`
+    - JS File Path: Relative to frontend directory, `{plan['js_path']}`
     
-    INTERNAL THOUGHT PROCESS (Follow these steps to build a comprehensive understanding before writing code):
-    1. **Analyze File Role**: Determine the file's purpose based on its path and the JSON Design's `folder_Structure`.
-       - If the file is `{plan['backend_module_path'].replace('.', '/')}.py`, include FastAPI initialization, StaticFiles mounting, and logging setup.
-       - If the file is a Python module (e.g., `backend/routes.py`), include function-level logging.
-       - If the file is `{plan['frontend_dir']}/index.html`, reference CSS and JS files using `{plan['css_path']}` and `{plan['js_path']}`.
-    2. **Identify Key Requirements (from JSON Specification)**:
-       - Which Functional Requirements (FRs) must this file help implement?
-       - Which Non-Functional Requirements (NFRs, e.g., Security, Performance, Usability) must this file adhere to?
-    3. **Map to Design (from JSON Design)**:
-       - Which API endpoints (`interface_Design`) does this file define or call?
-       - Which Data Models (`data_Design`) does this file define or use (CRUD)?
-       - Which Workflows (`workflow_Interaction`) does this file participate in?
-    4. **Plan Implementation & Patterns**:
-       - What is the high-level structure (Classes, Functions, Imports)?
-       - Use FastAPI conventions, Python logging, and StaticFiles for frontend serving.
-       - Ensure dependencies from the `dependencies` section are utilized.
-    5. **Determine Entry Point Requirements**:
-       - For `{plan['backend_module_path'].replace('.', '/')}.py`, include FastAPI app initialization, StaticFiles mounting.
-       - Ensure the file is executable via `uvicorn {plan['backend_module_path']}:app --reload --port 8001`.
+    
+    INTERNAL THOUGHT PROCESS
+    - Follow these steps to build a comprehensive understanding before writing code:
+        1. Analyze File Role:
+        - Determine the file’s purpose based on its path and the JSON Design’s `folder_Structure`.
+        - If the file is `{plan['backend_module_path'].replace('.', '/')}.py`, it’s the main backend entry point; include FastAPI initialization, StaticFiles mounting, and logging setup.
+        - If the file is a Python module (e.g., `backend/routes.py`), include function-level logging.
+        - If the file is `{plan['frontend_dir']}/index.html`, reference CSS and JS files using `{plan['css_path']}` and `{plan['js_path']}`.
+        2. Identify Key Requirements (from JSON Specification):
+        - Determine which Functional Requirements (FRs) this file must help implement.
+        - Determine which Non-Functional Requirements (NFRs, e.g., Security, Performance, Usability) this file must adhere to.
+        3. Map to Design (from JSON Design):
+        - Identify which API endpoints (interface_Design) this file defines or calls.
+        - Identify which Data Models (data_Design) this file defines or uses (CRUD operations).
+        - Identify which Workflows (workflow_Interaction) this file participates in.
+        4. Plan Implementation & Patterns:
+        - Outline the high-level structure of the code (Classes, Functions, Imports).
+        - Use FastAPI conventions, Python logging, and StaticFiles for frontend serving.
+        - Ensure dependencies from the `dependencies` section are utilized appropriately.
+        5. Determine Entry Point Requirements:
+        - For the main backend file `{plan['backend_module_path'].replace('.', '/')}.py`, include FastAPI app initialization and StaticFiles mounting.
+        - Ensure the file is executable via `uvicorn {plan['backend_module_path']}:app --reload --port 8001`.
 
-    Instructions for Code Generation:
-    1.  **Output Code Only**: Your response MUST be only the raw code for the file. Do NOT include any explanations, comments outside the code, or markdown formatting (like ```language ... ```).
-    2.  **Python Import Placement (Python Files Only)**: All `import` statements MUST be placed at the very top of the file, before any function definitions, class definitions, or any other executable code (e.g., variable assignments, route definitions outside functions). This is crucial for correct module loading and dependency resolution.
-    3.  **Advanced Logging Setup for Debug Agent (Python Files Only)**
-        -   **Objective**: Generate structured, rotatable logs in a dedicated `logs/` directory for easy processing by a debug agent.
-        -   **Detailed Initialization (ONLY in `{plan['backend_module_path'].replace('.', '/')}.py`):**
-            -   **Import necessary modules:** `logging`, `logging.handlers`, `json` (for custom JSON formatting), `contextvars`, `uuid`. If `python-json-logger` is intended for structured logging, attempt to import it and handle `ImportError` gracefully by providing a fallback custom JSON formatter.
-            -   **Define a custom JSON formatter:**
-                -   This formatter should convert `logging.LogRecord` attributes into a JSON string.
-                -   It must include the following fields: `timestamp` (from `asctime`), `level` (from `levelname`), `logger_name` (from `name`), `message`, `pathname`, `funcName`, `lineno`.
-                -   Crucially, it must **also include a `request_id` field** if it's present on the `LogRecord` (e.g., `record.request_id`).
-                -   For exceptions, ensure `exc_info` is properly formatted and included.
-            -   **Configure a `RotatingFileHandler`:**
-                -   It should write to `logs/app.log` (path relative to the project root).
-                -   Set a `maxBytes` limit (e.g., 10 * 1024 * 1024 bytes for 10MB) and `backupCount` (e.g., 5) to enable log rotation.
-                -   Set its formatter to the custom JSON formatter defined above.
-            -   **Configure a `StreamHandler`:**
-                -   For console output.
-                -   Use a standard, human-readable format (not JSON) for console logs (e.g., `%(asctime)s - %(levelname)s - %(name)s - %(message)s`).
-            -   **Root Logger Configuration:**
-                -   Call `logging.basicConfig` with `level=logging.DEBUG` and register both the `RotatingFileHandler` and `StreamHandler`.
-                -   Get the initial logger instance: `logger = logging.getLogger(__name__)`.
+
+    INSTRUCTIONS FOR CODE GENERATION:
+    1. Output Code Only:
+        - Your response MUST contain only the raw code for the file.
+        - Do NOT include explanations, comments outside the code, or markdown formatting.
+    2. Python Import Placement (Python Files Only):
+        - Place all `import` statements at the very top of the file, before any function definitions, class definitions, or other executable code. (e.g., variable assignments, route definitions outside functions).
+    3. Advanced Logging Setup for Debug Agent (Python Files Only):
+        - For Main Backend File `{plan['backend_module_path'].replace('.', '/')}.py`:
+            - Import necessary modules: `logging`, `logging.handlers`, `json`, `contextvars`, `uuid`.
+            - Define a custom JSON formatter to convert `logging.LogRecord` attributes into JSON string, including `timestamp` (from `asctime`), `level` (from `levelname`), `logger_name` (from `name`), `message`, `pathname`, `funcName`, `lineno`, and `request_id` (if present), with proper `exc_info` formatting for exceptions.
+            - Configure a `RotatingFileHandler` to write to `logs/app.log` with `maxBytes` (e.g., 10MB) and `backupCount` (e.g., 5), using the custom JSON formatter.
+            - Configure a `StreamHandler` for console output with a human-readable format (e.g., `%(asctime)s - %(levelname)s - %(name)s - %(message)s`).
+            - Set up the root logger with logging.basicConfig(level=logging.DEBUG) and register both the `RotatingFileHandler` and `StreamHandler`.
         -   **Request ID (Correlation ID) Implementation (ONLY in `{plan['backend_module_path'].replace('.', '/')}.py`):**
             -   **Objective**: Trace individual HTTP requests across all related log messages.
             -   **`ContextVar`:** Declare a `contextvars.ContextVar` (e.g., `request_id_ctx`) to store the unique request ID for the current request context.
@@ -441,6 +434,8 @@ and JSON specification file (requirements), adhering to additional rules for log
          app = FastAPI()
          app.mount("/", StaticFiles(directory="{plan['frontend_dir']}", html=True), name="static")
          ```
+        - This line must be placed at the very end of the line, after: All import statements, all middleware (e.g., Request ID context middleware), all logging setup, all route definitions (e.g., @app.get(...)) and any dependency injection or startup events.
+        - Placing app.mount(...) at the end ensures it only servers frontend files when no backend route matches. If placed earlier, it may override other route handlers unintentionally.
         - Ensure the frontend files (e.g., `frontend/index.html`, `frontend/css/style.css`, `frontend/js/app.js`) are structured to be served statically.
         - The application should be runnable with a single command: `uvicorn {plan['backend_module_path']}:app --reload --port 8001`.
     5. **Frontend File Paths (HTML Files Only)**:
@@ -527,8 +522,8 @@ def write_code_to_file(file_path, code):
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(code)
         logger.info(f"Successfully wrote {len(code)} characters to {file_path}")
-        # Validate batch file content if it's setup_and_run.bat
-        if file_path.endswith('setup_and_run.bat'):
+        # Validate batch file content if it's run.bat
+        if file_path.endswith('run.bat'):
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
                 if any(ord(char) > 127 for char in content):
@@ -552,9 +547,9 @@ def run_codegen_pipeline(json_design, json_spec, llm_model_instance):
             code = generate_code_for_each_file(json_design, json_spec, file_path, plan["project_root_directory"], llm_model_instance, plan)
             write_code_to_file(file_path, code)
         
-        bat_file = os.path.join(plan["project_root_directory"], "setup_and_run.bat")
+        bat_file = os.path.join(plan["project_root_directory"], "run.bat")
         absolute_project_root_dir = os.path.abspath(plan["project_root_directory"]) # dùng đường dẫn tuyệt đối
-        absolute_bat_file_path = os.path.join(absolute_project_root_dir, "setup_and_run.bat")
+        absolute_bat_file_path = os.path.join(absolute_project_root_dir, "run.bat")
 
         if os.path.exists(absolute_bat_file_path):
             logger.info(f"Executing {absolute_bat_file_path} to setup and run the application...")
@@ -672,8 +667,8 @@ if __name__ == "__main__":
 # - Thư mục đầu ra cơ sở: BASE_OUTPUT_DIR = 'code_generated_result'
 #  Là một tên thư mục cố định, không thể thay đổi dễ dàng mà không chỉnh sửa code. Mặc dù là tương đối, nó vẫn là hardcode.
 #  - Logic phát hiện và tạo tệp .bat (Windows-specific):
-# bat_file_path = os.path.join(actual_project_root_dir, "setup_and_run.bat")
-# Phần lớn nội dung của setup_and_run.bat được tạo ra trong hàm generate_code_for_each_file là Windows-specific (.bat extension, setlocal EnableDelayedExpansion, call "!PROJECT_ROOT!\venv\Scripts\activate.bat").
+# bat_file_path = os.path.join(actual_project_root_dir, "run.bat")
+# Phần lớn nội dung của run.bat được tạo ra trong hàm generate_code_for_each_file là Windows-specific (.bat extension, setlocal EnableDelayedExpansion, call "!PROJECT_ROOT!\venv\Scripts\activate.bat").
 # - Logic tạo tệp .env và requirements.txt mặc định:
 # if relative_file_path == '.env': return "DATABASE_URL=sqlite:///todo.db\n"
 # Logic cho requirements.txt thêm fastapi[all], uvicorn[standard], sqlalchemy, pydantic nếu không có dependency nào khác được tìm thấy.

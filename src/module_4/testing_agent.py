@@ -29,14 +29,15 @@ configure(api_key=api_key)
 logger.info("Gemini API configured successfully for test generator.")
 
 DEFAULT_MODEL = 'gemini-2.0-flash'
-# Sử dụng os.getenv để linh hoạt cấu hình thư mục gốc
 BASE_GENERATED_DIR = os.getenv('BASE_GENERATED_DIR', 'code_generated_result')
-# OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs')
-OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs')
+OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant\src\module_1_vs_2\outputs')
+# OUTPUTS_DIR = os.getenv('OUTPUTS_DIR', r'C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs')
 TEST_OUTPUT_DIR_NAME = "tests"
+UNIT_TEST_SUBDIR = "unit"
+INTEGRATION_TEST_SUBDIR = "integration"
 TEST_LOG_FILE = "test_results.log"
 TEST_HISTORY_LOG_FILE = "test_results_history.log"
-TEST_GENERATED_FLAG = ".test_generated" # Đánh dấu các file test đã được sinh ra
+TEST_GENERATED_FLAG = ".test_generated"
 
 def create_pytest_ini(project_root):
     pytest_ini_path = os.path.join(project_root, "pytest.ini")
@@ -48,12 +49,10 @@ asyncio_default_fixture_loop_scope = function
 # pytest will create this directory if it doesn't exist.
 cachedir = tmp_pytest_cache/
 """
-    # Kiểm tra xem pytest.ini đã tồn tại và có nội dung tương tự chưa để tránh ghi đè không cần thiết
     if os.path.exists(pytest_ini_path):
         try:
             with open(pytest_ini_path, 'r', encoding='utf-8') as f:
                 current_content = f.read()
-            # Kiểm tra sự hiện diện của các cấu hình chính
             if "asyncio_mode = auto" in current_content and \
                "asyncio_default_fixture_loop_scope = function" in current_content and \
                "cachedir = tmp_pytest_cache/" in current_content:
@@ -111,7 +110,7 @@ if %ERRORLEVEL% neq 0 (
 
 echo Attempting to activate virtual environment... >> debug_test_agent.log 2>&1
 echo Activating script path: "%~dp0venv\Scripts\activate.bat" >> debug_test_agent.log 2>&1
-call "%~dp0venv\Scripts\activate.bat" >> debug_test_agent.log 2>&1
+call "%~dp0venv\Scripts\activate.bat"  1>>debug_test_agent.log 2>&1
 if %ERRORLEVEL% neq 0 (
     echo ERROR: Failed to activate virtual environment. Error code: %ERRORLEVEL%. >> debug_test_agent.log 2>&1
     echo Please ensure the venv\Scripts\activate.bat exists and is not corrupted. >> debug_test_agent.log 2>&1
@@ -126,6 +125,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo Running pytest with --exitfirst and --tb=long... >> debug_test_agent.log 2>&1
+REM Pytest will automatically discover tests in tests/unit and tests/integration
 "{venv_python_path}" -m pytest tests --exitfirst --tb=long -v > "{TEST_LOG_FILE}" 2>&1
 set TEST_EXIT_CODE=%ERRORLEVEL%
 
@@ -163,13 +163,12 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
     if not os.path.exists(OUTPUTS_DIR):
         msg = f"Outputs directory '{OUTPUTS_DIR}' does not exist. Ensure your design/spec files are there."
         logger.error(msg)
-        raise FileNotFoundError(msg)
+        raise FileNotFoundError(msg) # This is the error you were seeing. The path C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs needs to exist.
 
     project_root = None
     design_data = None
     spec_data = None
 
-    # First approach: Using argparse to choose design/spec files
     if design_file_path and spec_file_path:
         logger.info(f"Using specified design file: {design_file_path} and spec file: {spec_file_path}")
         try:
@@ -182,7 +181,7 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
             if project_name:
                 potential_project_root = os.path.join(BASE_GENERATED_DIR, project_name)
                 if os.path.isdir(potential_project_root):
-                    project_root = os.path.abspath(potential_project_root) # đường dẫn tuyệt đối
+                    project_root = os.path.abspath(potential_project_root)
                     logger.info(f"Detected project root from specified design: {project_root}")
                 else:
                     logger.warning(f"Project directory '{potential_project_root}' from specified design not found in '{BASE_GENERATED_DIR}'.")
@@ -193,7 +192,6 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
             logger.error(f"Failed to load/parse specified JSON files: {e}")
             raise ValueError(f"Invalid specified JSON files: {e}")
     
-    # Second approach: Fallback to specified project name (if provided) and find latest design/spec in OUTPUTS_DIR
     if not project_root and specified_project_name:
         potential_project_root = os.path.join(BASE_GENERATED_DIR, specified_project_name)
         if os.path.isdir(potential_project_root):
@@ -222,7 +220,6 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
         else:
             logger.warning(f"Specified project folder '{specified_project_name}' not found. Falling back to most recent project/files.")
 
-    # Third approach (Default): Find the most recent project folder and associated design/spec files
     if not project_root:
         projects = [d for d in os.listdir(BASE_GENERATED_DIR) if os.path.isdir(os.path.join(BASE_GENERATED_DIR, d))]
         if not projects:
@@ -267,17 +264,17 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
         logger.warning(f"No valid specification data found for project {os.path.basename(project_root)}. Framework detection might be less accurate.")
 
     framework = "unknown"
-    app_package = "app"  # Default app package
+    app_package = "app"
 
     if design_data:
         folder_structure = design_data.get('folder_Structure', {}).get('structure', [])
         for item in folder_structure:
             relative_path = item['path'].strip().replace('\\', '/')
             if relative_path.endswith('main.py'):
-                backend_dir = os.path.dirname(relative_path).lstrip('/').lstrip('\\') # Use lstrip for robustness
+                backend_dir = os.path.dirname(relative_path).lstrip('/').lstrip('\\')
                 app_package = backend_dir or "app"
                 logger.info(f"Detected app package from JSON design: {app_package}")
-                break # Found main.py, so app_package is set
+                break
     
     if spec_data:
         tech_stack = spec_data.get('technology_Stack', {}).get('backend', {})
@@ -288,7 +285,6 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
             framework = "flask"
         logger.info(f"Detected framework from JSON specification: {framework}")
 
-    # Fallback: Check requirements.txt (only if framework is still unknown)
     if framework == "unknown":
         requirements_path = os.path.join(project_root, "requirements.txt")
         if os.path.exists(requirements_path):
@@ -296,35 +292,12 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
                 reqs = f.read().lower()
                 if "fastapi" in reqs:
                     framework = "fastapi"
-                    if app_package == "app":  # Only override if JSON didn't set it
-                        app_package = "backend" # Common FastAPI app_package name
+                    if app_package == "app":
+                        app_package = "backend"
                 elif "flask" in reqs:
                     framework = "flask"
-                    if app_package == "app":  # Only override if JSON didn't set it
-                        app_package = "app" # Common Flask app_package name
-
-    # Fallback: Inspect source files (only if framework is still unknown)
-    if framework == "unknown":
-        for root, _, files in os.walk(project_root):
-            for file in files:
-                if file.endswith(".py"):
-                    try:
-                        with open(os.path.join(root, file), 'r', encoding='utf-8') as f:
-                            content = f.read().lower()
-                            if "from fastapi import" in content:
-                                framework = "fastapi"
-                                if app_package == "app":
-                                    app_package = "backend"
-                                break
-                            elif "from flask import" in content:
-                                framework = "flask"
-                                if app_package == "app":
-                                    app_package = "app"
-                                break
-                    except Exception as e:
-                        logger.warning(f"Failed to read {file} for framework detection: {e}")
-            if framework != "unknown":
-                break
+                    if app_package == "app":
+                        app_package = "app"
 
     if framework == "unknown":
         logger.warning("Could not detect framework. Defaulting to Flask.")
@@ -336,13 +309,9 @@ def detect_project_and_framework(specified_project_name=None, design_file_path=N
     return project_root, framework, app_package, design_data, spec_data
 
 def ensure_init_py_recursive(base_directory_path):
-    """
-    Ensures all subdirectories within base_directory_path have an __init__.py file
-    to make them recognized Python packages.
-    """
     for root, dirs, files in os.walk(base_directory_path):
         if 'venv' in dirs:
-            dirs.remove('venv') # This modifies dirs in-place for os.walk to skip it
+            dirs.remove('venv')
             logger.debug(f"Skipping 'venv' directory in {root}")
 
         if any(f.endswith(".py") for f in files):
@@ -358,10 +327,6 @@ def ensure_init_py_recursive(base_directory_path):
                 logger.debug(f"__init__.py already exists in {root}")
 
 def update_requirements_for_testing(project_root):
-    """
-    Adds pytest, pytest-mock, pytest-asyncio to requirements.txt if not present.
-    Returns True if changes were made, False otherwise.
-    """
     requirements_path = os.path.join(project_root, "requirements.txt")
     
     if not os.path.exists(requirements_path):
@@ -405,25 +370,25 @@ def update_requirements_for_testing(project_root):
 
 def install_project_dependencies(project_root):
     venv_python_path = os.path.join(project_root, "venv", "Scripts", "python.exe")
-    requirements_file_name = "requirements.txt" # Chỉ lấy tên file
+    requirements_file_name = "requirements.txt"
     requirements_path_full = os.path.join(project_root, requirements_file_name)
 
     if not os.path.exists(venv_python_path):
         logger.error(f"Virtual environment python executable not found at {venv_python_path}. Please ensure 'venv' exists and is properly set up in the generated project.")
         raise FileNotFoundError(f"Project venv not found: {venv_python_path}")
     
-    if not os.path.exists(requirements_path_full): # Kiểm tra đường dẫn đầy đủ
+    if not os.path.exists(requirements_path_full):
         logger.warning(f"requirements.txt not found at {requirements_path_full}. Skipping dependency installation.")
         return
 
     logger.info(f"Installing dependencies from {requirements_path_full} into project venv...")
     try:
         result = subprocess.run(
-            [venv_python_path, "-m", "pip", "install", "-r", requirements_file_name], # <--- Thay đổi ở đây
+            [venv_python_path, "-m", "pip", "install", "-r", requirements_file_name],
             capture_output=True,
             text=True,
             check=True,
-            cwd=project_root # project_root là thư mục chứa requirements.txt
+            cwd=project_root
         )
         logger.info(f"Successfully installed dependencies. Pip output:\n{result.stdout}")
         if result.stderr:
@@ -475,7 +440,6 @@ def generate_unit_tests(function_code, function_name, module_path, framework, co
         method_context = f"This is a top-level function. The source info should be in the format: `module.functionName`."
         test_file_prefix = f"test_{function_name}_"
 
-    # Khôi phục prompt template chi tiết hơn
     prompt = f"""
     You are an expert Python test engineer specializing in the pytest framework and testing {framework} applications.
     Your task is to generate comprehensive unit tests for the Python function/method below using the pytest framework and `pytest-mock`.
@@ -520,7 +484,6 @@ def generate_unit_tests(function_code, function_name, module_path, framework, co
 
     Generate the Python code for the test file now.
     """
-    # logger.debug(f"Unit test prompt for {function_name}:\n{prompt[:1000]}...") # Log first 1000 chars of prompt
     time.sleep(API_CALL_DELAY_SECONDS)
 
     try:
@@ -539,7 +502,7 @@ def generate_unit_tests(function_code, function_name, module_path, framework, co
         logger.error(f"Failed to generate unit tests for {function_name}: {e}", exc_info=True)
         return None
 
-def generate_integration_tests(app_package, framework, endpoints, project_root):
+def generate_integration_tests(app_package, framework, discovered_api_handlers, project_root):
     model = GenerativeModel(DEFAULT_MODEL)
     logger.info(f"Generating integration tests for {app_package} using {DEFAULT_MODEL}")
     
@@ -558,11 +521,11 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
         }
     }.get(framework, {"client_import": "", "client_setup": "", "request_example": "", "app_import": ""})
 
-    if not endpoints:
-        logger.warning("No API endpoints provided for integration testing. Skipping integration test generation.")
+    if not discovered_api_handlers:
+        logger.warning("No discovered API handlers to generate integration tests. Skipping generation.")
         return None
     
-    # Khôi phục prompt template chi tiết hơn
+    # PROMPT ĐÃ ĐƯỢC ĐƠN GIẢN HÓA ĐỂ PHÙ HỢP VỚI CÁCH LÀM CỦA UNIT TEST
     prompt = f"""
     You are an expert Python test engineer specializing in the pytest framework and testing {framework} applications.
     Your task is to generate comprehensive pytest integration tests for the {framework} application.
@@ -570,18 +533,18 @@ def generate_integration_tests(app_package, framework, endpoints, project_root):
     Module Path of main app: {app_package}.main
     Application Entry Point: `app` (e.g., `from {app_package}.main import app`)
 
-    API Endpoints to Test:
-    {json.dumps(endpoints, indent=2)}
+    **Discovered API Endpoints and their Python Handlers (YOU MUST USE THIS FOR source_info):**
+    {json.dumps(discovered_api_handlers, indent=2)}
 
     Requirements for Test Generation:
     1.  **Strictly Output Code Only**: Your response MUST be only the raw Python code for the test file. Do NOT include any explanations, comments outside the code blocks, or markdown formatting (like ```python ... ```).
     2.  **File Naming Convention**: The generated test file for integration tests should be named `test_integration.py`.
     3.  **Test Naming Convention**: All test functions within `test_integration.py` MUST start with `test_` followed by the API action and scenario (e.g., `test_create_flashcard_success`, `test_get_flashcards_empty`).
-    4.  **Crucial Source Information (for Debugging)**: For EACH test function in `test_integration.py`, you MUST include a comment indicating the source endpoint function it tests. This is CRITICAL for our automated debugging system.
-        The format MUST be: `# source_info: backend.routers.your_router_file.your_endpoint_function`
-        If the endpoint is in `backend.main.py`, use: `# source_info: backend.main.your_endpoint_function`
-        Example: For a test of `POST /api/flashcards` (handled by `create_flashcard` in `backend.routers.flashcards.py`), the comment in the test function should be `# source_info: backend.routers.flashcards.create_flashcard`.
-        **DO NOT OMIT THIS COMMENT.** Its presence and exact format are essential.
+    4.  **Crucial Source Information (for Debugging)**: For EACH test function testing a specific API endpoint, you **MUST use the `handler_path` value provided in the `Discovered API Endpoints and their Python Handlers` JSON for that specific endpoint** in the `# source_info` comment.
+        The format MUST be: `# source_info: <value_from_handler_path>`
+        Example: If an endpoint entry has `"endpoint": "/api/flashcards"`, `"method": "POST"`, and `"handler_path": "backend.routers.flashcards.create_flashcard"`, then the comment in the test function must be `# source_info: backend.routers.flashcards.create_flashcard`.
+        **DO NOT GUESS OR DEVIATE from the provided `handler_path` value. Use it exactly as given.**
+        **DO NOT OMIT THIS COMMENT.** Its presence and exact format is essential for mapping debug info.
     5.  **Imports**: Include all necessary imports: `pytest`, `{framework_specific['client_import']}`, `{framework_specific['app_import']}` (to get the `app` instance for the client), and any other standard libraries like `json`, `os`, `uuid` if needed for test data.
     6.  **Test Client Setup**: Set up a test client using `{framework_specific['client_setup']}`.
     7.  **Test Scenarios**:
@@ -626,12 +589,11 @@ def run_test(project_root):
     logger.info(f"Current working directory for batch: {project_root}")
     if not os.path.exists(bat_file):
         logger.error(f"run_test.bat not found at {bat_file}. Cannot run tests.")
-        return [] # Return empty list if script not found
+        return []
 
     logger.info(f"Executing run_test.bat from {project_root}. Results will be in {test_log_file}")
     
     try:
-        # Chạy script batch. Nó sẽ ghi output của pytest vào test_results.log
         result = subprocess.run(
             f'"{bat_file}"',
             shell=True,
@@ -641,7 +603,6 @@ def run_test(project_root):
             check=False
         )
         
-        # Log stdout/stderr của script batch
         if result.stdout:
             logger.debug(f"run_test.bat stdout (from debug_test_agent.log):\n{result.stdout}")
         if result.stderr:
@@ -693,7 +654,6 @@ def run_test(project_root):
                         test_name = None
                         test_file_rel_path = None
 
-            # Handle case where error capture was not terminated
             if capture_error and test_name:
                 test_file_full_path = os.path.join(project_root, test_file_rel_path.replace('/', os.sep))
                 if os.path.exists(test_file_full_path):
@@ -725,7 +685,7 @@ def run_test(project_root):
 
     except Exception as e:
         logger.error(f"An unexpected error occurred during test execution or result parsing: {e}", exc_info=True)
-        return [] # Return empty list on critical error
+        return []
 
 def map_test_to_source(test_name, specific_test_file_path):
     logger.debug(f"Attempting to map test '{test_name}' from '{specific_test_file_path}' to source.")
@@ -735,14 +695,12 @@ def map_test_to_source(test_name, specific_test_file_path):
         with open(test_file_path, 'r', encoding='utf-8') as f:
             test_content = f.read()
         
-        # Cố gắng tìm khối hàm test cụ thể
         test_func_pattern = rf"(def\s+{re.escape(test_name)}\s*\(.*?\):\s*\n(?:(?!\n\s*def\s+test_).)*?)(?=\n\s*def\s+test_|\Z)"
         test_func_match = re.search(test_func_pattern, test_content, re.DOTALL | re.MULTILINE)
 
         if test_func_match:
             func_block_content = test_func_match.group(1)
             
-            # Tìm kiếm source_info trong khối hàm
             source_info_match = re.search(r"#\s*source_info:\s*([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)", func_block_content)
             
             if source_info_match:
@@ -753,7 +711,7 @@ def map_test_to_source(test_name, specific_test_file_path):
                     source_func_or_method_name = parts[-1]
                     parent_name = parts[-2]
 
-                    if parent_name and parent_name[0].isupper() and parent_name.isalpha(): # Kiểm tra parent_name không rỗng và bắt đầu bằng chữ hoa
+                    if parent_name and parent_name[0].isupper() and parent_name.isalpha():
                         if len(parts) >= 3:
                             module_part = ".".join(parts[:-2])
                             return f"{module_part.replace('.', os.sep)}.py", f"{parent_name}.{source_func_or_method_name}"
@@ -777,16 +735,111 @@ def map_test_to_source(test_name, specific_test_file_path):
     except Exception as e:
         logger.warning(f"Error reading or parsing test file '{test_file_path}' for '{test_name}' source info: {e}", exc_info=True)
 
-    # Fallback heuristic (only if source_info or specific test file parsing failed)
-    logger.warning(f"Failed to find reliable # source_info for '{test_name}' in '{test_file_path}'. Falling back to simple heuristic/unknown.")
+    logger.warning(f"Failed to find reliable # source_info for '{test_name}' in '{specific_test_file_path}'. Falling back to simple heuristic/unknown.")
     
     heuristic_func_name_match = re.match(r"test_([a-zA-Z0-9_]+)(?:_|$)", test_name)
     heuristic_func_name = heuristic_func_name_match.group(1) if heuristic_func_name_match else "unknown_function"
 
-    if test_name.startswith("test_integration"):
-        return "test_integration.py", heuristic_func_name
+    if specific_test_file_path and "integration" in specific_test_file_path.lower():
+        return os.path.basename(specific_test_file_path), heuristic_func_name
     
     return "unknown_file.py", heuristic_func_name
+
+
+# Hàm hỗ trợ để chuẩn hóa đường dẫn API
+def normalize_api_path(path: str) -> str:
+    """Normalizes an API path by removing trailing slashes, unless it's the root '/'.
+       Also removes multiple slashes.
+    """
+    if not path:
+        return ""
+    normalized_path = re.sub(r'/{2,}', '/', path) # Remove double slashes
+    if normalized_path != '/': # Do not remove trailing slash for root path
+        normalized_path = normalized_path.rstrip('/')
+    return normalized_path
+
+
+# NEW FUNCTION: Discovers API handlers from source code, similar to how unit tests find functions.
+def discover_api_handlers_from_code(project_root: str, app_package: str, framework: str) -> list[dict]:
+    """
+    Scans project source code to find actual API endpoints defined with decorators
+    and maps them to their Python handler functions.
+    Returns a list of dictionaries: [{'endpoint': '/api/path', 'method': 'GET', 'handler_path': 'module.function'}]
+    """
+    discovered_handlers = []
+    source_dir = os.path.join(project_root, app_package)
+
+    if not os.path.exists(source_dir):
+        logger.warning(f"Source directory '{source_dir}' not found for API discovery.")
+        return discovered_handlers
+
+    for root, _, files in os.walk(source_dir):
+        if 'venv' in root or 'node_modules' in root or 'tests' in root:
+            continue
+        for file in files:
+            if file.endswith(".py") and file != "__init__.py":
+                file_path = os.path.join(root, file)
+                relative_to_project_root = os.path.relpath(file_path, project_root)
+                module_name = relative_to_project_root.replace(os.sep, ".")[:-3]
+
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        source_content = f.read()
+                    tree = ast.parse(source_content)
+
+                    router_prefixes = {} 
+                    for node in tree.body:
+                        if isinstance(node, ast.Assign):
+                            if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id == 'APIRouter':
+                                for keyword in node.value.keywords:
+                                    if keyword.arg == 'prefix' and isinstance(keyword.value, ast.Constant):
+                                        for target in node.targets:
+                                            if isinstance(target, ast.Name):
+                                                router_prefixes[target.id] = normalize_api_path(keyword.value.value) # Normalize prefix too
+                                                logger.debug(f"Found APIRouter: {target.id} with normalized prefix: {router_prefixes[target.id]} in {module_name}")
+                    
+                    for node in ast.walk(tree):
+                        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                            for decorator in node.decorator_list:
+                                method = None
+                                raw_path_from_decorator = None
+
+                                if isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Attribute):
+                                    decorator_object_name = None
+                                    if isinstance(decorator.func.value, ast.Name):
+                                        decorator_object_name = decorator.func.value.id
+
+                                    decorator_method_name = decorator.func.attr
+
+                                    if decorator_method_name in ['get', 'post', 'put', 'delete', 'patch']:
+                                        method = decorator_method_name.upper()
+                                        if decorator.args and isinstance(decorator.args[0], ast.Constant):
+                                            raw_path_from_decorator = decorator.args[0].value
+                                            
+                                            effective_api_path = raw_path_from_decorator
+                                            if decorator_object_name in router_prefixes:
+                                                effective_api_path = router_prefixes[decorator_object_name] + raw_path_from_decorator
+                                            
+                                            normalized_full_path = normalize_api_path(effective_api_path)
+                                            
+                                            if normalized_full_path:
+                                                full_handler_path = f"{module_name}.{node.name}"
+                                                
+                                                # Add to discovered list, similar to how unit tests identify functions
+                                                discovered_handlers.append({
+                                                    'endpoint': normalized_full_path,
+                                                    'method': method,
+                                                    'handler_path': full_handler_path,
+                                                    'description': f"API handler for {method} {normalized_full_path}" # Add a description for LLM
+                                                })
+                                                logger.debug(f"Discovered API: {method} {normalized_full_path} handled by {full_handler_path}")
+
+                except SyntaxError as e:
+                    logger.warning(f"Syntax error in '{file_path}' during API discovery: {e}")
+                except Exception as e:
+                    logger.warning(f"Error processing '{file_path}' for API discovery: {e}", exc_info=True)
+    return discovered_handlers
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate and run tests for a generated application.")
@@ -804,21 +857,27 @@ if __name__ == "__main__":
 
         create_pytest_ini(project_root)
 
-        test_output_dir = os.path.join(project_root, TEST_OUTPUT_DIR_NAME)
+        base_test_dir = os.path.join(project_root, TEST_OUTPUT_DIR_NAME)
+        unit_test_output_dir = os.path.join(base_test_dir, UNIT_TEST_SUBDIR)
+        integration_test_output_dir = os.path.join(base_test_dir, INTEGRATION_TEST_SUBDIR)
         test_flag_file = os.path.join(project_root, TEST_GENERATED_FLAG)
         venv_python_path = os.path.join(project_root, "venv", "Scripts", "python.exe")
 
-        # Kiểm tra cờ .test_generated để chỉ sinh test một lần
         if not os.path.exists(test_flag_file):
             logger.info("Test generation flag not found. Generating tests...")
-            os.makedirs(test_output_dir, exist_ok=True)
-            logger.info(f"Ensured test output directory exists: {test_output_dir}")
+            
+            os.makedirs(unit_test_output_dir, exist_ok=True)
+            os.makedirs(integration_test_output_dir, exist_ok=True)
+            logger.info(f"Ensured unit test output directory exists: {unit_test_output_dir}")
+            logger.info(f"Ensured integration test output directory exists: {integration_test_output_dir}")
 
             logger.info(f"Ensuring __init__.py files in main application package: {os.path.join(project_root, app_package)}")
             ensure_init_py_recursive(os.path.join(project_root, app_package))
             
-            logger.info(f"Ensuring __init__.py files in test output directory: {test_output_dir}")
-            ensure_init_py_recursive(test_output_dir)
+            logger.info(f"Ensuring __init__.py files in unit test directory: {unit_test_output_dir}")
+            ensure_init_py_recursive(unit_test_output_dir)
+            logger.info(f"Ensuring __init__.py files in integration test directory: {integration_test_output_dir}")
+            ensure_init_py_recursive(integration_test_output_dir)
 
             needs_test_deps_install = update_requirements_for_testing(project_root)
             
@@ -828,13 +887,14 @@ if __name__ == "__main__":
             else:
                 logger.info("No new test dependencies detected in requirements.txt. Skipping dependency installation.")
 
-            # Scan for Python files to test and generate unit tests
             source_dir = os.path.join(project_root, app_package)
             if not os.path.exists(source_dir):
                 logger.error(f"Source directory '{source_dir}' (app package) not found. Cannot generate unit tests. Ensure the project code is generated correctly by codegen_agent.py.")
                 sys.exit(1)
             else:
                 for root, _, files in os.walk(source_dir):
+                    if 'venv' in root or 'node_modules' in root or 'tests' in root:
+                        continue
                     for file in files:
                         if file.endswith(".py") and file != "__init__.py":
                             file_path = os.path.join(root, file)
@@ -875,7 +935,7 @@ if __name__ == "__main__":
                                         class_name=None
                                     )
                                     if test_code:
-                                        test_file = os.path.join(test_output_dir, f"test_{func_name}.py")
+                                        test_file = os.path.join(unit_test_output_dir, f"test_{func_name}.py")
                                         with open(test_file, 'w', encoding='utf-8') as f:
                                             f.write(test_code)
                                         logger.info(f"Saved unit tests to {test_file}")
@@ -899,7 +959,7 @@ if __name__ == "__main__":
                                         class_name=class_name
                                     )
                                     if test_code:
-                                        test_file = os.path.join(test_output_dir, f"test_{class_name}_{method_name}.py")
+                                        test_file = os.path.join(unit_test_output_dir, f"test_{class_name}_{method_name}.py")
                                         with open(test_file, 'w', encoding='utf-8') as f:
                                             f.write(test_code)
                                         logger.info(f"Saved unit tests to {test_file}")
@@ -908,16 +968,17 @@ if __name__ == "__main__":
                                 else:
                                     logger.warning(f"Could not extract code for method '{class_name}.{method_name}' from '{file_path}'. Skipping unit test generation.")
 
-            endpoints = []
-            if design_data and 'interface_Design' in design_data and 'api_Specifications' in design_data['interface_Design']:
-                endpoints = design_data['interface_Design']['api_Specifications']
-                logger.info(f"Extracted {len(endpoints)} API endpoints from design file for integration testing.")
-            else:
-                logger.warning("No API specifications found in design file for integration testing.")
+            # API Discovery for Integration Tests (FULLY REVISED LOGIC)
+            logger.info(f"Discovering API endpoints and their handlers from source code...")
+            # THIS IS THE KEY: We are now driving integration test generation from what's
+            # actually found in the code, NOT just the design JSON.
+            discovered_api_handlers = discover_api_handlers_from_code(project_root, app_package, framework)
+            logger.info(f"Discovered {len(discovered_api_handlers)} API handlers in source code.")
 
-            test_code = generate_integration_tests(app_package, framework, endpoints, project_root)
+            # Now, generate integration tests based on the discovered handlers
+            test_code = generate_integration_tests(app_package, framework, discovered_api_handlers, project_root)
             if test_code:
-                test_file = os.path.join(test_output_dir, "test_integration.py")
+                test_file = os.path.join(integration_test_output_dir, "test_integration.py")
                 with open(test_file, 'w', encoding='utf-8') as f:
                     f.write(test_code)
                 logger.info(f"Saved integration tests to {test_file}")
@@ -942,7 +1003,6 @@ if __name__ == "__main__":
                 logger.error(f"  Source Function: {failure['source_function']}")
                 logger.error(f"  Error Summary: {failure['error_line_summary']}\n")
             
-            # Ghi thêm vào test_results.log để Debugging Agent có thể đọc
             log_file_path = os.path.join(project_root, TEST_LOG_FILE)
             with open(log_file_path, 'a', encoding='utf-8') as f:
                 f.write("\n\n--- Failure Summary (Mapped) ---\n")
@@ -967,10 +1027,6 @@ if __name__ == "__main__":
                     f.write(f"  Source Function: {failure['source_function']}\n")
                     f.write(f"  Error Summary: {failure['error_line_summary']}\n")
                 f.write("--- End of this run's failures ---\n")
-
-            # Để tự động gọi Debug Agent khi có lỗi, bỏ comment đoạn code sau:
-            # logger.error("Calling Debug Agent...")
-            # subprocess.run(["python", "debug_agent.py", "--project", os.path.basename(project_root)])
 
             sys.exit(1)
         else:
