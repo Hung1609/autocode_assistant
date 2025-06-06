@@ -313,7 +313,7 @@ CODE GENERATION RULES:
    - Ensure the app is runnable with `python -m uvicorn {backend_module_path}:app --reload --port 8001`.
 6. Frontend File Paths (HTML files only):
    - In `{frontend_dir}/index.html`, reference CSS: `<link rel="stylesheet" href="/{css_path}">`.
-   - For each JS file, add: `<script src="/{js_file}"></script>`.
+   - For each JS file, add: `<script src="/{{js_file}}"></script>`.
    - Example for multiple JS files:
      ```html
      <script src="/script.js"></script>
@@ -433,7 +433,7 @@ CODE GENERATION RULES:
    - Ensure the app is runnable with `python -m uvicorn {backend_module_path}:app --reload --port 8001`.
 6. Frontend File Paths (HTML files only):
    - In `{frontend_dir}/index.html`, reference CSS: `<link rel="stylesheet" href="/{css_path}">`.
-   - For each JS file, add: `<script src="/{js_file}"></script>`.
+   - For each JS file, add: `<script src="/{{js_file}}"></script>`.
    - Example for multiple JS files:
      ```html
      <script src="/script.js"></script>
