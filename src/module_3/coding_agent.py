@@ -36,13 +36,6 @@ PYTHON_PATH = r"C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\pytho
 # PYTHON_PATH = r"C:\Users\ADMIN\AppData\Local\Programs\Python\Python312\python.exe"
 
 # --- Main functions ---
-def slugify(text): # hiện đang không thấy được sử dụng, cần check lại
-    text = text.lower()
-    text = re.sub(r'\s+', '_', text)
-    text = re.sub(r'[^\w_.-]', '', text)
-    text = text.strip('_.-')
-    return text if text else "unnamed_project"
-
 def validate_json_design(json_data):# Validate the JSON design file against expected structure.
     logger.debug("Validating JSON design file.")
     required_fields = ['system_Architecture', 'data_Design', 'interface_Design', 'folder_Structure', 'dependencies']
@@ -120,7 +113,7 @@ def parse_json_and_generate_scaffold_plan(json_design, json_spec):
     backend_module_path = None
     frontend_dir = None
     css_path = None
-    js_path = None
+    js_files_to_link = [] 
 
     # Parse folder structure to detect backend and frontend directories
     for item in folder_structure_items:
@@ -159,10 +152,13 @@ def parse_json_and_generate_scaffold_plan(json_design, json_spec):
             css_path = os.path.relpath(relative_path, frontend_dir).replace('\\', '/') if frontend_dir and relative_path.startswith(frontend_dir) else relative_path
             logger.info(f"Detected CSS path: {css_path}")
 
-        # Detect JS file
-        if relative_path.endswith('.js'):
-            js_path = os.path.relpath(relative_path, frontend_dir).replace('\\', '/') if frontend_dir and relative_path.startswith(frontend_dir) else relative_path
-            logger.info(f"Detected JS path: {js_path}")
+        if relative_path.endswith('.js') and not is_directory:
+            if frontend_dir and relative_path.startswith(frontend_dir):
+                js_file_rel_to_frontend = os.path.relpath(relative_path, frontend_dir).replace('\\', '/')
+                js_files_to_link.append(js_file_rel_to_frontend)
+            else:
+                js_files_to_link.append(relative_path)
+            logger.info(f"Detected JS file for linking: {js_files_to_link[-1]}")
 
     # Validate detected paths
     if not backend_module_path:
@@ -173,10 +169,10 @@ def parse_json_and_generate_scaffold_plan(json_design, json_spec):
         raise ValueError("Main frontend file 'index.html' not found in folder structure.")
     if not css_path:
         logger.warning("No CSS file found in folder structure. Frontend may lack styling.")
-        raise ValueError("Main css file not found in folder structure.")
-    if not js_path:
-        logger.warning("No primary JS file (e.g., app.js) found in folder structure. Frontend may lack interactivity.")
-        raise ValueError("Main js file not found in folder structure.")
+        raise ValueError("No CSS file found in folder structure.")
+    
+    if not js_files_to_link:
+        logger.warning("No JavaScript files detected in folder structure. Frontend may lack interactivity.")
 
     # Add the 'logs' directory to the directories to be created
     logs_dir_path = os.path.join(actual_project_root_dir, "logs")
@@ -197,12 +193,12 @@ def parse_json_and_generate_scaffold_plan(json_design, json_spec):
         "backend_module_path": backend_module_path,
         "frontend_dir": frontend_dir,
         "css_path": css_path,
-        "js_path": js_path
+        "js_files_to_link": sorted(list(set(js_files_to_link))) # Ensure unique and sorted
     }
     logger.info(f"Scaffold plan generated successfully. Root: {actual_project_root_dir}")
     logger.debug(f"Directories planned: {result['directories_to_create']}")
     logger.debug(f"Files planned: {list(result['files_to_create'].keys())}")
-    logger.debug(f"Backend module path: {backend_module_path}, Frontend dir: {frontend_dir}, CSS path: {css_path}, JS path: {js_path}")
+    logger.debug(f"Backend module path: {backend_module_path}, Frontend dir: {frontend_dir}, CSS path: {css_path}, JS files: {result['js_files_to_link']}")
     return result
 
 # Create the project structure based on the scaffold plan.
@@ -229,6 +225,28 @@ def create_project_structure(plan):
         logger.info(f"Created empty file: {file_path}")
     logger.info("Project structure created successfully.")
 
+def ensure_init_py_files(project_root_directory):
+    logger.info(f"Ensuring __init__.py files in Python package directories under {project_root_directory}.")
+    for root, dirs, files in os.walk(project_root_directory):
+        if 'venv' in dirs:
+            dirs.remove('venv') 
+            logger.debug(f"Skipping 'venv' directory in {root}")
+        has_python_files = any(f.endswith(".py") and f != "__init__.py" for f in files)
+        
+        # If it contains Python files, ensure __init__.py exists
+        if has_python_files:
+            init_py_path = os.path.join(root, "__init__.py")
+            if not os.path.exists(init_py_path):
+                try:
+                    with open(init_py_path, 'w', encoding='utf-8') as f:
+                        f.write("# This file makes this directory a Python package.\n")
+                    logger.info(f"Created missing __init__.py in {root}")
+                except Exception as e:
+                    logger.error(f"Failed to create __init__.py in {root}: {e}")
+            else:
+                logger.debug(f"__init__.py already exists in {root}")
+    logger.info("Finished ensuring __init__.py files.")
+
 def generate_code_for_each_file(json_design, json_spec, file_path, project_root_dir, llm_model, plan):
     logger.info(f"Attempting to generate code for file: {file_path}")
     if not all(isinstance(arg, dict) for arg in [json_design, json_spec]):
@@ -248,76 +266,76 @@ def generate_code_for_each_file(json_design, json_spec, file_path, project_root_
 setlocal EnableDelayedExpansion
 
 :: Setup and run the generated application
-echo Setting up and running the application... > debug.log 2>&1
+echo Setting up and running the application... > debug_code_agent.log 2>&1
 
 :: Set project root
 set "PROJECT_ROOT=%~dp0"
-cd /d "%PROJECT_ROOT%" >> debug.log 2>&1
+cd /d "%PROJECT_ROOT%" >> debug_code_agent.log 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Failed to change to project root directory %PROJECT_ROOT%. >> debug.log 2>&1
+    echo ERROR: Failed to change to project root directory %PROJECT_ROOT%. >> debug_code_agent.log 2>&1
     echo ERROR: Failed to change to project root directory %PROJECT_ROOT%.
     pause
     exit /b 1
 )
-echo Project root set to: %PROJECT_ROOT% >> debug.log 2>&1
+echo Project root set to: %PROJECT_ROOT% >> debug_code_agent.log 2>&1
 
 :: Check for Python
-echo Checking for Python... >> debug.log 2>&1
-"{PYTHON_PATH}" --version >> debug.log 2>&1
+echo Checking for Python... >> debug_code_agent.log 2>&1
+"{PYTHON_PATH}" --version >> debug_code_agent.log 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Python is not installed at {PYTHON_PATH}. Please ensure Python 3.8+ is installed. >> debug.log 2>&1
+    echo ERROR: Python is not installed at {PYTHON_PATH}. Please ensure Python 3.8+ is installed. >> debug_code_agent.log 2>&1
     echo ERROR: Python is not installed at {PYTHON_PATH}. Please ensure Python 3.8+ is installed.
     pause
     exit /b 1
 )
-echo Python found. >> debug.log 2>&1
+echo Python found. >> debug_code_agent.log 2>&1
 
 :: Create and activate virtual environment in project directory
-echo Setting up virtual environment in !PROJECT_ROOT!\venv... >> debug.log 2>&1
+echo Setting up virtual environment in !PROJECT_ROOT!\venv... >> debug_code_agent.log 2>&1
 if not exist "!PROJECT_ROOT!\venv" (
-    "{PYTHON_PATH}" -m venv "!PROJECT_ROOT!\venv" >> debug.log 2>&1
+    "{PYTHON_PATH}" -m venv "!PROJECT_ROOT!\venv" >> debug_code_agent.log 2>&1
     if %ERRORLEVEL% neq 0 (
-        echo ERROR: Failed to create virtual environment in !PROJECT_ROOT!\venv. >> debug.log 2>&1
+        echo ERROR: Failed to create virtual environment in !PROJECT_ROOT!\venv. >> debug_code_agent.log 2>&1
         echo ERROR: Failed to create virtual environment in !PROJECT_ROOT!\venv.
         pause
         exit /b 1
     )
 )
-call "!PROJECT_ROOT!\venv\Scripts\activate.bat" >> debug.log 2>&1
+call "!PROJECT_ROOT!\venv\Scripts\activate.bat" >> debug_code_agent.log 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Failed to activate virtual environment. Check !PROJECT_ROOT!\venv\Scripts\activate.bat. >> debug.log 2>&1
+    echo ERROR: Failed to activate virtual environment. Check !PROJECT_ROOT!\venv\Scripts\activate.bat. >> debug_code_agent.log 2>&1
     echo ERROR: Failed to activate virtual environment. Check !PROJECT_ROOT!\venv\Scripts\activate.bat.
     pause
     exit /b 1
 )
-echo Virtual environment activated. >> debug.log 2>&1
+echo Virtual environment activated. >> debug_code_agent.log 2>&1
 
 :: Install dependencies
-echo Installing dependencies... >> debug.log 2>&1
+echo Installing dependencies... >> debug_code_agent.log 2>&1
 if exist "requirements.txt" (
-    pip install -r requirements.txt >> debug.log 2>&1
+    pip install -r requirements.txt >> debug_code_agent.log 2>&1
     if %ERRORLEVEL% neq 0 (
-        echo ERROR: Failed to install dependencies. Check requirements.txt. >> debug.log 2>&1
+        echo ERROR: Failed to install dependencies. Check requirements.txt. >> debug_code_agent.log 2>&1
         echo ERROR: Failed to install dependencies. Check requirements.txt.
         pause
         exit /b 1
     )
 ) else (
-    echo WARNING: requirements.txt not found. Skipping dependency installation. >> debug.log 2>&1
+    echo WARNING: requirements.txt not found. Skipping dependency installation. >> debug_code_agent.log 2>&1
     echo WARNING: requirements.txt not found. Skipping dependency installation.
 )
-echo Dependencies installed. >> debug.log 2>&1
+echo Dependencies installed. >> debug_code_agent.log 2>&1
 
 :: Run the application
-echo Starting the application... >> debug.log 2>&1
-{run_command} >> debug.log 2>&1
+echo Starting the application... >> debug_code_agent.log 2>&1
+{run_command} >> debug_code_agent.log 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Failed to start the application. Check {plan['backend_module_path'].replace('.', '/')}.py and uvicorn configuration. >> debug.log 2>&1
+    echo ERROR: Failed to start the application. Check {plan['backend_module_path'].replace('.', '/')}.py and uvicorn configuration. >> debug_code_agent.log 2>&1
     echo ERROR: Failed to start the application. Check {plan['backend_module_path'].replace('.', '/')}.py and uvicorn configuration.
     pause
     exit /b 1
 )
-echo Application started. >> debug.log 2>&1
+echo Application started. >> debug_code_agent.log 2>&1
 
 pause
 exit /b 0
@@ -328,7 +346,7 @@ exit /b 0
             raise ValueError("Generated run.bat contains invalid non-ASCII characters.")
         return bat_content
 
-    if relative_file_path == '.env':
+    if relative_file_path == '.env': # hardcoded for now, can be changed later
         logger.info(f"Generating content for .env: {file_path}")
         return "DATABASE_URL=sqlite:///todo.db\n"
 
@@ -350,11 +368,23 @@ exit /b 0
     frontend_language_framework = f"{json_spec.get('technology_Stack', {}).get('frontend', {}).get('language', '')} {json_spec.get('technology_Stack', {}).get('frontend', {}).get('framework', '')}".strip()
     storage_type = json_design.get('data_Design', {}).get('storage_Type', 'not specified')
 
+    # Prepare JS links for the prompt
+    js_links_for_prompt = "\n".join([f"- /{js_file}" for js_file in plan['js_files_to_link']])
+    if not js_links_for_prompt:
+        js_links_for_prompt = "No JavaScript files detected. If interactivity is needed, you might need to add script tags manually or specify JS files in the design JSON."
+    
     # NOTE: The file_path passed to prompt is the absolute one.
     prompt = f"""
     CONTEXT:
-    - You are an expert Senior Software Engineer acting as a meticulous code writer for a `{project_name}` with a `{backend_language_framework}` backend technology, `{frontend_language_framework}` frontend technology, and `{storage_type}` storage type.
-    - Your task is to generate complete, syntactically correct code for the specified file, based on the JSON design file (technical implementation) and JSON specification file (requirements), adhering to additional rules for logging and FastAPI static file serving.
+    - You are an expert Senior Software Engineer tasked with generating complete, syntactically correct code for a web application named {project_name}. The application uses:
+        - Backend: `{backend_language_framework}`
+        - Frontend: `{frontend_language_framework}`
+        - Storage: `{storage_type}`
+    - Your goal is to produce code for a specific file based on:
+        - JSON Design: Technical implementation details (architecture, data models, APIs).
+        - JSON Specification: Functional and non-functional requirements.
+        - Additional rules for logging, FastAPI static file serving, and CORS configuration.
+    - The generated code must be executable, idiomatic, and aligned with the provided design and requirements.
 
 
     TARGET FILE INFORMATION:
@@ -363,109 +393,119 @@ exit /b 0
     - Backend Module Path: `{plan['backend_module_path']}` (e.g., 'backend.main' or 'app.main').
     - Frontend Directory: `{plan['frontend_dir']}` (e.g., 'frontend').
     - CSS File Path: Relative to frontend directory, `{plan['css_path']}`
-    - JS File Path: Relative to frontend directory, `{plan['js_path']}`
+    - JS Files: List of JavaScript files relative to frontend directory, {js_links_for_prompt}
     
     
     INTERNAL THOUGHT PROCESS
-    - Follow these steps to build a comprehensive understanding before writing code:
+    - Before generating code, follow these steps to ensure a comprehensive understanding:
         1. Analyze File Role:
-        - Determine the file’s purpose based on its path and the JSON Design’s `folder_Structure`.
-        - If the file is `{plan['backend_module_path'].replace('.', '/')}.py`, it’s the main backend entry point; include FastAPI initialization, StaticFiles mounting, and logging setup.
+        - Identify the file's purpose based on `{file_path}` and `json_design.folder_Structure`.
+        - If the file is `{plan['backend_module_path'].replace('.', '/')}.py`, it's the main backend entry point; include FastAPI initialization, StaticFiles mounting, logging, and CORS setup.
         - If the file is a Python module (e.g., `backend/routes.py`), include function-level logging.
-        - If the file is `{plan['frontend_dir']}/index.html`, reference CSS and JS files using `{plan['css_path']}` and `{plan['js_path']}`.
+        - If the file is `{plan['frontend_dir']}/index.html`, reference CSS and JS files using `{plan['css_path']}` and all files in `JS Files` section.
         2. Identify Key Requirements (from JSON Specification):
         - Determine which Functional Requirements (FRs) this file must help implement.
         - Determine which Non-Functional Requirements (NFRs, e.g., Security, Performance, Usability) this file must adhere to.
         3. Map to Design (from JSON Design):
-        - Identify which API endpoints (interface_Design) this file defines or calls.
-        - Identify which Data Models (data_Design) this file defines or uses (CRUD operations).
-        - Identify which Workflows (workflow_Interaction) this file participates in.
-        4. Plan Implementation & Patterns:
+        - Implement API endpoints from `interface_Design.api_Specifications`.
+        - Use or define data models from `data_Design.data_Models` for CRUD operations.
+        - Follow workflows from `workflow_Interaction`.
+        4. Plan Implementation:
         - Outline the high-level structure of the code (Classes, Functions, Imports).
         - Use FastAPI conventions, Python logging, and StaticFiles for frontend serving.
-        - Ensure dependencies from the `dependencies` section are utilized appropriately.
+        - Incorporate dependencies from `json_design.dependencies`.
         5. Determine Entry Point Requirements:
-        - For the main backend file `{plan['backend_module_path'].replace('.', '/')}.py`, include FastAPI app initialization and StaticFiles mounting.
+        - For the main backend file `{plan['backend_module_path'].replace('.', '/')}.py`, include FastAPI app initialization, StaticFiles mounting, and CORS setup.
         - Ensure the file is executable via `uvicorn {plan['backend_module_path']}:app --reload --port 8001`.
+        - For other executable files, include language-specific entry points (e.g., if __name__ == "__main__": for Python).
 
 
-    INSTRUCTIONS FOR CODE GENERATION:
-    1. Output Code Only:
+    CODE GENERATION RULES:
+    1. Output Format:
         - Your response MUST contain only the raw code for the file.
         - Do NOT include explanations, comments outside the code, or markdown formatting.
-    2. Python Import Placement (Python Files Only):
+    2. Python Imports (Python files only):
         - Place all `import` statements at the very top of the file, before any function definitions, class definitions, or other executable code. (e.g., variable assignments, route definitions outside functions).
-    3. Advanced Logging Setup for Debug Agent (Python Files Only):
+    3. Advanced Logging (Python files only):
         - For Main Backend File `{plan['backend_module_path'].replace('.', '/')}.py`:
-            - Import necessary modules: `logging`, `logging.handlers`, `json`, `contextvars`, `uuid`.
-            - Define a custom JSON formatter to convert `logging.LogRecord` attributes into JSON string, including `timestamp` (from `asctime`), `level` (from `levelname`), `logger_name` (from `name`), `message`, `pathname`, `funcName`, `lineno`, and `request_id` (if present), with proper `exc_info` formatting for exceptions.
+            - Import `logging`, `logging.handlers`, `json`.
+            - Define a custom JSON formatter to convert `logging.LogRecord` attributes into JSON string, including `timestamp` (from `asctime`), `level` (from `levelname`), `logger_name` (from `name`), `message`, `pathname`, `funcName`, `lineno`, with proper `exc_info` formatting for exceptions.
             - Configure a `RotatingFileHandler` to write to `logs/app.log` with `maxBytes` (e.g., 10MB) and `backupCount` (e.g., 5), using the custom JSON formatter.
             - Configure a `StreamHandler` for console output with a human-readable format (e.g., `%(asctime)s - %(levelname)s - %(name)s - %(message)s`).
-            - Set up the root logger with logging.basicConfig(level=logging.DEBUG) and register both the `RotatingFileHandler` and `StreamHandler`.
-        -   **Request ID (Correlation ID) Implementation (ONLY in `{plan['backend_module_path'].replace('.', '/')}.py`):**
-            -   **Objective**: Trace individual HTTP requests across all related log messages.
-            -   **`ContextVar`:** Declare a `contextvars.ContextVar` (e.g., `request_id_ctx`) to store the unique request ID for the current request context.
-            -   **FastAPI Middleware:** Implement a `starlette.middleware.base.BaseHTTPMiddleware`.
-                -   Inside its `dispatch` method, generate a unique ID for each incoming request (e.g., using `uuid.uuid4()`).
-                -   Set this ID in `request_id_ctx` using `token = request_id_ctx.set(request_id)`.
-                -   Reset the `ContextVar` using `request_id_ctx.reset(token)` in a `finally` block **after** `call_next(request)` to ensure context is cleaned up. This is CRITICAL for correct ContextVar behavior.
-            -   **Logging Filter:** Create a custom `logging.Filter`.
-                -   Its `filter` method should retrieve the `request_id` from `request_id_ctx.get()` and attach it as an attribute to the `logging.LogRecord` (e.g., `record.request_id = request_id_value`).
-            -   **Registration:** Register the custom middleware with the FastAPI `app` using `app.add_middleware()`. Also, add the custom logging filter to the root logger (e.g., `logger.addFilter(YourRequestIdFilter())`) after `basicConfig`.
-        -   **Logging in Other Python Files (e.g., `backend/routes.py`, `backend/models.py`):**
-            -   Simply import `logging` and get the logger instance at the top of the file:
-                ```python
-                import logging
-                logger = logging.getLogger(__name__)
-                ```
-            -   Log messages will automatically inherit the global logging configuration and Request ID from the context.
-        -   **Content of Logs:** In every function, add logging for:
-            -   Entry: `logger.info("Entering <function_name> with args: <args>, kwargs: <kwargs>")`
-            -   Exit: `logger.info("Exiting <function_name> with result: <result>")` (if applicable)
-            -   Errors: Wrap function logic in a try-except block and log errors with `logger.error("Error in <function_name>: <dynamic_error_message>", exc_info=True)` (message should be informative).
-            -   For FastAPI route handlers, log incoming requests and responses, including basic path and method.
-            -   Do NOT add logging to non-Python files (e.g., HTML, CSS, JavaScript).
-    4.  **FastAPI StaticFiles for Frontend ({plan['backend_module_path'].replace('.', '/')}.py Only)**:
-       - In `{plan['backend_module_path'].replace('.', '/')}.py`, configure FastAPI to serve frontend static files (HTML, CSS, JavaScript) using `fastapi.StaticFiles`.
-       - Mount the frontend directory `{plan['frontend_dir']}` at the root path `/`:
-         ```python
-         from fastapi import FastAPI
-         from fastapi.staticfiles import StaticFiles
-         app = FastAPI()
-         app.mount("/", StaticFiles(directory="{plan['frontend_dir']}", html=True), name="static")
-         ```
-        - This line must be placed at the very end of the line, after: All import statements, all middleware (e.g., Request ID context middleware), all logging setup, all route definitions (e.g., @app.get(...)) and any dependency injection or startup events.
-        - Placing app.mount(...) at the end ensures it only servers frontend files when no backend route matches. If placed earlier, it may override other route handlers unintentionally.
-        - Ensure the frontend files (e.g., `frontend/index.html`, `frontend/css/style.css`, `frontend/js/app.js`) are structured to be served statically.
-        - The application should be runnable with a single command: `uvicorn {plan['backend_module_path']}:app --reload --port 8001`.
-    5. **Frontend File Paths (HTML Files Only)**:
-        - In HTML files (e.g., `{plan['frontend_dir']}/index.html`), reference CSS and JS files using paths relative to the frontend directory.
-        - Use `{plan['css_path']}` for the CSS file (e.g., `<link rel="stylesheet" href="/{plan['css_path']}">`).
-        - Use `{plan['js_path']}` for the JS file (e.g., `<script src="/{plan['js_path']}"></script>`).
-        - Ensure paths are correct whether assets are in the frontend root (e.g., `frontend/style.css`) or subdirectories (e.g., `frontend/css/style.css`).
-    6.  **General Requirements**:
-        - Ensure the code aligns with the JSON Design and Specification.
-        - For Python files, include necessary imports and follow FastAPI conventions.
-        - For frontend files, ensure compatibility with FastAPI’s StaticFiles.
-    7.  **Implement Functionality**: Base the code on BOTH the JSON Design and JSON Specification provided below, incorporating logging and StaticFiles as specified.
-        -   **JSON Design (Technical Implementation Details)**:
-            -   `system_Architecture`: Overall component layout.
-            -   `data_Design.data_Models`: Define database schemas/models, considering the `storage_Type`.
-            -   **Pydantic Model Data Validation**: For Pydantic models, ensure that all required fields are provided correctly during instantiation. Pay close attention to field names (e.g., 'front_text' vs 'question') and whether a field is optional or required. If a field is `required`, it must always be present when creating an instance of the Pydantic model.
-            -   **SQLAlchemy Model Instantiation**: When defining Python classes that map to database tables (e.g., SQLAlchemy models), ensure that primary key fields (like 'id') are correctly defined as `primary_key=True` and are NOT passed as arguments during object instantiation. SQLAlchemy handles the ID generation upon commit.
-            -   `interface_Design.api_Specifications`: For backend files, implement these API endpoints (routes, controllers, handlers). For frontend files, prepare to call these APIs.
-            -   `workflow_Interaction`: Implement the logic described in these user/system flows.
-            -   `dependencies`: Utilize libraries listed here where appropriate for the file's purpose.
-        -   **JSON Specification (Requirements & Scope)**:
-            -   `project_Overview.project_Purpose`, `project_Overview.product_Scope`: Understand the overall goals and boundaries.
-            -   `functional_Requirements`: Ensure the code implements the specified features and actions. Pay attention to `acceptance_criteria`.
-            -   `non_Functional_Requirements`: Adhere to quality attributes like security (e.g., input validation, auth checks if applicable to the file), usability, performance).
-    8.  **Infer Role from Path**: Deduce the file's purpose from its path and the overall project structure (e.g., a backend model, a frontend UI component, a utility script, a configuration file).
-    9.  **Completeness**: Generate all necessary imports, class/function definitions, and logic. For frontend files, include basic HTML structure and styling compatible with StaticFiles.
-    10. **Implement Entry Points Correctly**: For files that serve as application entry points, include the appropriate language-specific entry point pattern:
-        -   Automatically identify if this file serves as an application entry point, main execution file, or server startup file based on its path, name, and role in the system architecture.
-        -   Generate fully executable code, including appropriate initialization code and language-specific entry point patterns (like `if __name__ == "__main__":`) for any file that serves as an application entry point or executable script without requiring explicit instructions.
-    11. **Technology Specifics**: Use idiomatic code and conventions for the specified technologies (e.g., FastAPI/SQLAlchemy for Python backend, React/VanillaJS for frontend).
+            - Set up the root logger with `logging.basicConfig(level=logging.DEBUG)` and register both the `RotatingFileHandler` and `StreamHandler`.
+        - For Other Python Files:
+            - Import logging and initialize logger at the top of the file: `logger = logging.getLogger(__name__)`.
+            - In every function, add logging for:
+                -   Log function entry: `logger.info("Entering <function_name> with args: <args>, kwargs: <kwargs>")`.
+                -   Log function exit: `logger.info("Exiting <function_name> with result: <result>")` (if applicable).
+                -   Log errors in try-except blocks: `logger.error("Error in <function_name>: <dynamic_error_message>", exc_info=True)`.
+            - For FastAPI route handlers, log incoming requests and responses, including basic path and method.
+        - For Non-Python Files: DO NOT add logging.
+    4. FastAPI CORS Configuration (ONLY in `{plan['backend_module_path'].replace('.', '/')}.py`):
+        - In `{plan['backend_module_path'].replace('.', '/')}.py`, configure Cross-Origin Resource Sharing (CORS) using `fastapi.middleware.cors.CORSMiddleware`.
+        - Add the `CORSMiddleware` after FastAPI app initialization and logging setup.
+        - Example:
+            ```python
+            from fastapi import FastAPI
+            from fastapi.middleware.cors import CORSMiddleware
+            
+            app = FastAPI()
+            
+            # Configure CORS
+            app.add_middleware(
+                CORSMiddleware,
+                allow_origins=["*"],  # In production, replace with specific origins
+                allow_credentials=True,
+                allow_methods=["*"],
+                allow_headers=["*"],
+            )
+            ```
+        - Place this before route definitions but after imports and logging.
+    5. FastAPI StaticFiles (only in `{plan['backend_module_path'].replace('.', '/')}.py`):
+        - In `{plan['backend_module_path'].replace('.', '/')}.py`, configure FastAPI to serve frontend static files (HTML, CSS, JavaScript) using `fastapi.StaticFiles`.
+        - Mount the frontend directory at `/`:
+            ```python
+            from fastapi.staticfiles import StaticFiles
+            # ... other setup ...
+            app.mount("/", StaticFiles(directory="{plan['frontend_dir']}", html=True), name="static")
+            ```
+        - This line MUST be placed at the very end of the file, after: All import statements, all middleware (e.g., CORS middleware), all logging setup, all route definitions (e.g., @app.get(...)) and any dependency injection or startup events.
+        - Ensure the app is runnable with uvicorn `{plan['backend_module_path']}:app --reload --port 8001`.
+    6. Frontend File Paths (HTML Files Only):
+        - In `{plan['frontend_dir']}/index.html`, reference CSS with `<link rel="stylesheet" href="/{plan['css_path']}">`.
+        - For JavaScript files, include ALL detected JS files by creating a `<script>` tag for each. The detected JS files are: {js_links_for_prompt}
+        - Example for multiple JS files:
+          ```html
+          <script src="/script.js"></script>
+          <script src="/utils.js"></script>
+          ```
+        - Ensure paths are relative to the frontend directory and compatible with StaticFiles.
+    7. Technology-Specific Conventions:
+        - Python/FastAPI:
+            - Include necessary imports.
+            - Use Pydantic for data validation, ensuring required fields are correctly handled.
+            - For SQLAlchemy models, define primary keys (e.g., `id`) with `primary_key=True` and exclude them from instantiation.
+            - Follow FastAPI conventions for routes and dependencies.
+        - Frontend (HTML/CSS/JS):
+            - Ensure compatibility with FastAPI's StaticFiles.
+            - Use vanilla JavaScript unless otherwise specified.
+    8. Completeness: 
+        - Include all necessary imports, classes, functions, and logic.
+        - For frontend files, provide a complete HTML structure with basic styling compatible with StaticFiles.
+    9. JSON Design and Specification:
+        - Design (json_design):
+            - `system_Architecture`: Guides component layout.
+            - `data_Design.data_Models`: Defines schemas for `{storage_type}`.
+            - `interface_Design.api_Specifications`: Defines API endpoints to implement in backend or call in frontend.
+            - `workflow_Interaction`: Guides logic for user/system flows.
+            - `dependencies`: Libraries to use.
+        - Specification (json_spec):
+            - `project_Overview.project_Purpose`, `project_Overview.product_Scope`: Defines goals and scope.
+            - `functional_Requirements`: Features to implement, with `acceptance_criteria`.
+            - `non_Functional_Requirements`: Quality attributes like security, performance.
+    10. Entry Points: For files that serve as application entry points, include the appropriate language-specific entry point pattern:
+        -   Automatically detect if {file_path} is an entry point.
+        -   Generate fully executable code, including appropriate initialization code and language-specific entry point patterns (like `if __name__ == "__main__":` in Python) for any file that serves as an application entry point or executable script without requiring explicit instructions.
 
     Here is the design file in JSON format:
     ```json
@@ -477,8 +517,13 @@ exit /b 0
     {json.dumps(json_spec, indent=2)}
     ```
 
-    Now, generate the code for the file: `{file_path}`. Ensure it is complete and ready to run, includes advanced logging for Python functions tailored 
-for a debug agent, and supports FastAPI StaticFiles for frontend serving in `{plan['backend_module_path'].replace('.', '/')}.py`. If any file should serve as an entry point or executable file, include the appropriate language-specific entry point code.
+    
+    TASK:
+    Generate the complete code for `{file_path}`, ensuring:
+    - Ensure it is complete with FastAPI conventions, logging, CORS, and StaticFiles and ready to run.
+    - Alignment with `json_design` and `json_spec`.
+    - Inclusion of language-specific entry points for executable files.
+    - Readiness to run with uvicorn `{plan['backend_module_path']}:app --reload --port 8001` for `{plan['backend_module_path'].replace('.', '/')}.py`.
     """
 
     if API_CALL_DELAY_SECONDS > 0:
@@ -522,7 +567,7 @@ def write_code_to_file(file_path, code):
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(code)
         logger.info(f"Successfully wrote {len(code)} characters to {file_path}")
-        # Validate batch file content if it's run.bat
+        # Validate batch file content if it's setup_and_run.bat
         if file_path.endswith('run.bat'):
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -541,6 +586,9 @@ def run_codegen_pipeline(json_design, json_spec, llm_model_instance):
     try:
         plan = parse_json_and_generate_scaffold_plan(json_design, json_spec)
         create_project_structure(plan)
+        
+        ensure_init_py_files(plan["project_root_directory"])
+
         total_files = len(plan["files_to_create"])
         logger.info(f"Attempting to generate code for {total_files} file(s).")
         for i, file_path in enumerate(plan["files_to_create"].keys()):
@@ -657,7 +705,7 @@ if __name__ == "__main__":
         logger.error(f"An unexpected error occurred: {e}", exc_info=True)
         print(f"An unexpected error occurred. Check codegen.log for details. Error: {e}")
 
-# Run file in C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant> python src/module_3/agent.py
+# Run file in C:\Users\Hoang Duy\Documents\Phan Lac Hung\autocode_assistant> python src/module_3/coding_agent.py
 
 
 ### Vấn đề hardcode của coding agent: 

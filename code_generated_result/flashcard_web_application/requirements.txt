@@ -1,9 +1,0 @@
-fastapi[all]
-uvicorn
-SQLAlchemy
-pydantic
-aiosqlite
-uvicorn[standard]
-pytest
-pytest-mock
-pytest-asyncio
