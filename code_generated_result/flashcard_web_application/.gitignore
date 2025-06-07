@@ -1,0 +1,130 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.eggs/
+dist/
+sdist/
+*.egg-info/
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written into a dist/ subdirectory. However, PyInstaller
+#  also creates temporary near the spec file.
+dist/
+build/
+*.spec
+_MEI*
+venv/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+environment/
+myvenv/
+*/.venv/
+**/venv/
+.direnv
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.pytest_cache/
+!/backend/.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py*
+db.sqlite3
+db.sqlite3-journal
+instance/
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx stuff:
+docs/_build/
+
+# MkDocs stuff:
+site/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pip
+pip-log.txt
+pip-delete-this-directory.txt
+pip-download-cache/
+pip-wheel-metadata/
+
+# poetry
+poetry.lock
+
+# node_modules
+node_modules/
+
+# Yarn
+yarn-error.log
+
+# pnpm
+pnpm-debug.log*
+
+# Editors (VS Code, Sublime Text, etc.)
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.idea
+*.tmproj
+*.swp
+*.swo
+*.DS_Store
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# JetBrains IDE
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Logs
+*.log
+logs

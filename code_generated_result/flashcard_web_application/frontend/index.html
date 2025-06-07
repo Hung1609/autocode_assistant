@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard Web Application</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="sidebar">
+        <a href="#" onclick="loadContent('create')">Create</a>
+        <a href="#" onclick="loadContent('search')">Search</a>
+        <a href="#" onclick="loadContent('review')">Review</a>
+        <a href="#" onclick="loadContent('statistics')">Statistics</a>
+    </div>
+
+    <div class="content" id="content">
+        <h1>Welcome to the Flashcard App!</h1>
+        <p>Use the sidebar to navigate.</p>
+    </div>
+
+    <script src="/script.js"></script>
+    <script src="/utils.js"></script>
+</body>
+</html>
