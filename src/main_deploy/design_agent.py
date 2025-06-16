@@ -1,63 +1,81 @@
-import json
 import logging
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema import StrOutputParser
+from langchain.chains import LLMChain
+from autogen import ConversableAgent
+from .prompt import DESIGN_PROMPT
+from .setup import get_gemini_model
+from .utils import parse_json_response, save_data_to_json_file, get_filename
+import json
 from datetime import datetime
-import google.generativeai as genai
-from prompt import DESIGN_PROMPT
 
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class DesignAgent:
-    def __init__(self, model_name='gemini-2.0-flash', api_key=None):
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY must be provided.")
-        
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel(model_name)
-        self.model_name = model_name
+    def __init__(self):
+        """Initialize the design agent with LangChain components."""
+        self.model = get_gemini_model(model_name="gemini-2.0-flash")
+        self.model_name = "gemini-2.0-flash"
+        # Define LangChain prompt template
+        self.prompt_template = ChatPromptTemplate.from_template(DESIGN_PROMPT)
+        # Create LangChain chain
+        self.chain = LLMChain(
+            llm=self.model,
+            prompt=self.prompt_template,
+            output_parser=StrOutputParser()
+        )
 
-    def _parse_json_response(self, response_text):
-        if "```json" in response_text:
-            json_text = response_text.split("```json", 1)[1].split("```", 1)[0].strip()
-        elif response_text.strip().startswith('{') and response_text.strip().endswith('}'):
-            json_text = response_text.strip()
-        else:
-            logger.warning("Response does not appear to be a markdown JSON block or plain JSON. Attempting direct parse.")
-            json_text = response_text
-        return json.loads(json_text)
+    def generate_design(self, spec_data: dict) -> dict:
+        """Generate a system design from a specification JSON."""
+        if not isinstance(spec_data, dict):
+            logger.error("Invalid specification data: must be a dictionary.")
+            raise ValueError("Specification data must be a dictionary.")
 
-    def generate_design(self, specification_json):
-        if not isinstance(specification_json, dict):
-            logger.error("Invalid input: Specification data must be a dictionary.")
-            return None
+        try:
+            logger.info("Generating design specification...")
+            # Prepare input for prompt
+            spec_json_string = json.dumps(spec_data, indent=2)
+            # Run LangChain chain
+            response_text = self.chain.run(agent1_output_json=spec_json_string)
+            logger.info("Received response from model.")
 
-        # Prepare specification JSON for prompt
-        spec_keys = [
-            "project_Overview", "functional_Requirements", "non_Functional_Requirements",
-            "external_Interface_Requirements", "technology_Stack", "data_Storage", "assumptions_Made"
-        ]
-        clean_spec = {key: specification_json[key] for key in spec_keys if key in specification_json}
-        spec_json_string = json.dumps(clean_spec, indent=2)
+            # Parse JSON response
+            design_data = parse_json_response(response_text)
+            if not isinstance(design_data, dict):
+                logger.error("Parsed design is not a dictionary.")
+                raise ValueError("Model did not return valid JSON structure.")
 
-        # Format the DESIGN_PROMPT
-        prompt = DESIGN_PROMPT.format(agent1_output_json=spec_json_string)
-        logger.info("Generating design specification...")
-        response = self.model.generate_content(prompt)
-        logger.info("Received design response from model.")
+            # Add metadata
+            design_data["metadata"] = {
+                "generation_step": "design",
+                "timestamp": datetime.now().isoformat(),
+                "model_used": self.model_name,
+                "source_specification_timestamp": spec_data.get("metadata", {}).get("timestamp")
+            }
 
-        json_result = self._parse_json_response(response.text)
-        if not isinstance(json_result, dict):
-            logger.error("Parsed design result is not a dictionary.")
-            return None
+            # Save to file
+            project_name = spec_data.get("project_Overview", {}).get("project_Name", "unnamed_project")
+            filename = get_filename(project_name=project_name, extension="design.json")
+            filepath = save_data_to_json_file(design_data, filename)
+            logger.info(f"Design saved to {filepath}")
 
-        processed_result = json_result.copy()
-        processed_result["metadata"] = {
-            "generation_step": "design",
-            "timestamp": datetime.now().isoformat(),
-            "model_used": self.model_name,
-            "source_specification_timestamp": specification_json.get("metadata", {}).get("timestamp")
-        }
+            return design_data
 
-        project_name = specification_json.get("project_Overview", {}).get("project_Name", "unnamed_project")
-        logger.info(f"Design generated successfully for project: {project_name}")
-        return processed_result
+        except Exception as e:
+            logger.exception(f"Error generating design: {str(e)}")
+            raise
+
+    def to_autogen_agent(self) -> ConversableAgent:
+        """Convert to an AutoGen ConversableAgent."""
+        return ConversableAgent(
+            name="DesignAgent",
+            system_message="I am a System Designer AI, creating detailed system designs from software specifications.",
+            llm_config=False,  # No LLM directly; use LangChain
+            human_input_mode="NEVER",
+            code_execution_config=False,
+            function_map={
+                "generate_design": self.generate_design
+            }
+        )

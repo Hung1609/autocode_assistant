@@ -1,60 +1,78 @@
-import json
 import logging
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema import StrOutputParser
+from langchain.chains import LLMChain
+from autogen import ConversableAgent
+from .prompt import SPECIFICATION_PROMPT
+from .setup import get_gemini_model
+from .utils import parse_json_response, save_data_to_json_file, get_filename
 from datetime import datetime
-import google.generativeai as genai
-from prompt import SPECIFICATION_PROMPT
 
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class SpecificationAgent:
-    def __init__(self, model_name='gemini-2.0-flash', api_key=None):
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY must be provided.")
-        
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel(model_name)
-        self.model_name = model_name
+    def __init__(self):
+        """Initialize the specification agent with LangChain components."""
+        self.model = get_gemini_model(model_name="gemini-2.0-flash")
+        self.model_name = "gemini-2.0-flash"
+        # Define LangChain prompt template
+        self.prompt_template = ChatPromptTemplate.from_template(SPECIFICATION_PROMPT)
+        # Create LangChain chain
+        self.chain = LLMChain(
+            llm=self.model,
+            prompt=self.prompt_template,
+            output_parser=StrOutputParser()
+        )
 
-    def _parse_json_response(self, response_text):
-        if "```json" in response_text:
-            json_text = response_text.split("```json", 1)[1].split("```", 1)[0].strip()
-        elif response_text.strip().startswith('{') and response_text.strip().endswith('}'):
-            json_text = response_text.strip()
-        else:
-            logger.warning("Response does not appear to be a markdown JSON block or plain JSON. Attempting direct parse.")
-            json_text = response_text
-        return json.loads(json_text)
+    def generate_specification(self, user_description: str) -> dict:
+        """Generate a software specification from user description."""
+        if not user_description.strip():
+            logger.error("Empty user description provided.")
+            raise ValueError("User description cannot be empty.")
 
-    def generate_specification(self, user_description, prompt_template=None):
-        if not user_description:
-            logger.error("No user description provided.")
-            return None
+        try:
+            logger.info("Generating specification...")
+            # Run LangChain chain
+            response_text = self.chain.run(user_description=user_description)
+            logger.info("Received response from model.")
 
-        prompt = (prompt_template or SPECIFICATION_PROMPT).format(user_description=user_description)
-        logger.info("Generating specification...")
-        response = self.model.generate_content(prompt)
-        logger.info("Received response from model.")
+            # Parse JSON response
+            spec_data = parse_json_response(response_text)
+            if not isinstance(spec_data, dict):
+                logger.error("Parsed specification is not a dictionary.")
+                raise ValueError("Model did not return valid JSON structure.")
 
-        json_result = self._parse_json_response(response.text)
-        if not isinstance(json_result, dict):
-            logger.error("Parsed specification result is not a dictionary.")
-            return None
+            # Process and add metadata
+            project_name = spec_data.get("project_Overview", {}).get("project_Name", "unnamed_project")
+            spec_data["metadata"] = {
+                "generation_step": "specification",
+                "timestamp": datetime.now().isoformat(),
+                "model_used": self.model_name,
+                "original_description": user_description
+            }
 
-        processed_result = json_result.copy()
-        project_name = processed_result.get("project_Overview", {}).get("project_Name", "unnamed_project")
+            # Save to file
+            filename = get_filename(project_name=project_name, extension="spec.json")
+            filepath = save_data_to_json_file(spec_data, filename)
+            logger.info(f"Specification saved to {filepath}")
 
-        if "project_Overview" not in processed_result:
-            processed_result["project_Overview"] = {}
-        if "project_Name" not in processed_result["project_Overview"]:
-            processed_result["project_Overview"]["project_Name"] = project_name
+            return spec_data
 
-        processed_result["metadata"] = {
-            "generation_step": "specification",
-            "timestamp": datetime.now().isoformat(),
-            "model_used": self.model_name,
-            "original_description": user_description
-        }
+        except Exception as e:
+            logger.exception(f"Error generating specification: {str(e)}")
+            raise
 
-        logger.info(f"Specification generated successfully for project: {project_name}")
-        return processed_result
+    def to_autogen_agent(self) -> ConversableAgent:
+        """Convert to an AutoGen ConversableAgent."""
+        return ConversableAgent(
+            name="SpecificationAgent",
+            system_message="I am a Requirements Analyst AI, generating structured software specifications from user descriptions.",
+            llm_config=False,  # No LLM directly; use LangChain
+            human_input_mode="NEVER",
+            code_execution_config=False,
+            function_map={
+                "generate_specification": self.generate_specification
+            }
+        )

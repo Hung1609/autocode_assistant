@@ -1,55 +1,53 @@
-import os
 from specification_agent import SpecificationAgent
 from design_agent import DesignAgent
-from utils import save_data_to_json_file
-import logging
-from dotenv import load_dotenv
+from autogen import UserProxyAgent, GroupChat, GroupChatManager
 
-load_dotenv()
+# Initialize your core agent classes
+spec_agent_instance = SpecificationAgent()
+design_agent_instance = DesignAgent()
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Create AutoGen ConversableAgent wrappers
+autogen_spec_agent = spec_agent_instance.to_autogen_agent()
+autogen_design_agent = design_agent_instance.to_autogen_agent()
 
-def main():
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        print("Error: GEMINI_API_KEY environment variable not set.")
-        return
+# Create a UserProxyAgent that acts as the initiator and can call functions
+# It needs to know about ALL functions it might want to call
+orchestrator_proxy = UserProxyAgent(
+    name="Orchestrator",
+    human_input_mode="NEVER",
+    max_consecutive_auto_reply=10,
+    is_termination_msg=lambda x: "TERMINATE" in x.get("content", "").upper(),
+    code_execution_config={"work_dir": "temp_scripts"}, # for calling python scripts if needed
+    function_map={
+        "generate_specification": autogen_spec_agent.generate_specification,
+        "generate_design": autogen_design_agent.generate_design
+        # Add functions for CodingAgent, TestingAgent etc. later
+    }
+)
 
-    spec_agent = SpecificationAgent(api_key=api_key)
-    design_agent = DesignAgent(api_key=api_key)
+# --- Sequential Flow using function calls ---
 
-    print("\nEnter your software project requirements (type 'DONE' on a new line to finish):")
-    user_input = []
-    while True:
-        line = input()
-        if line.strip().upper() == "DONE":
-            break
-        user_input.append(line)
-    
-    user_description = "\n".join(user_input).strip()
-    if not user_description:
-        logger.error("No input provided.")
-        print("Error: No input provided.")
-        return
+# Step 1: Generate Specification
+user_prompt = "I need a simple task management web app with user login, tasks with name/due date, and filter by status."
+print("Orchestrator: Initiating Specification Generation...")
 
-    print("\nGenerating specification...")
-    spec_data = spec_agent.generate_specification(user_description)
-    if not spec_data:
-        print("Failed to generate specification. Check logs for details.")
-        return
+# The orchestrator_proxy will "talk" to the autogen_spec_agent
+# and suggest calling the 'generate_specification' function.
+# This requires careful prompting of the orchestrator_proxy OR
+# a direct call from the script (which might be simpler for the initial sequential steps).
 
-    spec_filename = save_data_to_json_file(spec_data, extension="spec.json")
-    print(f"Specification saved to: {spec_filename}")
+# A more direct, less "chatty" way for the first two sequential steps:
+try:
+    print(f"\n--- Running Specification Agent ---")
+    spec_data = spec_agent_instance.generate_specification(user_prompt) # Directly call the method
+    print(f"Specification Generated. Project: {spec_data['project_Overview']['project_Name']}")
+    # You could then convert this spec_data to a message for the next agent
+    # e.g., print(f"Here is the specification:\n{json.dumps(spec_data, indent=2)}")
 
-    print("\nGenerating design specification...")
-    design_data = design_agent.generate_design(spec_data)
-    if not design_data:
-        print("Failed to generate design specification. Check logs for details.")
-        return
+    print(f"\n--- Running Design Agent ---")
+    design_data = design_agent_instance.generate_design(spec_data) # Directly call the method
+    print(f"Design Generated for: {design_data['project_Overview']['project_Name']}")
+    # You could then convert this design_data to a message for the next agent
 
-    design_filename = save_data_to_json_file(design_data, extension="design.json")
-    print(f"Design specification saved to: {design_filename}")
-
-if __name__ == "__main__":
-    main()
+except Exception as e:
+    print(f"Orchestration failed: {e}")
