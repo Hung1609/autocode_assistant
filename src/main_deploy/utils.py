@@ -12,7 +12,8 @@ def get_base_output_dir():
     """Get the absolute path to the outputs directory."""
     current_file_path = os.path.abspath(__file__)
     current_file_dir = os.path.dirname(current_file_path)
-    output_dir = os.path.join(current_file_dir, "outputs")
+    project_root = os.path.dirname(os.path.dirname(current_file_dir))  # Go up two levels from main_deploy
+    output_dir = os.path.join(project_root, "outputs")
     return output_dir
 
 def get_filename(project_name: str = None, extension: str = "json") -> str:

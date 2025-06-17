@@ -1,10 +1,17 @@
 import logging
-from langchain.prompts import ChatPromptTemplate
-from langchain.schema import StrOutputParser
-from langchain.chains import LLMChain
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_google_genai import ChatGoogleGenerativeAI
 from autogen import ConversableAgent
 from .prompt import SPECIFICATION_PROMPT
-from .setup import get_gemini_model
+from .setup import get_api_key
+from .utils import parse_json_response, save_data_to_json_file, get_filename
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema import StrOutputParser
+from langchain_google_genai import ChatGoogleGenerativeAI
+from autogen import ConversableAgent
+from .prompt import SPECIFICATION_PROMPT
+from .setup import get_api_key
 from .utils import parse_json_response, save_data_to_json_file, get_filename
 from datetime import datetime
 
@@ -15,16 +22,22 @@ logger = logging.getLogger(__name__)
 class SpecificationAgent:
     def __init__(self):
         """Initialize the specification agent with LangChain components."""
-        self.model = get_gemini_model(model_name="gemini-2.0-flash")
+        # Get API key for Google Gemini
+        self.api_key = get_api_key()
         self.model_name = "gemini-2.0-flash"
+        
+        # Initialize LangChain's Google Gemini model
+        self.llm = ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash",
+            google_api_key=self.api_key,
+            temperature=0.3
+        )
+        
         # Define LangChain prompt template
         self.prompt_template = ChatPromptTemplate.from_template(SPECIFICATION_PROMPT)
-        # Create LangChain chain
-        self.chain = LLMChain(
-            llm=self.model,
-            prompt=self.prompt_template,
-            output_parser=StrOutputParser()
-        )
+        
+        # Create processing chain using the modern LCEL approach
+        self.chain = self.prompt_template | self.llm | StrOutputParser()
 
     def generate_specification(self, user_description: str) -> dict:
         """Generate a software specification from user description."""
@@ -33,9 +46,9 @@ class SpecificationAgent:
             raise ValueError("User description cannot be empty.")
 
         try:
-            logger.info("Generating specification...")
-            # Run LangChain chain
-            response_text = self.chain.run(user_description=user_description)
+            logger.info("Generating specification...")            
+            # Run LangChain LCEL chain
+            response_text = self.chain.invoke({"user_description": user_description})
             logger.info("Received response from model.")
 
             # Parse JSON response

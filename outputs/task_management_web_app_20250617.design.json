@@ -1,0 +1,365 @@
+{
+  "system_Architecture": {
+    "description": "A client-server architecture with a Vanilla JavaScript frontend interacting with a Python/FastAPI backend via RESTful APIs. The backend manages user authentication, task creation, and data persistence using a SQLite database.",
+    "components": [
+      {
+        "name": "Web Frontend",
+        "description": "Provides the user interface for interacting with the task management application. Handles user input, displays tasks, and communicates with the backend API.",
+        "technologies": [
+          "HTML",
+          "CSS",
+          "JavaScript",
+          "Vanilla"
+        ],
+        "inputs": [
+          "User interactions (button clicks, form submissions), API responses from the backend"
+        ],
+        "outputs": [
+          "API requests to the backend, rendered UI elements"
+        ]
+      },
+      {
+        "name": "Backend API",
+        "description": "Handles user authentication, task management logic, and data persistence. Exposes RESTful APIs for the frontend to interact with.",
+        "technologies": [
+          "Python",
+          "FastAPI",
+          "RESTful"
+        ],
+        "inputs": [
+          "HTTP requests from the frontend"
+        ],
+        "outputs": [
+          "HTTP responses, database queries"
+        ]
+      },
+      {
+        "name": "Database",
+        "description": "Stores user accounts and task data.",
+        "technologies": [
+          "SQLite",
+          "SQL"
+        ],
+        "inputs": [
+          "Data read/write requests from the backend"
+        ],
+        "outputs": [
+          "Stored data, query results"
+        ]
+      }
+    ]
+  },
+  "data_Design": {
+    "data_Flow_Description": "User interacts with the HTML/CSS/JavaScript frontend, which sends API calls to the Python/FastAPI backend. The backend validates requests, interacts with the SQLite database for CRUD operations on Users and Tasks, and returns responses to the frontend. Data is passed as JSON in both directions.",
+    "storage_Type": "SQL",
+    "database_Type": "SQLite",
+    "data_Models": [
+      {
+        "model_Name": "User",
+        "description": "Represents a user account.",
+        "fields": [
+          {
+            "name": "id",
+            "type": "INTEGER",
+            "description": "Primary key for the user.",
+            "constraints": [
+              "primary_key: true",
+              "autoincrement: true"
+            ]
+          },
+          {
+            "name": "username",
+            "type": "VARCHAR(255)",
+            "description": "User's username.",
+            "constraints": [
+              "required",
+              "unique"
+            ]
+          },
+          {
+            "name": "password",
+            "type": "VARCHAR(255)",
+            "description": "Hashed password for the user.",
+            "constraints": [
+              "required"
+            ]
+          }
+        ],
+        "relationships": []
+      },
+      {
+        "model_Name": "Task",
+        "description": "Represents a task associated with a user.",
+        "fields": [
+          {
+            "name": "id",
+            "type": "INTEGER",
+            "description": "Primary key for the task.",
+            "constraints": [
+              "primary_key: true",
+              "autoincrement: true"
+            ]
+          },
+          {
+            "name": "user_id",
+            "type": "INTEGER",
+            "description": "Foreign key referencing the User table.",
+            "constraints": [
+              "required",
+              "indexed"
+            ]
+          },
+          {
+            "name": "name",
+            "type": "VARCHAR(255)",
+            "description": "Name of the task.",
+            "constraints": [
+              "required"
+            ]
+          },
+          {
+            "name": "due_date",
+            "type": "DATE",
+            "description": "Due date for the task.",
+            "constraints": [
+              "nullable: true"
+            ]
+          },
+          {
+            "name": "status",
+            "type": "VARCHAR(20)",
+            "description": "Status of the task (e.g., complete, incomplete).",
+            "constraints": [
+              "required",
+              "default: incomplete"
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "field_Name": "user_id",
+            "type": "Many-to-one",
+            "related_Model": "User",
+            "foreign_Field": "id",
+            "description": "Each task belongs to one user.",
+            "implementation_Notes": "FOREIGN KEY (user_id) REFERENCES User(id)",
+            "on_Delete": "CASCADE"
+          }
+        ]
+      }
+    ]
+  },
+  "interface_Design": {
+    "api_Specifications": [
+      {
+        "endpoint": "/api/users/register",
+        "method": "POST",
+        "description": "Registers a new user.",
+        "request_Format": {
+          "params": [],
+          "query": [],
+          "body_Schema": {
+            "description": "{ username: String (required), password: String (required) }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 201,
+          "success_Schema": {
+            "description": "Returns the created user object."
+          },
+          "error_Status": [
+            400,
+            409,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message description' }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "NFR-002"
+        ]
+      },
+      {
+        "endpoint": "/api/users/login",
+        "method": "POST",
+        "description": "Logs in an existing user.",
+        "request_Format": {
+          "params": [],
+          "query": [],
+          "body_Schema": {
+            "description": "{ username: String (required), password: String (required) }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "Returns a JWT token upon successful login."
+          },
+          "error_Status": [
+            400,
+            401,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message description' }"
+          }
+        },
+        "authentication_Required": false,
+        "related_NFRs": [
+          "NFR-002"
+        ]
+      },
+      {
+        "endpoint": "/api/tasks",
+        "method": "POST",
+        "description": "Creates a new task for the logged-in user.",
+        "request_Format": {
+          "params": [],
+          "query": [],
+          "body_Schema": {
+            "description": "{ name: String (required), due_date: Date (optional) }"
+          }
+        },
+        "response_Format": {
+          "success_Status": 201,
+          "success_Schema": {
+            "description": "Returns the created task object."
+          },
+          "error_Status": [
+            400,
+            401,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message description' }"
+          }
+        },
+        "authentication_Required": true,
+        "related_NFRs": [
+          "NFR-002"
+        ]
+      },
+      {
+        "endpoint": "/api/tasks",
+        "method": "GET",
+        "description": "Retrieves all tasks for the logged-in user, optionally filtered by status.",
+        "request_Format": {
+          "params": [],
+          "query": [
+            "status (optional): String (complete, incomplete)"
+          ],
+          "body_Schema": {
+            "description": "None"
+          }
+        },
+        "response_Format": {
+          "success_Status": 200,
+          "success_Schema": {
+            "description": "Returns an array of task objects."
+          },
+          "error_Status": [
+            401,
+            500
+          ],
+          "error_Schema": {
+            "description": "{ error: 'Error message description' }"
+          }
+        },
+        "authentication_Required": true,
+        "related_NFRs": [
+          "NFR-002"
+        ]
+      }
+    ],
+    "ui_Interaction_Notes": "The login/registration page sends POST requests to /api/users/register and /api/users/login. The task list page fetches data from GET /api/tasks on load and after creating a new task. The task creation form sends a POST request to /api/tasks."
+  },
+  "workflow_Interaction": [
+    {
+      "workflow_Name": "User Registration Process",
+      "description": "1. User submits registration form on Frontend. 2. Frontend sends POST request to /api/users/register on Backend API. 3. Backend API validates data. 4. Backend API hashes password. 5. Backend API saves user data to Database. 6. Database confirms save. 7. Backend API sends success response to Frontend. 8. Frontend displays success message or redirects to login page.",
+      "related_Requirements": [
+        "FR-001"
+      ]
+    },
+    {
+      "workflow_Name": "Task Creation Process",
+      "description": "1. User submits task creation form on Frontend. 2. Frontend sends POST request to /api/tasks on Backend API. 3. Backend API validates data. 4. Backend API saves task data to Database. 5. Database confirms save. 6. Backend API sends success response to Frontend. 7. Frontend updates task list with the new task.",
+      "related_Requirements": [
+        "FR-003"
+      ]
+    }
+  ],
+  "folder_Structure": {
+    "description": "Proposed folder structure for the entire project, including root-level files and main subdirectories for a Python/FastAPI backend and Vanilla JS frontend. All paths are relative to the root_Project_Directory_Name.",
+    "root_Project_Directory_Name": "task_management_web_app",
+    "structure": [
+      {
+        "path": "requirements.txt",
+        "description": "Python backend dependencies file."
+      },
+      {
+        "path": ".env",
+        "description": "Environment variables configuration file."
+      },
+      {
+        "path": "backend",
+        "description": "Backend application directory using Python/FastAPI directory."
+      },
+      {
+        "path": "backend/main.py",
+        "description": "FastAPI application instance and startup file."
+      },
+      {
+        "path": "backend/database.py",
+        "description": "Database connection and session setup file (SQLAlchemy)."
+      },
+      {
+        "path": "backend/models.py",
+        "description": "SQLAlchemy ORM models definition file."
+      },
+      {
+        "path": "backend/schemas.py",
+        "description": "Pydantic schemas for data validation and serialization file."
+      },
+      {
+        "path": "backend/routes.py",
+        "description": "API route definitions file."
+      },
+      {
+        "path": "frontend",
+        "description": "Frontend application directory using HTML, CSS, Vanilla JS directory."
+      },
+      {
+        "path": "frontend/index.html",
+        "description": "Main HTML file, entry point for the frontend."
+      },
+      {
+        "path": "frontend/style.css",
+        "description": "Main application stylesheet file."
+      },
+      {
+        "path": "frontend/script.js",
+        "description": "Main client-side JavaScript logic and initialization file."
+      }
+    ]
+  },
+  "dependencies": {
+    "backend": [
+      "fastapi",
+      "uvicorn",
+      "sqlalchemy",
+      "pydantic",
+      "python-jose[cryptography]",
+      "passlib[bcrypt]"
+    ],
+    "frontend": []
+  },
+  "metadata": {
+    "generation_step": "design",
+    "timestamp": "2025-06-17T13:44:58.599282",
+    "model_used": "gemini-2.0-flash",
+    "source_specification_timestamp": "2025-06-17T13:44:43.511372"
+  }
+}
