@@ -2,10 +2,14 @@ import os
 import json
 import logging
 import argparse
+from typing import Dict, List
+# Use absolute imports for execution as script
 from .specification_agent import SpecificationAgent
 from .design_agent import DesignAgent
+from .coding_agent import LangChainCodingAgent, AgentConfig
 from .utils import get_filename, get_base_output_dir
-from .setup import get_api_key
+from .setup import get_api_key, configure_genai
+import autogen
 
 # Configure logging for the orchestrator script
 # This ensures that messages from this script also appear in the console.
@@ -77,11 +81,9 @@ def main():
             print("\n--- Specification Preview ---")
             print(json.dumps(spec_data, indent=2)[:1000] + "...") # Print first 1000 chars
 
-        # --- 4. Execute Design Generation ---
-        print("\n--- STEP 2: Generating System Design ---")
+        # --- 4. Execute Design Generation ---        print("\n--- STEP 2: Generating System Design ---")
         logger.info("Calling DesignAgent to generate design from specification...")
-
-        # Directly call the generate_design method on the instance, passing the spec_data        
+        # Directly call the generate_design method on the instance, passing the spec_data
         design_data = design_agent_instance.generate_design(spec_data)
         design_filename = get_filename(project_name=project_name, extension="design.json")
         design_filepath = os.path.join(get_base_output_dir(), design_filename)
@@ -94,7 +96,86 @@ def main():
             print(json.dumps(design_data, indent=2)[:1000] + "...") # Print first 1000 chars
 
         print("\n--- Orchestration of Specification and Design complete! ---")
-        print(f"Check the 'outputs' directory for the generated '{project_name}' specification and design files.")
+        print("\n--- STEP 3: Entering AutoGen GroupChat for Code Generation ---")
+        coding_config = AgentConfig.from_env()
+        coding_agent_instance = LangChainCodingAgent(coding_config)
+        autogen_llm_config = {
+            "config_list": [
+                {
+                    "model": coding_config.model_name,
+                    "api_key": os.getenv("GEMINI_API_KEY"),
+                    "api_type": "google"
+                }
+            ],
+            "temperature": 0.3,
+            "timeout": 600,
+        }
+        
+        project_manager = autogen.AssistantAgent(
+            name="ProjectManager",
+            system_message="""
+            You are a project manager. Your role is to orchestrate the code generation process.
+            - Receive the initial task with the design and specification JSON.
+            - Delegate the implementation to the Coder by instructing it to call the 'generate_project' function.
+            - Once the Coder agent confirms successful generation, you must instruct the UserProxy to execute the `run.bat` script to verify the application.
+            - If the execution is successful, your MUST reply with the word 'TERMINATE'.
+            """,
+            llm_config=autogen_llm_config,
+        )
+        
+        coder = autogen.AssistantAgent(
+            name="Coder",
+            system_message="""
+            You are an expert software engineer. You will receive instructions from the ProjectManager.
+            - Your main tool is 'generate_project'. When asked to implement the project, call this function with the provided design and specification data.
+            - DO NOT write code directly in the chat.
+            - Report the result of the function call back to the ProjectManager.
+            """,
+            llm_config=autogen_llm_config,
+        )
+        user_proxy = autogen.UserProxyAgent(
+            name="UserProxy",
+            human_input_mode = "NEVER",
+            max_consecutive_auto_reply=30,
+            is_termination_msg=lambda x: "TERMINATE" in x.get("content", "").upper(),
+            code_execution_config={
+                "work_dir": coding_config.base_output_dir,
+                "use_docker": False,
+            },
+            function_map={
+                "generate_project": coding_agent_instance.generate_project,
+            }
+        )
+        
+        # GropuChat in AutoGen
+        groupchat = autogen.GroupChat(
+            agents=[user_proxy,project_manager, coder],
+            messages=[],
+            max_round=99
+        )
+        manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=autogen_llm_config)
+        initial_message = f"""
+        The specification and design phases are complete. Now, we need to generate the project code.
+
+        ProjectManager, please orchestrate this process. Your first step is to instruct the Coder to call the `generate_project` function.
+
+        Here is the required data:
+
+        --- SPECIFICATION DATA ---
+        {json.dumps(spec_data, indent=2)}
+
+        --- DESIGN DATA ---
+        {json.dumps(design_data, indent=2)}
+        """
+        
+        print("\n--- Starting AutoGen Conversation... ---")
+        user_proxy.initiate_chat(
+            manager,
+            message=initial_message,
+        )
+        
+        print("\n--- AutoGen Conversation Finished. ---")
+        print(f"Check the '{coding_config.base_output_dir}' directory for the generated project.")
 
         # --- Next Steps Placeholder ---
         # At this point, `design_data` holds the detailed design.
