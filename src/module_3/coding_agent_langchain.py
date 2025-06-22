@@ -2,6 +2,7 @@ import json
 import os
 import logging
 import time
+import sys
 import subprocess
 from datetime import datetime
 from typing import Dict, List, Optional, Any
@@ -14,18 +15,18 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.callbacks.base import BaseCallbackHandler
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+from .detect_path import define_project_root, define_python_path
 
 load_dotenv()
 
-# Configuration class for Windows
+# Configuration for the coding agent
 class AgentConfig(BaseModel):
-    """Configuration for the coding agent"""
     outputs_dir: str = Field(default="src/module_1_vs_2/outputs", description="Directory containing JSON files")
     base_output_dir: str = Field(default="code_generated_result", description="Base directory for generated code")
     python_path: str = Field(default="python", description="Python executable path")
     model_name: str = Field(default="gemini-2.0-flash", description="LLM model name")
-    api_delay_seconds: int = Field(default=2, description="Delay between API calls")
-    max_retries: int = Field(default=2, description="Maximum retry attempts for LLM calls")
+    api_delay_seconds: int = Field(default=5, description="Delay between API calls")
+    max_retries: int = Field(default=3, description="Maximum retry attempts for LLM calls")
     log_level: str = Field(default="DEBUG", description="Logging level")
 
     @classmethod
@@ -36,7 +37,7 @@ class AgentConfig(BaseModel):
             base_output_dir=os.getenv('BASE_OUTPUT_DIR', 'code_generated_result'),
             python_path=os.getenv('PYTHON_PATH', 'python'),
             model_name=os.getenv('MODEL_NAME', 'gemini-2.0-flash'),
-            api_delay_seconds=int(os.getenv('API_DELAY_SECONDS', '2')),
+            api_delay_seconds=int(os.getenv('API_DELAY_SECONDS', '5')),
             max_retries=int(os.getenv('MAX_RETRIES', '3')),
             log_level=os.getenv('LOG_LEVEL', 'DEBUG')
         )
@@ -230,10 +231,10 @@ exit /b 0
     
     def _fastapi_requirements(self, **kwargs):
         dependencies = kwargs.get('dependencies', [])
-        base_deps = ['fastapi[all]', 'uvicorn[standard]', 'sqlalchemy', 'pydantic']
+        base_deps = ['fastapi[all]', 'uvicorn[standard]', 'sqlalchemy', 'pydantic', 'python-dotenv']
         all_deps = list(set(dependencies + base_deps))
         return '\n'.join(all_deps) + '\n'
-    
+        
     def _fastapi_env(self, **kwargs):
         storage_type = kwargs.get('storage_type', 'sqlite')
         return f"DATABASE_URL={storage_type}:///app.db\nSECRET_KEY=your-secret-key-here\n"
@@ -250,7 +251,6 @@ exit /b 0
         js_files = kwargs.get('js_files_to_link', [])
         json_design = kwargs.get('json_design', {})
         json_spec = kwargs.get('json_spec', {})
-        
         js_links_for_prompt = "\n".join([f"- /{js_file}" for js_file in js_files]) or "No JavaScript files detected."
         
         return f"""
