@@ -6,12 +6,19 @@ from backend.database import get_db
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/api/reviews",
+    tags=["reviews"],
+    responses={404: {"description": "Not found"}},
+)
 
 
-@router.post("/api/reviews", response_model=schemas.Review, status_code=201)
+@router.post("/", response_model=schemas.Review)
 def create_review(review: schemas.ReviewCreate, db: Session = Depends(get_db)):
-    logger.info(f"Entering create_review with args: {review}, kwargs: {{}}")
+    """
+    Creates a new review record for a flashcard.
+    """
+    logger.info(f"Entering create_review with args: {review}, kwargs: ")
     try:
         db_review = models.Review(**review.dict())
         db.add(db_review)
@@ -22,4 +29,3 @@ def create_review(review: schemas.ReviewCreate, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error in create_review: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-

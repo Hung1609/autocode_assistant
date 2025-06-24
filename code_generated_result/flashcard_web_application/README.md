@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is a web application for creating, reviewing, and searching flashcards. It's designed to help users learn and memorize information effectively, particularly useful for language learning.
+This project is a web application for creating, reviewing, and searching flashcards. It allows users to create flashcards with a front and back side, search through their existing flashcards, review them with a flipping animation, track review statistics, and navigate through the application via a sidebar. The application is preloaded with ten Hindi-English flashcards.
 
 ## Features
 
@@ -21,12 +21,12 @@ This project is a web application for creating, reviewing, and searching flashca
 *   **Frontend:**
     *   Language: HTML, CSS, JavaScript (Vanilla)
 
-## Project Structure
+## Folder Structure
 
 ```
 flashcard_web_application/
-├── README.md
 ├── requirements.txt
+├── README.md
 ├── .gitignore
 ├── backend/
 │   ├── main.py
@@ -36,13 +36,11 @@ flashcard_web_application/
 │   │   ├── flashcards.py
 │   │   └── reviews.py
 │   └── schemas.py
-├── frontend/
-│   ├── index.html
-│   ├── style.css
-│   ├── script.js
-│   ├── utils.js
-│   └── assets/
-└── ...
+└── frontend/
+    ├── index.html
+    ├── style.css
+    ├── script.js
+    └── utils.js
 ```
 
 ## Setup Instructions
@@ -74,21 +72,21 @@ flashcard_web_application/
     python -m uvicorn backend.main:app --reload --port 8001
     ```
 
-5.  **Access the frontend:**
+5.  **Access the application in your browser:**
 
     Open your web browser and navigate to `http://localhost:8001`.
 
 ## API Endpoints
 
-*   `POST /api/flashcards`: Creates a new flashcard.
-*   `GET /api/flashcards`: Retrieves all flashcards, optionally filtered by a search query.
-*   `GET /api/flashcards/{flashcard_id}`: Retrieves a specific flashcard by ID.
-*   `POST /api/reviews`: Creates a new review record for a flashcard.
-*   `GET /api/statistics`: Retrieves review statistics.
+*   **POST /api/flashcards:** Creates a new flashcard.
+*   **GET /api/flashcards:** Retrieves all flashcards, optionally filtered by a search query.
+*   **GET /api/flashcards/{flashcard\_id}:** Retrieves a specific flashcard by ID.
+*   **POST /api/reviews:** Creates a new review record for a flashcard.
+*   **GET /api/statistics:** Retrieves review statistics.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit pull requests or open issues for any bugs or feature requests.
+Contributions are welcome! Please submit a pull request with your changes.
 
 ## License
 

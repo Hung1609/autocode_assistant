@@ -6,31 +6,23 @@ __pycache__/
 # Distribution / packaging
 .eggs/
 dist/
-sdist/
-*.egg-info/
+build/
+develop-eggs/
+parts/
+wheels/
+eggs/
+.installed.cfg
 *.egg
-MANIFEST
+*.whl
+MANIFEST.in
+*.manifest
 
 # PyInstaller
-#  Usually these files are written into a dist/ subdirectory. However, PyInstaller
-#  also creates temporary near the spec file.
-dist/
-build/
-*.spec
-_MEI*
-venv/
-
-# Environments
+#  Usually these files are written into a dist directory.
+#  See https://github.com/pyinstaller/pyinstaller/blob/development/docs/spec-files/contents.rst#binding-together-the-script-imports
+**/_MEI*
+# dotenv environment variable files
 .env
-.venv
-env/
-venv/
-ENV/
-environment/
-myvenv/
-*/.venv/
-**/venv/
-.direnv
 
 # Unit test / coverage reports
 htmlcov/
@@ -41,9 +33,8 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
-*.py,cover
+*.log
 .pytest_cache/
-!/backend/.pytest_cache/
 
 # Translations
 *.mo
@@ -51,80 +42,68 @@ coverage.xml
 
 # Django stuff:
 *.log
-local_settings.py*
-db.sqlite3
-db.sqlite3-journal
-instance/
+*.pot
+*.pyc
+__pycache__/
+media/
+static/
+staticfiles/
 
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx stuff:
+# Sphinx documentation
 docs/_build/
 
-# MkDocs stuff:
-site/
+# Build system files
+*.mk
+*.ninja
+CMakeLists.txt
+cmake_install.cmake
+CMakeFiles/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# pip
-pip-log.txt
-pip-delete-this-directory.txt
-pip-download-cache/
-pip-wheel-metadata/
-
-# poetry
-poetry.lock
-
-# node_modules
-node_modules/
-
-# Yarn
-yarn-error.log
-
-# pnpm
-pnpm-debug.log*
-
-# Editors (VS Code, Sublime Text, etc.)
-.vscode/
-*.sublime-project
-*.sublime-workspace
+# IDE/editor
 .idea
-*.tmproj
+.vscode
 *.swp
-*.swo
-*.DS_Store
+*~
+tmp/
+temp/
+tmp.*
+*.bak
+*.orig
+*.$$$
+*.esproj
+*.user
+*.booproj
+.ropeproject
+.tmproj
+.tern-project
+.cproject
+.project
+.recommenders
+.settings/
+_ReSharper*/
+*.sln
+*.suo
+*.pdb
+*.opensdf
+*.opendbsln
+*.dbmdl
+[Bb]in/
+[Oo]bj/
+*.VC.db
+*.opendb
+*.vssscc
+*.vspscc
+*.build.txt
+*.pidb
+*.svclog
+*.local
+*.DotSettings.user
+*.Cache
+*.orig
+*.rej
 
 # OS generated files
 .DS_Store
 Thumbs.db
-
-# JetBrains IDE
-.idea/
-*.iws
-*.iml
-*.ipr
-
-# Compiled source
-*.com
-*.class
-*.dll
-*.exe
-*.o
-*.so
-
-# Logs
-*.log
-logs
+ehthumbs.db
+Desktop.ini

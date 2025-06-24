@@ -8,17 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 # Configure logging
-def setup_logger():
-    """Sets up logging configuration for the application."""
-    log_level = logging.DEBUG
-    log_file = "logs/app.log"
-    max_bytes = 10 * 1024 * 1024  # 10MB
-    backup_count = 5
+def create_logger():
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
 
-    # Define a custom JSON formatter
+    # JSON Formatter
     class JsonFormatter(logging.Formatter):
-        def format(self, record: logging.LogRecord) -> str:
-            """Formats a log record as a JSON string."""
+        def format(self, record):
             log_record = {
                 "timestamp": self.formatTime(record, self.datefmt),
                 "level": record.levelname,
@@ -28,33 +24,27 @@ def setup_logger():
                 "funcName": record.funcName,
                 "lineno": record.lineno,
             }
-
-            # Include exception info if available
             if record.exc_info:
                 log_record["exc_info"] = self.formatException(record.exc_info)
-
             return json.dumps(log_record)
 
-    # Create a rotating file handler
+    # Rotating File Handler
     rotating_handler = logging.handlers.RotatingFileHandler(
-        log_file, maxBytes=max_bytes, backupCount=backup_count
+        "logs/app.log", maxBytes=10*1024*1024, backupCount=5
     )
     json_formatter = JsonFormatter()
     rotating_handler.setFormatter(json_formatter)
+    logger.addHandler(rotating_handler)
 
-    # Create a stream handler for console output
+    # Stream Handler (Console)
     stream_handler = logging.StreamHandler(sys.stdout)
-    stream_formatter = logging.Formatter(
-        "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-    )
+    stream_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
     stream_handler.setFormatter(stream_formatter)
+    logger.addHandler(stream_handler)
 
-    # Configure the root logger
-    logging.basicConfig(level=log_level, handlers=[rotating_handler, stream_handler])
+    return logger
 
-setup_logger()
-
-logger = logging.getLogger(__name__)
+logger = create_logger()
 
 app = FastAPI()
 
@@ -67,11 +57,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-from backend.routers import flashcards, reviews
-
-app.include_router(flashcards.router)
-app.include_router(reviews.router)
+@app.get("/api/health")
+def health_check():
+    logger.info("Health check endpoint hit")
+    return {"status": "ok"}
 
 # Mount the frontend
 app.mount("/", StaticFiles(directory="frontend", html=True), name="static")

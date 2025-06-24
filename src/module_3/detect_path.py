@@ -38,7 +38,7 @@ def define_project_root() -> str:
         os.path.join(os.getcwd(), 'code_generated_result')
     )
 
-    chosen_path = _prompt_user("Enter the root directory for generated projects", default_path)
+    chosen_path = _prompt_user("Enter the root directory for generated projects (Press Enter if you want to use 'Default')", default_path)
     # Expands user-specific paths (like ~) and gets the absolute path.
     final_path = os.path.abspath(os.path.expanduser(chosen_path))
 
@@ -61,7 +61,7 @@ def define_python_path() -> str:
     
     final_path = ""
     while True:
-        chosen_path = _prompt_user("Enter the path to the Python executable", default_path)
+        chosen_path = _prompt_user("Enter the path to the Python executable (Press Enter if you want to use 'Default')", default_path)
         final_path = os.path.abspath(os.path.expanduser(chosen_path))
 
         # Validate if the path is an existing file and looks like a Python executable.

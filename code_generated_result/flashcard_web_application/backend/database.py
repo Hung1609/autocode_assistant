@@ -24,6 +24,10 @@ class Flashcard(Base):
 
     reviews = relationship("Review", back_populates="flashcard")
 
+    def __repr__(self):
+        return f"<Flashcard(id={self.id}, front_text='{self.front_text}', back_text='{self.back_text}')>"
+
+
 class Review(Base):
     __tablename__ = "reviews"
 
@@ -34,7 +38,15 @@ class Review(Base):
 
     flashcard = relationship("Flashcard", back_populates="reviews")
 
-Base.metadata.create_all(bind=engine)
+    def __repr__(self):
+        return f"<Review(id={self.id}, flashcard_id={self.flashcard_id}, correct={self.correct}, review_timestamp={self.review_timestamp})>"
+
+
+def create_db_and_tables():
+    logger.info("Creating database and tables")
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database and tables created successfully")
+
 
 def get_db():
     db = SessionLocal()
@@ -42,3 +54,8 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    create_db_and_tables()

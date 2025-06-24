@@ -1,0 +1,60 @@
+2025-06-24 23:42:26,588 - __main__ - INFO - Starting project generation for: flashcard_web_application
+2025-06-24 23:42:26,589 - __main__ - INFO - Validating JSON inputs...
+2025-06-24 23:42:26,589 - __main__ - INFO - JSON validation passed.
+2025-06-24 23:42:26,590 - __main__ - INFO - Creating project structure for: flashcard_web_application
+2025-06-24 23:42:26,599 - __main__ - INFO - Structure creation result: Created 18 items:
+File: code_generated_result\flashcard_web_application\requirements.txt
+File: code_generated_result\flashcard_web_application\README.md
+File: code_generated_result\flashcard_web_application\.gitignore
+Directory: code_generated_result\flashcard_web_application\backend
+File: code_generated_result\flashcard_web_application\backend/main.py
+File: code_generated_result\flashcard_web_application\backend/database.py
+File: code_generated_result\flashcard_web_application\backend/models.py
+Directory: code_generated_result\flashcard_web_application\backend/routers
+File: code_generated_result\flashcard_web_application\backend/routers/flashcards.py
+File: code_generated_result\flashcard_web_application\backend/routers/reviews.py
+File: code_generated_result\flashcard_web_application\backend/schemas.py
+Directory: code_generated_result\flashcard_web_application\frontend
+File: code_generated_result\flashcard_web_application\frontend/index.html
+File: code_generated_result\flashcard_web_application\frontend/style.css
+File: code_generated_result\flashcard_web_application\frontend/script.js
+File: code_generated_result\flashcard_web_application\frontend/utils.js
+Directory: code_generated_result\flashcard_web_application\frontend/assets
+Directory: code_generated_result\flashcard_web_application\logs
+2025-06-24 23:42:26,600 - __main__ - INFO - Generating project files for: flashcard_web_application
+2025-06-24 23:43:38,634 - __main__ - INFO - Files generation result: Generated 13 files
+2025-06-24 23:43:38,634 - __main__ - INFO - Validating project: flashcard_web_application
+2025-06-24 23:43:38,637 - __main__ - INFO - Validation result: Project validation passed successfully
+2025-06-24 23:43:38,637 - __main__ - INFO - Creating and executing run script for: flashcard_web_application
+2025-06-24 23:43:38,639 - __main__ - INFO - Current working directory: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant
+2025-06-24 23:43:38,639 - __main__ - INFO - Executing run script: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\run.bat from C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application
+2025-06-24 23:44:45,396 - __main__ - INFO - Starting project generation for: flashcard_web_application
+2025-06-24 23:44:45,396 - __main__ - INFO - Validating JSON inputs...
+2025-06-24 23:44:45,396 - __main__ - INFO - JSON validation passed.
+2025-06-24 23:44:45,396 - __main__ - INFO - Creating project structure for: flashcard_web_application
+2025-06-24 23:44:45,405 - __main__ - INFO - Structure creation result: Created 18 items:
+File: code_generated_result\flashcard_web_application\requirements.txt
+File: code_generated_result\flashcard_web_application\README.md
+File: code_generated_result\flashcard_web_application\.gitignore
+Directory: code_generated_result\flashcard_web_application\backend
+File: code_generated_result\flashcard_web_application\backend/main.py
+File: code_generated_result\flashcard_web_application\backend/database.py
+File: code_generated_result\flashcard_web_application\backend/models.py
+Directory: code_generated_result\flashcard_web_application\backend/routers
+File: code_generated_result\flashcard_web_application\backend/routers/flashcards.py
+File: code_generated_result\flashcard_web_application\backend/routers/reviews.py
+File: code_generated_result\flashcard_web_application\backend/schemas.py
+Directory: code_generated_result\flashcard_web_application\frontend
+File: code_generated_result\flashcard_web_application\frontend/index.html
+File: code_generated_result\flashcard_web_application\frontend/style.css
+File: code_generated_result\flashcard_web_application\frontend/script.js
+File: code_generated_result\flashcard_web_application\frontend/utils.js
+Directory: code_generated_result\flashcard_web_application\frontend/assets
+Directory: code_generated_result\flashcard_web_application\logs
+2025-06-24 23:44:45,406 - __main__ - INFO - Generating project files for: flashcard_web_application
+2025-06-24 23:45:48,729 - __main__ - INFO - Files generation result: Generated 13 files
+2025-06-24 23:45:48,730 - __main__ - INFO - Validating project: flashcard_web_application
+2025-06-24 23:45:48,732 - __main__ - INFO - Validation result: Project validation passed successfully
+2025-06-24 23:45:48,732 - __main__ - INFO - Creating and executing run script for: flashcard_web_application
+2025-06-24 23:45:48,733 - __main__ - INFO - Current working directory: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant
+2025-06-24 23:45:48,733 - __main__ - INFO - Executing run script: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\run.bat from C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application

@@ -1,0 +1,188 @@
+2025-06-24 23:53:11,723 - INFO - Gemini API configured successfully for test generator.
+2025-06-24 23:53:11,724 - INFO - Detecting project and framework...
+2025-06-24 23:53:11,725 - INFO - Using most recent project folder: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application
+2025-06-24 23:53:11,725 - INFO - Loaded latest design file: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs\task_management_web_app_20250617.design.json
+2025-06-24 23:53:11,727 - INFO - Loaded latest specification file: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\src\module_1_vs_2\outputs\task_management_web_app_20250617.spec.json
+2025-06-24 23:53:11,727 - INFO - Detected app package from JSON design: backend
+2025-06-24 23:53:11,727 - INFO - Detected framework from JSON specification: fastapi
+2025-06-24 23:53:11,727 - INFO - Final detected project: flashcard_web_application, Framework: fastapi, App Package: backend
+2025-06-24 23:53:11,728 - INFO - Created/Updated pytest.ini in C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application with asyncio and cachedir configurations.
+2025-06-24 23:53:11,728 - INFO - Test generation flag not found. Generating tests...
+2025-06-24 23:53:11,730 - INFO - Ensured unit test output directory exists: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\unit
+2025-06-24 23:53:11,730 - INFO - Ensured integration test output directory exists: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\integration
+2025-06-24 23:53:11,730 - INFO - Ensuring __init__.py files in main application package: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\backend
+2025-06-24 23:53:11,732 - INFO - Created missing __init__.py in C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\backend
+2025-06-24 23:53:11,733 - INFO - Created missing __init__.py in C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\backend\routers
+2025-06-24 23:53:11,734 - INFO - Ensuring __init__.py files in unit test directory: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\unit
+2025-06-24 23:53:11,734 - INFO - Ensuring __init__.py files in integration test directory: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\integration
+2025-06-24 23:53:11,736 - INFO - Added pytest, pytest-mock, pytest-asyncio to C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\requirements.txt
+2025-06-24 23:53:11,736 - INFO - Test dependencies (pytest, pytest-mock, pytest-asyncio) were added/updated in requirements.txt. Installing/Updating dependencies in project venv.
+2025-06-24 23:53:11,736 - INFO - Installing dependencies from C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\requirements.txt into project venv...
+2025-06-24 23:53:21,056 - INFO - Successfully installed dependencies. Pip output:
+Requirement already satisfied: uvicorn in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from -r requirements.txt (line 1)) (0.34.3)
+Requirement already satisfied: python-dotenv in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from -r requirements.txt (line 3)) (1.1.1)
+Requirement already satisfied: sqlalchemy in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from -r requirements.txt (line 4)) (2.0.41)
+Requirement already satisfied: fastapi in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from -r requirements.txt (line 6)) (0.115.13)
+Requirement already satisfied: pydantic in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from -r requirements.txt (line 7)) (2.11.7)
+Requirement already satisfied: aiosqlite in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from -r requirements.txt (line 9)) (0.21.0)
+Collecting pytest (from -r requirements.txt (line 11))
+  Downloading pytest-8.4.1-py3-none-any.whl.metadata (7.7 kB)
+Collecting pytest-mock (from -r requirements.txt (line 12))
+  Using cached pytest_mock-3.14.1-py3-none-any.whl.metadata (3.9 kB)
+Collecting pytest-asyncio (from -r requirements.txt (line 13))
+  Using cached pytest_asyncio-1.0.0-py3-none-any.whl.metadata (4.0 kB)
+Requirement already satisfied: click>=7.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from uvicorn->-r requirements.txt (line 1)) (8.2.1)
+Requirement already satisfied: h11>=0.8 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from uvicorn->-r requirements.txt (line 1)) (0.16.0)
+Requirement already satisfied: starlette<0.47.0,>=0.40.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi[all]->-r requirements.txt (line 2)) (0.46.2)
+Requirement already satisfied: typing-extensions>=4.8.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi[all]->-r requirements.txt (line 2)) (4.14.0)
+Requirement already satisfied: fastapi-cli>=0.0.5 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi-cli[standard]>=0.0.5; extra == "all"->fastapi[all]->-r requirements.txt (line 2)) (0.0.7)
+Requirement already satisfied: httpx>=0.23.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi[all]->-r requirements.txt (line 2)) (0.28.1)
+Requirement already satisfied: jinja2>=3.1.5 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi[all]->-r requirements.txt (line 2)) (3.1.6)
+Requirement already satisfied: python-multipart>=0.0.18 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi[all]->-r requirements.txt (line 2)) (0.0.20)
+Requirement already satisfied: itsdangerous>=1.1.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi[all]->-r requirements.txt (line 2)) (2.2.0)
+Requirement already satisfied: pyyaml>=5.3.1 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi[all]->-r requirements.txt (line 2)) (6.0.2)
+Requirement already satisfied: ujson!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0,>=4.0.1 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi[all]->-r requirements.txt (line 2)) (5.10.0)
+Requirement already satisfied: orjson>=3.2.1 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi[all]->-r requirements.txt (line 2)) (3.10.18)
+Requirement already satisfied: email-validator>=2.0.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi[all]->-r requirements.txt (line 2)) (2.2.0)
+Requirement already satisfied: pydantic-settings>=2.0.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi[all]->-r requirements.txt (line 2)) (2.10.1)
+Requirement already satisfied: pydantic-extra-types>=2.0.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi[all]->-r requirements.txt (line 2)) (2.10.5)
+Requirement already satisfied: greenlet>=1 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from sqlalchemy->-r requirements.txt (line 4)) (3.2.3)
+Requirement already satisfied: annotated-types>=0.6.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from pydantic->-r requirements.txt (line 7)) (0.7.0)
+Requirement already satisfied: pydantic-core==2.33.2 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from pydantic->-r requirements.txt (line 7)) (2.33.2)
+Requirement already satisfied: typing-inspection>=0.4.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from pydantic->-r requirements.txt (line 7)) (0.4.1)
+Requirement already satisfied: colorama>=0.4 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from uvicorn[standard]->-r requirements.txt (line 8)) (0.4.6)
+Requirement already satisfied: httptools>=0.6.3 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from uvicorn[standard]->-r requirements.txt (line 8)) (0.6.4)
+Requirement already satisfied: watchfiles>=0.13 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from uvicorn[standard]->-r requirements.txt (line 8)) (1.1.0)
+Requirement already satisfied: websockets>=10.4 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from uvicorn[standard]->-r requirements.txt (line 8)) (15.0.1)
+Collecting iniconfig>=1 (from pytest->-r requirements.txt (line 11))
+  Using cached iniconfig-2.1.0-py3-none-any.whl.metadata (2.7 kB)
+Collecting packaging>=20 (from pytest->-r requirements.txt (line 11))
+  Using cached packaging-25.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting pluggy<2,>=1.5 (from pytest->-r requirements.txt (line 11))
+  Using cached pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+Requirement already satisfied: pygments>=2.7.2 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from pytest->-r requirements.txt (line 11)) (2.19.2)
+Requirement already satisfied: dnspython>=2.0.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from email-validator>=2.0.0->fastapi[all]->-r requirements.txt (line 2)) (2.7.0)
+Requirement already satisfied: idna>=2.0.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from email-validator>=2.0.0->fastapi[all]->-r requirements.txt (line 2)) (3.10)
+Requirement already satisfied: typer>=0.12.3 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi-cli>=0.0.5->fastapi-cli[standard]>=0.0.5; extra == "all"->fastapi[all]->-r requirements.txt (line 2)) (0.16.0)
+Requirement already satisfied: rich-toolkit>=0.11.1 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from fastapi-cli>=0.0.5->fastapi-cli[standard]>=0.0.5; extra == "all"->fastapi[all]->-r requirements.txt (line 2)) (0.14.7)
+Requirement already satisfied: anyio in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from httpx>=0.23.0->fastapi[all]->-r requirements.txt (line 2)) (4.9.0)
+Requirement already satisfied: certifi in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from httpx>=0.23.0->fastapi[all]->-r requirements.txt (line 2)) (2025.6.15)
+Requirement already satisfied: httpcore==1.* in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from httpx>=0.23.0->fastapi[all]->-r requirements.txt (line 2)) (1.0.9)
+Requirement already satisfied: MarkupSafe>=2.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from jinja2>=3.1.5->fastapi[all]->-r requirements.txt (line 2)) (3.0.2)
+Requirement already satisfied: sniffio>=1.1 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from anyio->httpx>=0.23.0->fastapi[all]->-r requirements.txt (line 2)) (1.3.1)
+Requirement already satisfied: rich>=13.7.1 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from rich-toolkit>=0.11.1->fastapi-cli>=0.0.5->fastapi-cli[standard]>=0.0.5; extra == "all"->fastapi[all]->-r requirements.txt (line 2)) (14.0.0)
+Requirement already satisfied: shellingham>=1.3.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from typer>=0.12.3->fastapi-cli>=0.0.5->fastapi-cli[standard]>=0.0.5; extra == "all"->fastapi[all]->-r requirements.txt (line 2)) (1.5.4)
+Requirement already satisfied: markdown-it-py>=2.2.0 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from rich>=13.7.1->rich-toolkit>=0.11.1->fastapi-cli>=0.0.5->fastapi-cli[standard]>=0.0.5; extra == "all"->fastapi[all]->-r requirements.txt (line 2)) (3.0.0)
+Requirement already satisfied: mdurl~=0.1 in c:\users\admin\documents\foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\lib\site-packages (from markdown-it-py>=2.2.0->rich>=13.7.1->rich-toolkit>=0.11.1->fastapi-cli>=0.0.5->fastapi-cli[standard]>=0.0.5; extra == "all"->fastapi[all]->-r requirements.txt (line 2)) (0.1.2)
+Downloading pytest-8.4.1-py3-none-any.whl (365 kB)
+Using cached pytest_mock-3.14.1-py3-none-any.whl (9.9 kB)
+Using cached pytest_asyncio-1.0.0-py3-none-any.whl (15 kB)
+Using cached iniconfig-2.1.0-py3-none-any.whl (6.0 kB)
+Using cached packaging-25.0-py3-none-any.whl (66 kB)
+Using cached pluggy-1.6.0-py3-none-any.whl (20 kB)
+Installing collected packages: pluggy, packaging, iniconfig, pytest, pytest-mock, pytest-asyncio
+Successfully installed iniconfig-2.1.0 packaging-25.0 pluggy-1.6.0 pytest-8.4.1 pytest-asyncio-1.0.0 pytest-mock-3.14.1
+
+2025-06-24 23:53:21,058 - WARNING - Pip warnings/errors during dependency installation:
+
+[notice] A new release of pip is available: 24.2 -> 25.1.1
+[notice] To update, run: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\python.exe -m pip install --upgrade pip
+
+2025-06-24 23:53:21,060 - DEBUG - Generating unit tests for function: create_db_and_tables in module: backend.database
+2025-06-24 23:53:21,062 - INFO - Using model: gemini-2.0-flash for unit test generation for 'create_db_and_tables'.
+2025-06-24 23:53:29,606 - INFO - Saved unit tests to C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\unit\test_create_db_and_tables.py
+2025-06-24 23:53:29,606 - DEBUG - Generating unit tests for function: get_db in module: backend.database
+2025-06-24 23:53:29,607 - INFO - Using model: gemini-2.0-flash for unit test generation for 'get_db'.
+2025-06-24 23:53:38,133 - INFO - Saved unit tests to C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\unit\test_get_db.py
+2025-06-24 23:53:38,135 - DEBUG - Generating unit tests for function: create_logger in module: backend.main
+2025-06-24 23:53:38,135 - INFO - Using model: gemini-2.0-flash for unit test generation for 'create_logger'.
+2025-06-24 23:53:47,060 - INFO - Saved unit tests to C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\unit\test_create_logger.py
+2025-06-24 23:53:47,060 - DEBUG - Generating unit tests for function: health_check in module: backend.main
+2025-06-24 23:53:47,060 - INFO - Using model: gemini-2.0-flash for unit test generation for 'health_check'.
+2025-06-24 23:53:53,473 - INFO - Saved unit tests to C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\unit\test_health_check.py
+2025-06-24 23:53:53,477 - DEBUG - Generating unit tests for function: create_flashcard in module: backend.routers.flashcards
+2025-06-24 23:53:53,477 - INFO - Using model: gemini-2.0-flash for unit test generation for 'create_flashcard'.
+2025-06-24 23:54:04,588 - INFO - Saved unit tests to C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\unit\test_create_flashcard.py
+2025-06-24 23:54:04,588 - DEBUG - Generating unit tests for function: read_flashcards in module: backend.routers.flashcards
+2025-06-24 23:54:04,588 - INFO - Using model: gemini-2.0-flash for unit test generation for 'read_flashcards'.
+2025-06-24 23:54:14,348 - INFO - Saved unit tests to C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\unit\test_read_flashcards.py
+2025-06-24 23:54:14,348 - DEBUG - Generating unit tests for function: read_flashcard in module: backend.routers.flashcards
+2025-06-24 23:54:14,348 - INFO - Using model: gemini-2.0-flash for unit test generation for 'read_flashcard'.
+2025-06-24 23:54:26,930 - INFO - Saved unit tests to C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\unit\test_read_flashcard.py
+2025-06-24 23:54:26,932 - DEBUG - Generating unit tests for function: create_review in module: backend.routers.reviews
+2025-06-24 23:54:26,932 - INFO - Using model: gemini-2.0-flash for unit test generation for 'create_review'.
+2025-06-24 23:54:36,014 - INFO - Saved unit tests to C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\unit\test_create_review.py
+2025-06-24 23:54:36,015 - INFO - Discovering API endpoints and their handlers from source code...
+2025-06-24 23:54:36,017 - DEBUG - Discovered API: GET /api/health handled by backend.main.health_check
+2025-06-24 23:54:36,020 - DEBUG - Discovered API: POST /api/flashcards handled by backend.routers.flashcards.create_flashcard
+2025-06-24 23:54:36,020 - DEBUG - Discovered API: GET /api/flashcards handled by backend.routers.flashcards.read_flashcards
+2025-06-24 23:54:36,020 - DEBUG - Discovered API: GET /api/flashcards/{flashcard_id} handled by backend.routers.flashcards.read_flashcard
+2025-06-24 23:54:36,022 - DEBUG - Found APIRouter: router with normalized prefix: /api/reviews in backend.routers.reviews
+2025-06-24 23:54:36,023 - DEBUG - Discovered API: POST /api/reviews handled by backend.routers.reviews.create_review
+2025-06-24 23:54:36,023 - INFO - Discovered 5 API handlers in source code.
+2025-06-24 23:54:36,023 - INFO - Generating integration tests for backend using gemini-2.0-flash
+2025-06-24 23:54:49,504 - INFO - Saved integration tests to C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\integration\test_integration.py
+2025-06-24 23:54:49,505 - INFO - Marked tests as generated: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\.test_generated
+2025-06-24 23:54:49,506 - INFO - Created run_test.bat at C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\run_test.bat
+2025-06-24 23:54:49,506 - INFO - Attempting to execute batch file: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\run_test.bat
+2025-06-24 23:54:49,506 - INFO - Current working directory for batch: C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application
+2025-06-24 23:54:49,507 - INFO - Executing run_test.bat from C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application. Results will be in C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\test_results.log
+2025-06-24 23:54:53,483 - DEBUG - run_test.bat stdout (from debug_test_agent.log):
+off  REM Turn off echo to make Python capture output easier to read
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>setlocal EnableDelayedExpansion 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>REM Write directly to stdout so Python can capture, don't use log file immediately 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>echo --- run_test.bat STARTED --- 
+--- run_test.bat STARTED ---
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>REM The following commands are redirected to debug_test_agent.log 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>echo Current Directory (when batch started): "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application"  1>debug_test_agent.log 2>&1 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>echo PROJECT_ROOT variable (calculated): "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\"  1>>debug_test_agent.log 2>&1 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>echo Changing directory to project root...  1>>debug_test_agent.log 2>&1 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>cd /d "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\"  1>>debug_test_agent.log 2>&1 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>if 0 NEQ 0 (
+echo ERROR: Failed to change to project root directory. Exiting with code 0.  1>>debug_test_agent.log 2>&1  
+ exit /b 1 
+) 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>echo Current Directory (after cd): "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application"  1>>debug_test_agent.log 2>&1 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>echo Cleaning up previous test log file...  1>>debug_test_agent.log 2>&1 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>if exist "test_results.log" (
+del "test_results.log"  1>>debug_test_agent.log 2>&1  
+ if 0 NEQ 0 (echo WARNING: Failed to delete old test log file: "test_results.log".  1>>debug_test_agent.log 2>&1 )  else (echo Old test log file deleted: "test_results.log".  1>>debug_test_agent.log 2>&1 ) 
+)  else (echo No old test log file to delete: "test_results.log".  1>>debug_test_agent.log 2>&1 ) 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>echo Checking for Python at: "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\python.exe"  1>>debug_test_agent.log 2>&1 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\python.exe" --version  1>>debug_test_agent.log 2>&1 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>if 0 NEQ 0 (
+echo ERROR: Python not found at "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\python.exe". Exiting with code 0.  1>>debug_test_agent.log 2>&1  
+ exit /b 1 
+) 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>echo Attempting to activate virtual environment...  1>>debug_test_agent.log 2>&1 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>echo Activating script path: "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\activate.bat"  1>>debug_test_agent.log 2>&1 
+
+(foxconn_env) C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application>call "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\activate.bat"   1>>debug_test_agent.log 2>&1 
+
+2025-06-24 23:54:53,484 - INFO - Pytest run completed. Batch script exit code: 0
+2025-06-24 23:54:53,485 - DEBUG - Attempting to map test 'test_create_flashcard_success' from 'C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\tests\integration\test_integration.py' to source.
+2025-06-24 23:54:53,486 - ERROR - Tests failed. Returning failure information.
+2025-06-24 23:54:53,486 - ERROR - Found 1 test failures. Details below:
+2025-06-24 23:54:53,486 - ERROR -   Test: test_create_flashcard_success
+2025-06-24 23:54:53,486 - ERROR -   Test File: tests\integration\test_integration.py
+2025-06-24 23:54:53,487 - ERROR -   Source File: backend\routers\flashcards.py
+2025-06-24 23:54:53,487 - ERROR -   Source Function: create_flashcard
+2025-06-24 23:54:53,487 - ERROR -   Error Summary: tests/integration/test_integration.py::test_create_flashcard_success FAILED [  6%]
+

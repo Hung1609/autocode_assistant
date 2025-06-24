@@ -9,35 +9,35 @@ echo --- run.bat STARTING --- > "%LOG_FILE%"
 echo Timestamp: %DATE% %TIME% >> "%LOG_FILE%"
 echo Current Directory (at start): "%CD%" >> "%LOG_FILE%"
 echo PROJECT_ROOT (calculated): "%~dp0" >> "%LOG_FILE%"
-echo PYTHON_PATH from config: "C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\python.exe" >> "%LOG_FILE%"
+echo PYTHON_PATH from config: "python" >> "%LOG_FILE%"
 
 :: Change to project root
 echo Changing directory to project root... >> "%LOG_FILE%"
 cd /d "%~dp0" 1>>"%LOG_FILE%" 2>>&1
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Failed to change to project root directory. ErrorLevel: %ERRORLEVEL%. >> "%LOG_FILE%"
+    echo ERROR: Failed to change to project root directory. >> "%LOG_FILE%"
     echo ERROR: Failed to change to project root directory. Check "%LOG_FILE%".
     pause
     exit /b 1
 )
-echo Current Directory (after cd): "%CD%" >> "%LOG_FILE%"
+echo Current Directory (after cd): %CD% >> "%LOG_FILE%"
 
 :: Check for Python (using the system Python path from PYTHON_PATH)
-echo Checking for Python at "C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\python.exe"... >> "%LOG_FILE%"
-"C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\python.exe" --version 1>>"%LOG_FILE%" 2>>&1
+echo Checking for Python at "python"... >> "%LOG_FILE%"
+"python" --version 1>>"%LOG_FILE%" 2>>&1
 set PYTHON_CHECK_ERRORLEVEL=!ERRORLEVEL!
 if !PYTHON_CHECK_ERRORLEVEL! neq 0 (
-    echo ERROR: Python not found or failed to execute at "C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\python.exe". ErrorLevel: !PYTHON_CHECK_ERRORLEVEL!. >> "%LOG_FILE%"
-    echo ERROR: Python not found at "C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\python.exe". Check "%LOG_FILE%".
+    echo ERROR: Python not found or failed to execute at "python". ErrorLevel: !PYTHON_CHECK_ERRORLEVEL!. >> "%LOG_FILE%"
+    echo ERROR: Python not found at "python". Check "%LOG_FILE%".
     pause
     exit /b !PYTHON_CHECK_ERRORLEVEL!
 )
-echo Python found at "C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\python.exe". >> "%LOG_FILE%"
+echo Python found at "python". >> "%LOG_FILE%"
 
 :: Create virtual environment
-echo Creating virtual environment in "!PROJECT_ROOT!\venv"... >> "%LOG_FILE%"
-if not exist "!PROJECT_ROOT!\venv" (
-    "C:\Users\Hoang Duy\AppData\Local\Programs\Python\Python310\python.exe" -m venv "!PROJECT_ROOT!\venv" 1>>"%LOG_FILE%" 2>>&1
+echo Creating virtual environment in %CD%\venv... >> "%LOG_FILE%"
+if not exist "venv" (
+    "python" -m venv "venv" 1>>"%LOG_FILE%" 2>>&1
     set VENV_CREATE_ERRORLEVEL=!ERRORLEVEL!
     if !VENV_CREATE_ERRORLEVEL! neq 0 (
         echo ERROR: Failed to create virtual environment. ErrorLevel: !VENV_CREATE_ERRORLEVEL!. >> "%LOG_FILE%"
@@ -52,7 +52,7 @@ echo Virtual environment creation check complete. >> "%LOG_FILE%"
 
 :: Activate virtual environment
 echo Activating virtual environment... >> "%LOG_FILE%"
-call "!PROJECT_ROOT!\venv\Scripts\activate.bat" 1>>"%LOG_FILE%" 2>>&1
+call "venv\Scripts\activate.bat" 1>>"%LOG_FILE%" 2>>&1
 set VENV_ACTIVATE_ERRORLEVEL=!ERRORLEVEL!
 if !VENV_ACTIVATE_ERRORLEVEL! neq 0 (
     echo ERROR: Failed to activate virtual environment. ErrorLevel: !VENV_ACTIVATE_ERRORLEVEL!. Check if venv\Scripts\activate.bat exists and is not corrupted. >> "%LOG_FILE%"

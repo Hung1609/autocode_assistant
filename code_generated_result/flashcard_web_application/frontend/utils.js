@@ -1,70 +1,97 @@
-// Function to fetch data from the backend API
-async function fetchData(url, options = {}) {
-  try {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+// Function to fetch data from the API
+async function fetchData(url, method = 'GET', body = null) {
+    try {
+        const options = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+
+        if (body) {
+            options.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(url, options);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Fetch error:", error);
+        throw error; // Re-throw the error for the calling function to handle
     }
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    throw error;
-  }
 }
 
-// Function to create a new flashcard
+// Function to create a flashcard
 async function createFlashcard(frontText, backText) {
-  const url = '/api/flashcards';
-  const options = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ front_text: frontText, back_text: backText }),
-  };
+    const url = '/api/flashcards';
+    const body = { front_text: frontText, back_text: backText };
 
-  return fetchData(url, options);
+    try {
+        const newFlashcard = await fetchData(url, 'POST', body);
+        return newFlashcard;
+    } catch (error) {
+        console.error("Error creating flashcard:", error);
+        throw error;
+    }
 }
 
-// Function to get all flashcards (optionally filtered by query)
-async function getFlashcards(query = '') {
-  let url = '/api/flashcards';
-  if (query) {
-    url += `?query=${query}`;
-  }
-  return fetchData(url);
+// Function to get all flashcards (with optional search query)
+async function getAllFlashcards(query = '') {
+    let url = '/api/flashcards';
+    if (query) {
+        url += `?query=${query}`;
+    }
+
+    try {
+        const flashcards = await fetchData(url);
+        return flashcards;
+    } catch (error) {
+        console.error("Error getting flashcards:", error);
+        throw error;
+    }
 }
 
 // Function to get a specific flashcard by ID
-async function getFlashcard(flashcardId) {
-  const url = `/api/flashcards/${flashcardId}`;
-  return fetchData(url);
+async function getFlashcardById(flashcardId) {
+    const url = `/api/flashcards/${flashcardId}`;
+
+    try {
+        const flashcard = await fetchData(url);
+        return flashcard;
+    } catch (error) {
+        console.error("Error getting flashcard by ID:", error);
+        throw error;
+    }
 }
 
-// Function to create a new review record
+// Function to create a review record
 async function createReview(flashcardId, correct) {
-  const url = '/api/reviews';
-  const options = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ flashcard_id: flashcardId, correct: correct }),
-  };
+    const url = '/api/reviews';
+    const body = { flashcard_id: flashcardId, correct: correct };
 
-  return fetchData(url, options);
+    try {
+        const newReview = await fetchData(url, 'POST', body);
+        return newReview;
+    } catch (error) {
+        console.error("Error creating review:", error);
+        throw error;
+    }
 }
 
 // Function to get review statistics
 async function getStatistics() {
-  const url = '/api/statistics';
-  return fetchData(url);
-}
+    const url = '/api/statistics';
 
-// Function to handle errors and display messages to the user
-function displayMessage(message, type = 'info') {
-  // You can implement a more sophisticated message display system here,
-  // such as creating a div element and appending it to the DOM.
-  // For now, we'll just use alert.
-  alert(message);
+    try {
+        const statistics = await fetchData(url);
+        return statistics;
+    } catch (error) {
+        console.error("Error getting statistics:", error);
+        throw error;
+    }
 }
