@@ -27,8 +27,8 @@ class AgentConfig(BaseModel):
     model_name: str = Field(default="gemini-2.0-flash", description="LLM model name")
     api_delay_seconds: int = Field(default=5, description="Delay between API calls")
     max_retries: int = Field(default=3, description="Maximum retry attempts for LLM calls")
-    log_level: str = Field(default="DEBUG", description="Logging level")
-
+    log_level: str = Field(default="DEBUG", description="Logging level")    
+    
     @classmethod
     def from_env(cls) -> 'AgentConfig':
         """Create config from environment variables"""
@@ -41,6 +41,51 @@ class AgentConfig(BaseModel):
             max_retries=int(os.getenv('MAX_RETRIES', '3')),
             log_level=os.getenv('LOG_LEVEL', 'DEBUG')
         )
+    
+    @classmethod
+    def from_user_input(cls) -> 'AgentConfig':
+        """Create config by prompting user for paths using detect_path functions"""
+        print("Setting up coding agent configuration...")
+        
+        # Use detect_path functions to get user-defined paths
+        base_output_dir = define_project_root()
+        python_path = define_python_path()
+        
+        return cls(
+            outputs_dir=os.getenv('OUTPUTS_DIR', 'src/module_1_vs_2/outputs'),
+            base_output_dir=base_output_dir,
+            python_path=python_path,
+            model_name=os.getenv('MODEL_NAME', 'gemini-2.0-flash'),
+            api_delay_seconds=int(os.getenv('API_DELAY_SECONDS', '5')),
+            max_retries=int(os.getenv('MAX_RETRIES', '3')),
+            log_level=os.getenv('LOG_LEVEL', 'DEBUG')
+        )
+    
+    def validate_paths(self) -> bool:
+        """Validate that the configured paths exist and are accessible"""
+        # Validate base output directory
+        try:
+            os.makedirs(self.base_output_dir, exist_ok=True)
+            print(f"✓ Base output directory validated: {self.base_output_dir}")
+        except Exception as e:
+            print(f"✗ Error with base output directory {self.base_output_dir}: {e}")
+            return False
+        
+        # Validate Python path
+        try:
+            result = subprocess.run([self.python_path, '--version'], 
+                                  capture_output=True, text=True, timeout=10)
+            if result.returncode == 0:
+                print(f"✓ Python executable validated: {self.python_path}")
+                print(f"  Version: {result.stdout.strip()}")
+            else:
+                print(f"✗ Python executable failed: {self.python_path}")
+                return False
+        except Exception as e:
+            print(f"✗ Error validating Python executable {self.python_path}: {e}")
+            return False
+        
+        return True
 
 # Error tracking system
 class ErrorTracker:
@@ -746,6 +791,43 @@ class LangChainCodingAgent:
         )
         return logging.getLogger(__name__)
     
+    def reconfigure_paths(self) -> bool:
+        """Reconfigure paths using detect_path functions"""
+        print("\n--- Reconfiguring Paths ---")
+        try:
+            # Get new paths from user
+            new_base_output_dir = define_project_root()
+            new_python_path = define_python_path()
+            
+            # Update configuration
+            self.config.base_output_dir = new_base_output_dir
+            self.config.python_path = new_python_path
+            
+            # Validate new paths
+            if self.config.validate_paths():
+                self.logger.info(f"Path reconfiguration successful")
+                self.logger.info(f"New base output dir: {new_base_output_dir}")
+                self.logger.info(f"New Python path: {new_python_path}")
+                return True
+            else:
+                self.logger.error("Path validation failed after reconfiguration")
+                return False
+        except Exception as e:
+            self.logger.error(f"Path reconfiguration failed: {e}")
+            return False
+    
+    def get_current_config(self) -> Dict[str, str]:
+        """Get current configuration as a dictionary"""
+        return {
+            "outputs_dir": self.config.outputs_dir,
+            "base_output_dir": self.config.base_output_dir,
+            "python_path": self.config.python_path,
+            "model_name": self.config.model_name,
+            "api_delay_seconds": str(self.config.api_delay_seconds),
+            "max_retries": str(self.config.max_retries),
+            "log_level": self.config.log_level
+        }
+
     def _setup_tools(self):
         """Setup LangChain tools with the actual error_tracker"""
         # Đảm bảo self.error_tracker đã được khởi tạo
@@ -1056,30 +1138,153 @@ Work systematically: create structure first, generate files, validate, and creat
         
         return str(latest_design), str(latest_spec)
 
+def setup_agent_with_path_detection() -> LangChainCodingAgent:
+    """Convenience function to set up agent with interactive path detection"""
+    print("=== Setting up Coding Agent with Path Detection ===")
+    
+    config = AgentConfig.from_user_input()
+    
+    if not config.validate_paths():
+        raise ValueError("Path validation failed. Please check your configuration.")
+    
+    agent = LangChainCodingAgent(config)
+    print("Agent setup complete!")
+    return agent
+
+def setup_agent_with_env_fallback() -> LangChainCodingAgent:
+    """Setup agent with environment variables, with fallback to path detection if validation fails"""
+    print("=== Setting up Coding Agent (Environment + Fallback) ===")
+    
+    config = AgentConfig.from_env()
+    
+    if not config.validate_paths():
+        print("Environment configuration validation failed. Switching to interactive setup...")
+        config = AgentConfig.from_user_input()
+        
+        if not config.validate_paths():
+            raise ValueError("Path validation failed after interactive setup.")
+    
+    agent = LangChainCodingAgent(config)
+    print("Agent setup complete!")
+    return agent
+
+def demo_path_integration():
+    """Demonstration of how the path detection functions are integrated"""
+    print("=== Path Integration Demo ===")
+    
+    print("\n1. Environment Variables Method:")
+    print("   - Uses os.getenv() for configuration")
+    print("   - Falls back to defaults if env vars not set")
+    
+    print("\n2. Interactive Setup Method:")
+    print("   - Uses define_project_root() to get output directory")
+    print("   - Uses define_python_path() to get Python executable")
+    print("   - Persists choices to .env file for future runs")
+    
+    print("\n3. Validation:")
+    print("   - Checks if paths exist and are accessible")
+    print("   - Validates Python executable by running --version")
+    
+    print("\n4. Runtime Reconfiguration:")
+    print("   - Allows changing paths during execution")
+    print("   - Uses the same detect_path functions")
+    
+    print("\nAvailable setup functions:")
+    print("   - AgentConfig.from_env() - Environment variables")
+    print("   - AgentConfig.from_user_input() - Interactive with detect_path")
+    print("   - setup_agent_with_path_detection() - Convenience function")
+    print("   - setup_agent_with_env_fallback() - Env with fallback")
+    
+    print("\nAgent methods:")
+    print("   - agent.reconfigure_paths() - Runtime reconfiguration")
+    print("   - agent.get_current_config() - View current settings")
+
 def main():
     """Main function to run the coding agent"""
     try:
-        config = AgentConfig.from_env()
-        agent = LangChainCodingAgent(config) # Agent now initializes tools later.
+        print("=== LangChain Coding Agent ===")
+        print("Choose configuration method:")
+        print("1. Use environment variables (default)")
+        print("2. Interactive setup with path detection")
+        print("3. Use environment variables, then allow reconfiguration")
         
+        try:
+            choice = input("Enter choice (1, 2, or 3) [Default: 1]: ").strip()
+        except EOFError:
+            choice = "1"
+        
+        if choice == "2":
+            print("\n--- Interactive Setup ---")
+            config = AgentConfig.from_user_input()
+        elif choice == "3":
+            print("\n--- Using Environment Variables (with reconfiguration option) ---")
+            config = AgentConfig.from_env()
+        else:
+            print("\n--- Using Environment Variables ---")
+            config = AgentConfig.from_env()
+        
+        print("\n--- Validating Configuration ---")
+        if not config.validate_paths():
+            print("Configuration validation failed.")
+            if choice == "3":
+                print("Would you like to reconfigure paths? (y/n): ", end="")
+                try:
+                    reconfigure = input().strip().lower()
+                    if reconfigure in ['y', 'yes']:
+                        # Create a temporary agent to use reconfigure method
+                        temp_agent = LangChainCodingAgent(config)
+                        if temp_agent.reconfigure_paths():
+                            config = temp_agent.config
+                        else:
+                            print("Reconfiguration failed. Exiting.")
+                            return
+                    else:
+                        print("Exiting due to configuration validation failure.")
+                        return
+                except EOFError:
+                    print("Exiting due to configuration validation failure.")
+                    return
+            else:
+                print("Please check your paths and try again.")
+                return
+        
+        print("\n--- Final Configuration ---")
+        for key, value in config.__dict__.items():
+            print(f"  {key}: {value}")
+        
+        print("\n--- Initializing Agent ---")
+        agent = LangChainCodingAgent(config)
+        
+        print("\n--- Finding Latest JSON Files ---")
         design_file, spec_file = agent.find_latest_json_files()
+        print(f"Using design file: {design_file}")
+        print(f"Using spec file: {spec_file}")
         
+        print("\n--- Loading JSON Data ---")
         with open(design_file, 'r', encoding='utf-8') as f:
             design_data = json.load(f)
         
         with open(spec_file, 'r', encoding='utf-8') as f:
             spec_data = json.load(f)
         
+        print("\n--- Generating Project ---")
         result = agent.generate_project(design_data, spec_data)
         print(result)
-        # Assuming project_name is available from design_data
+        
+        # Display results
         project_name = design_data['folder_Structure']['root_Project_Directory_Name']
         project_root_for_errors = os.path.join(config.base_output_dir, project_name)
+        
+        print(f"\n--- Project Generation Complete ---")
+        print(f"Project location: {project_root_for_errors}")
         print(f"Check {os.path.join(project_root_for_errors, 'errors.json')} for any issues")
+        print(f"Python path used: {config.python_path}")
+        print(f"Base output directory: {config.base_output_dir}")
         
     except Exception as e:
         logging.getLogger(__name__).error(f"Main execution failed: {e}", exc_info=True)
         print(f"Error: {e}")
+        print("Check the log file for detailed error information.")
 
 if __name__ == "__main__":
     main()
