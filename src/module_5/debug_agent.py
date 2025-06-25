@@ -473,9 +473,7 @@ def main():
         -   Be systematic. Don't skip steps.
 
         **Previous Debug History (from prior iterations on this specific issue):**
-        {current_debug_history}
-
-        **Your first step is to call `read_test_results` to understand the current state of tests.**
+        {current_debug_history}        **Your first step is to call `read_test_results` to understand the current state of tests.**
         """
         
         logger.info(f"Agent executing with prompt for iteration {iteration + 1}...")
@@ -489,10 +487,10 @@ def main():
                "task is complete" in final_agent_message:
                 logger.info("Agent indicated task completion or deployment. Exiting debug loop.")
                 break
-
-            current_debug_history += f"\n--- Iteration {iteration + 1} Outcome Summary ---\n"
-            current_debug_history += f"Agent's final thought/action for this iteration: {final_agent_message}\n"
-            current_debug_history += f"Tests likely still failing or unexpected outcome. Agent will analyze in next attempt.\n"
+            else:
+                current_debug_history += f"\n--- Iteration {iteration + 1} Outcome Summary ---\n"
+                current_debug_history += f"Agent's final thought/action for this iteration: {final_agent_message}\n"
+                current_debug_history += f"Tests likely still failing or unexpected outcome. Agent will analyze in next attempt.\n"
 
         except Exception as e:
             logger.error(f"An unexpected error occurred during agent execution in iteration {iteration + 1}: {e}", exc_info=True)
@@ -507,4 +505,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# to run, type this commend: python src\module_5\debug_agent.py  
+# to run, type this command: python src\module_5\debug_agent.py  
