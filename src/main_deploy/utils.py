@@ -4,20 +4,18 @@ import logging
 from datetime import datetime
 import re
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Get the absolute path to the outputs directory.
 def get_base_output_dir():
-    """Get the absolute path to the outputs directory."""
     current_file_path = os.path.abspath(__file__)
     current_file_dir = os.path.dirname(current_file_path)
     project_root = os.path.dirname(os.path.dirname(current_file_dir))  # Go up two levels from main_deploy
     output_dir = os.path.join(project_root, "outputs")
     return output_dir
-
+# Generate a filename with project name and timestamp.
 def get_filename(project_name: str = None, extension: str = "json") -> str:
-    """Generate a filename with project name and timestamp."""
     clean_name = (
         "".join(c if c.isalnum() else "_" for c in project_name).lower()
         if project_name
@@ -27,7 +25,6 @@ def get_filename(project_name: str = None, extension: str = "json") -> str:
     return f"{clean_name}_{timestamp}.{extension}"
 
 def save_data_to_json_file(data: dict, filename: str = None) -> str:
-    """Save data to a JSON file in the outputs directory."""
     output_dir = get_base_output_dir()
     if filename is None:
         project_name = data.get("project_Overview", {}).get("project_Name", "unnamed_project")
@@ -39,8 +36,8 @@ def save_data_to_json_file(data: dict, filename: str = None) -> str:
         json.dump(data, f, ensure_ascii=False, indent=2)
     return filepath
 
+#Parse a JSON response from the model.
 def parse_json_response(response_text: str) -> dict:
-    """Parse a JSON response from the model."""
     try:
         if "```json" in response_text:
             json_text = response_text.split("```json", 1)[1].split("```", 1)[0].strip()

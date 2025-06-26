@@ -2,7 +2,9 @@ import json
 import os
 import logging
 import time
+import sys
 import subprocess
+import argparse
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from pathlib import Path
@@ -14,20 +16,20 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.callbacks.base import BaseCallbackHandler
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+from detect_path import define_project_root, define_python_path
 
 load_dotenv()
 
-# Configuration class for Windows
+# Configuration for the coding agent
 class AgentConfig(BaseModel):
-    """Configuration for the coding agent"""
     outputs_dir: str = Field(default="src/module_1_vs_2/outputs", description="Directory containing JSON files")
     base_output_dir: str = Field(default="code_generated_result", description="Base directory for generated code")
     python_path: str = Field(default="python", description="Python executable path")
     model_name: str = Field(default="gemini-2.0-flash", description="LLM model name")
-    api_delay_seconds: int = Field(default=2, description="Delay between API calls")
-    max_retries: int = Field(default=2, description="Maximum retry attempts for LLM calls")
-    log_level: str = Field(default="DEBUG", description="Logging level")
-
+    api_delay_seconds: int = Field(default=5, description="Delay between API calls")
+    max_retries: int = Field(default=3, description="Maximum retry attempts for LLM calls")
+    log_level: str = Field(default="DEBUG", description="Logging level")    
+    
     @classmethod
     def from_env(cls) -> 'AgentConfig':
         """Create config from environment variables"""
@@ -36,10 +38,55 @@ class AgentConfig(BaseModel):
             base_output_dir=os.getenv('BASE_OUTPUT_DIR', 'code_generated_result'),
             python_path=os.getenv('PYTHON_PATH', 'python'),
             model_name=os.getenv('MODEL_NAME', 'gemini-2.0-flash'),
-            api_delay_seconds=int(os.getenv('API_DELAY_SECONDS', '2')),
+            api_delay_seconds=int(os.getenv('API_DELAY_SECONDS', '5')),
             max_retries=int(os.getenv('MAX_RETRIES', '3')),
             log_level=os.getenv('LOG_LEVEL', 'DEBUG')
         )
+    
+    @classmethod
+    def from_user_input(cls) -> 'AgentConfig':
+        """Create config by prompting user for paths using detect_path functions"""
+        print("Setting up coding agent configuration...")
+        
+        # Use detect_path functions to get user-defined paths
+        base_output_dir = define_project_root()
+        python_path = define_python_path()
+        
+        return cls(
+            outputs_dir=os.getenv('OUTPUTS_DIR', 'src/module_1_vs_2/outputs'),
+            base_output_dir=base_output_dir,
+            python_path=python_path,
+            model_name=os.getenv('MODEL_NAME', 'gemini-2.0-flash'),
+            api_delay_seconds=int(os.getenv('API_DELAY_SECONDS', '5')),
+            max_retries=int(os.getenv('MAX_RETRIES', '3')),
+            log_level=os.getenv('LOG_LEVEL', 'DEBUG')
+        )
+    
+    def validate_paths(self) -> bool:
+        """Validate that the configured paths exist and are accessible"""
+        # Validate base output directory
+        try:
+            os.makedirs(self.base_output_dir, exist_ok=True)
+            print(f"✓ Base output directory validated: {self.base_output_dir}")
+        except Exception as e:
+            print(f"✗ Error with base output directory {self.base_output_dir}: {e}")
+            return False
+        
+        # Validate Python path
+        try:
+            result = subprocess.run([self.python_path, '--version'], 
+                                  capture_output=True, text=True, timeout=10)
+            if result.returncode == 0:
+                print(f"✓ Python executable validated: {self.python_path}")
+                print(f"  Version: {result.stdout.strip()}")
+            else:
+                print(f"✗ Python executable failed: {self.python_path}")
+                return False
+        except Exception as e:
+            print(f"✗ Error validating Python executable {self.python_path}: {e}")
+            return False
+        
+        return True
 
 # Error tracking system
 class ErrorTracker:
@@ -119,7 +166,7 @@ class TechnologyTemplateManager:
     def _fastapi_run_script(self, **kwargs):
         python_path = kwargs.get('python_path', 'python')
         backend_module = kwargs.get('backend_module_path', 'main')
-        return f"""@echo off
+        return rf"""@echo off
 setlocal EnableDelayedExpansion
 
 :: Define the log file path explicitly - THIS MUST BE THE VERY FIRST COMMAND THAT USES THE VARIABLE
@@ -136,12 +183,12 @@ echo PYTHON_PATH from config: "{python_path}" >> "%LOG_FILE%"
 echo Changing directory to project root... >> "%LOG_FILE%"
 cd /d "%~dp0" 1>>"%LOG_FILE%" 2>>&1
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Failed to change to project root directory. ErrorLevel: %ERRORLEVEL%. >> "%LOG_FILE%"
+    echo ERROR: Failed to change to project root directory. >> "%LOG_FILE%"
     echo ERROR: Failed to change to project root directory. Check "%LOG_FILE%".
     pause
     exit /b 1
 )
-echo Current Directory (after cd): "%CD%" >> "%LOG_FILE%"
+echo Current Directory (after cd): %CD% >> "%LOG_FILE%"
 
 :: Check for Python (using the system Python path from PYTHON_PATH)
 echo Checking for Python at "{python_path}"... >> "%LOG_FILE%"
@@ -156,9 +203,9 @@ if !PYTHON_CHECK_ERRORLEVEL! neq 0 (
 echo Python found at "{python_path}". >> "%LOG_FILE%"
 
 :: Create virtual environment
-echo Creating virtual environment in "!PROJECT_ROOT!\\venv"... >> "%LOG_FILE%"
-if not exist "!PROJECT_ROOT!\\venv" (
-    "{python_path}" -m venv "!PROJECT_ROOT!\\venv" 1>>"%LOG_FILE%" 2>>&1
+echo Creating virtual environment in %CD%\venv... >> "%LOG_FILE%"
+if not exist "venv" (
+    "{python_path}" -m venv "venv" 1>>"%LOG_FILE%" 2>>&1
     set VENV_CREATE_ERRORLEVEL=!ERRORLEVEL!
     if !VENV_CREATE_ERRORLEVEL! neq 0 (
         echo ERROR: Failed to create virtual environment. ErrorLevel: !VENV_CREATE_ERRORLEVEL!. >> "%LOG_FILE%"
@@ -173,10 +220,10 @@ echo Virtual environment creation check complete. >> "%LOG_FILE%"
 
 :: Activate virtual environment
 echo Activating virtual environment... >> "%LOG_FILE%"
-call "!PROJECT_ROOT!\\venv\\Scripts\\activate.bat" 1>>"%LOG_FILE%" 2>>&1
+call "venv\Scripts\activate.bat" 1>>"%LOG_FILE%" 2>>&1
 set VENV_ACTIVATE_ERRORLEVEL=!ERRORLEVEL!
 if !VENV_ACTIVATE_ERRORLEVEL! neq 0 (
-    echo ERROR: Failed to activate virtual environment. ErrorLevel: !VENV_ACTIVATE_ERRORLEVEL!. Check if venv\\Scripts\\activate.bat exists and is not corrupted. >> "%LOG_FILE%"
+    echo ERROR: Failed to activate virtual environment. ErrorLevel: !VENV_ACTIVATE_ERRORLEVEL!. Check if venv\Scripts\activate.bat exists and is not corrupted. >> "%LOG_FILE%"
     echo ERROR: Failed to activate virtual environment. Check "%LOG_FILE%".
     pause
     exit /b !VENV_ACTIVATE_ERRORLEVEL!
@@ -230,10 +277,10 @@ exit /b 0
     
     def _fastapi_requirements(self, **kwargs):
         dependencies = kwargs.get('dependencies', [])
-        base_deps = ['fastapi[all]', 'uvicorn[standard]', 'sqlalchemy', 'pydantic']
+        base_deps = ['fastapi[all]', 'uvicorn[standard]', 'sqlalchemy', 'pydantic', 'python-dotenv']
         all_deps = list(set(dependencies + base_deps))
         return '\n'.join(all_deps) + '\n'
-    
+        
     def _fastapi_env(self, **kwargs):
         storage_type = kwargs.get('storage_type', 'sqlite')
         return f"DATABASE_URL={storage_type}:///app.db\nSECRET_KEY=your-secret-key-here\n"
@@ -250,7 +297,6 @@ exit /b 0
         js_files = kwargs.get('js_files_to_link', [])
         json_design = kwargs.get('json_design', {})
         json_spec = kwargs.get('json_spec', {})
-        
         js_links_for_prompt = "\n".join([f"- /{js_file}" for js_file in js_files]) or "No JavaScript files detected."
         
         return f"""
@@ -746,6 +792,43 @@ class LangChainCodingAgent:
         )
         return logging.getLogger(__name__)
     
+    def reconfigure_paths(self) -> bool:
+        """Reconfigure paths using detect_path functions"""
+        print("\n--- Reconfiguring Paths ---")
+        try:
+            # Get new paths from user
+            new_base_output_dir = define_project_root()
+            new_python_path = define_python_path()
+            
+            # Update configuration
+            self.config.base_output_dir = new_base_output_dir
+            self.config.python_path = new_python_path
+            
+            # Validate new paths
+            if self.config.validate_paths():
+                self.logger.info(f"Path reconfiguration successful")
+                self.logger.info(f"New base output dir: {new_base_output_dir}")
+                self.logger.info(f"New Python path: {new_python_path}")
+                return True
+            else:
+                self.logger.error("Path validation failed after reconfiguration")
+                return False
+        except Exception as e:
+            self.logger.error(f"Path reconfiguration failed: {e}")
+            return False
+    
+    def get_current_config(self) -> Dict[str, str]:
+        """Get current configuration as a dictionary"""
+        return {
+            "outputs_dir": self.config.outputs_dir,
+            "base_output_dir": self.config.base_output_dir,
+            "python_path": self.config.python_path,
+            "model_name": self.config.model_name,
+            "api_delay_seconds": str(self.config.api_delay_seconds),
+            "max_retries": str(self.config.max_retries),
+            "log_level": self.config.log_level
+        }
+
     def _setup_tools(self):
         """Setup LangChain tools with the actual error_tracker"""
         # Đảm bảo self.error_tracker đã được khởi tạo
@@ -840,12 +923,11 @@ Work systematically: create structure first, generate files, validate, and creat
             # 5. Create and execute run script
             self.logger.info(f"Creating and executing run script for: {project_name}")
             self._create_run_script(project_root, spec_data, design_data)
-            # execution_result = self._execute_run_script(project_root)
-            # self.logger.info(f"Run script execution result: {execution_result}")
+            execution_result = self._execute_run_script(project_root)
+            self.logger.info(f"Run script execution result: {execution_result}")
             
             self.logger.info(f"Project generation completed: {project_root}")
-            return f"Project generated successfully at: {project_root}"
-            # return f"Project generated at: {project_root}\nStructure: {structure_result}\nFiles: {files_result}\nValidation: {validation_result}\nExecution: {execution_result}"
+            return f"Project generated at: {project_root}\nStructure: {structure_result}\nFiles: {files_result}\nValidation: {validation_result}\nExecution: {execution_result}"
             
         except Exception as e:
             self.logger.error(f"Project generation failed: {e}", exc_info=True) # Log full traceback
@@ -1057,30 +1139,338 @@ Work systematically: create structure first, generate files, validate, and creat
         
         return str(latest_design), str(latest_spec)
 
+def setup_agent_with_path_detection() -> LangChainCodingAgent:
+    """Convenience function to set up agent with interactive path detection"""
+    print("=== Setting up Coding Agent with Path Detection ===")
+    
+    config = AgentConfig.from_user_input()
+    
+    if not config.validate_paths():
+        raise ValueError("Path validation failed. Please check your configuration.")
+    
+    agent = LangChainCodingAgent(config)
+    print("Agent setup complete!")
+    return agent
+
+def setup_agent_with_env_fallback() -> LangChainCodingAgent:
+    """Setup agent with environment variables, with fallback to path detection if validation fails"""
+    print("=== Setting up Coding Agent (Environment + Fallback) ===")
+    
+    config = AgentConfig.from_env()
+    
+    if not config.validate_paths():
+        print("Environment configuration validation failed. Switching to interactive setup...")
+        config = AgentConfig.from_user_input()
+        
+        if not config.validate_paths():
+            raise ValueError("Path validation failed after interactive setup.")
+    
+    agent = LangChainCodingAgent(config)
+    print("Agent setup complete!")
+    return agent
+
+def demo_path_integration():
+    """Demonstration of how the path detection functions are integrated"""
+    print("=== Path Integration Demo ===")
+    
+    print("\n1. Environment Variables Method:")
+    print("   - Uses os.getenv() for configuration")
+    print("   - Falls back to defaults if env vars not set")
+    
+    print("\n2. Interactive Setup Method:")
+    print("   - Uses define_project_root() to get output directory")
+    print("   - Uses define_python_path() to get Python executable")
+    print("   - Persists choices to .env file for future runs")
+    
+    print("\n3. Validation:")
+    print("   - Checks if paths exist and are accessible")
+    print("   - Validates Python executable by running --version")
+    
+    print("\n4. Runtime Reconfiguration:")
+    print("   - Allows changing paths during execution")
+    print("   - Uses the same detect_path functions")
+    
+    print("\nAvailable setup functions:")
+    print("   - AgentConfig.from_env() - Environment variables")
+    print("   - AgentConfig.from_user_input() - Interactive with detect_path")
+    print("   - setup_agent_with_path_detection() - Convenience function")
+    print("   - setup_agent_with_env_fallback() - Env with fallback")
+    
+    print("\nAgent methods:")
+    print("   - agent.reconfigure_paths() - Runtime reconfiguration")
+    print("   - agent.get_current_config() - View current settings")
+
+def parse_arguments():
+    """Parse command line arguments for input file selection"""
+    parser = argparse.ArgumentParser(
+        description="LangChain Coding Agent - Generate code projects from JSON specifications",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=""":
+Examples:
+  # Use latest files from outputs directory (default behavior)
+  python coding_agent_langchain.py
+  
+  # Specify specific design and spec files
+  python coding_agent_langchain.py --design design.json --spec spec.json
+  
+  # Specify only design file (will find matching spec file)
+  python coding_agent_langchain.py --design myproject_20250625.design.json
+        """
+    )
+    
+    # File selection arguments
+    parser.add_argument(
+        "--design", "-d",
+        type=str,
+        help="Path to the design JSON file (.design.json). Can be absolute or relative to outputs directory."
+    )
+    
+    parser.add_argument(
+        "--spec", "-s", 
+        type=str,
+        help="Path to the specification JSON file (.spec.json). Can be absolute or relative to outputs directory."
+    )
+    
+    # Configuration method arguments
+    parser.add_argument(
+        "--interactive", "-i",
+        action="store_true",
+        help="Use interactive path detection setup instead of environment variables"
+    )
+    
+    parser.add_argument(
+        "--outputs-dir", "-o",
+        type=str,
+        help="Override the outputs directory path (default: src/module_1_vs_2/outputs)"
+    )
+    
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose output and debug logging"
+    )
+    
+    return parser.parse_args()
+
+def find_json_files_from_args(args, config: AgentConfig) -> tuple[str, str]:
+    """Find JSON files based on command line arguments"""
+    outputs_dir = Path(args.outputs_dir if args.outputs_dir else config.outputs_dir)
+    
+    if not outputs_dir.exists():
+        raise FileNotFoundError(f"Outputs directory '{outputs_dir}' does not exist")
+    
+    design_file = None
+    spec_file = None
+    
+    # Handle design file argument
+    if args.design:
+        design_path = Path(args.design)
+        if design_path.is_absolute() and design_path.exists():
+            design_file = str(design_path)
+        else:
+            # Try relative to outputs directory
+            design_path = outputs_dir / args.design
+            if design_path.exists():
+                design_file = str(design_path)
+            else:
+                raise FileNotFoundError(f"Design file not found: {args.design}")
+    
+    # Handle spec file argument
+    if args.spec:
+        spec_path = Path(args.spec)
+        if spec_path.is_absolute() and spec_path.exists():
+            spec_file = str(spec_path)
+        else:
+            # Try relative to outputs directory
+            spec_path = outputs_dir / args.spec
+            if spec_path.exists():
+                spec_file = str(spec_path)
+            else:
+                raise FileNotFoundError(f"Spec file not found: {args.spec}")
+    
+    # If only one file is specified, try to find the matching pair
+    if design_file and not spec_file:
+        # Extract base name and look for matching spec file
+        design_path = Path(design_file)
+        base_name = design_path.stem.replace('.design', '')
+        
+        # Look for matching spec file
+        possible_spec_files = [
+            outputs_dir / f"{base_name}.spec.json",
+            design_path.parent / f"{base_name}.spec.json"
+        ]
+        
+        for possible_spec in possible_spec_files:
+            if possible_spec.exists():
+                spec_file = str(possible_spec)
+                break
+        
+        if not spec_file:
+            raise FileNotFoundError(f"Could not find matching spec file for design file: {design_file}")
+    
+    elif spec_file and not design_file:
+        # Extract base name and look for matching design file
+        spec_path = Path(spec_file)
+        base_name = spec_path.stem.replace('.spec', '')
+        
+        # Look for matching design file
+        possible_design_files = [
+            outputs_dir / f"{base_name}.design.json",
+            spec_path.parent / f"{base_name}.design.json"
+        ]
+        
+        for possible_design in possible_design_files:
+            if possible_design.exists():
+                design_file = str(possible_design)
+                break
+        
+        if not design_file:
+            raise FileNotFoundError(f"Could not find matching design file for spec file: {spec_file}")
+    
+    # If neither file is specified, use the latest files (existing behavior)
+    if not design_file and not spec_file:
+        spec_files = list(outputs_dir.glob('*.spec.json'))
+        design_files = list(outputs_dir.glob('*.design.json'))
+        
+        if not spec_files:
+            raise FileNotFoundError("No .spec.json files found in output directory.")
+        if not design_files:
+            raise FileNotFoundError("No .design.json files found in output directory.")
+        
+        # Sort by modification time, newest first
+        latest_spec = max(spec_files, key=lambda p: p.stat().st_mtime)
+        latest_design = max(design_files, key=lambda p: p.stat().st_mtime)
+        
+        design_file = str(latest_design)
+        spec_file = str(latest_spec)
+    
+    # Validate that both files exist and are readable
+    for file_path, file_type in [(design_file, "design"), (spec_file, "spec")]:
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"{file_type.capitalize()} file not found: {file_path}")
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                json.load(f)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in {file_type} file {file_path}: {e}")
+        except Exception as e:
+            raise ValueError(f"Cannot read {file_type} file {file_path}: {e}")
+    
+    return design_file, spec_file
+
 def main():
     """Main function to run the coding agent"""
     try:
-        config = AgentConfig.from_env()
-        agent = LangChainCodingAgent(config) # Agent now initializes tools later.
+        print("=== LangChain Coding Agent ===")
         
-        design_file, spec_file = agent.find_latest_json_files()
+        # Parse command line arguments
+        args = parse_arguments()
         
+        # Set log level based on verbose flag
+        if args.verbose:
+            os.environ["LOG_LEVEL"] = "DEBUG"
+        else:
+            os.environ["LOG_LEVEL"] = "INFO"
+        
+        # Override outputs directory if specified
+        if args.outputs_dir:
+            os.environ["OUTPUTS_DIR"] = args.outputs_dir
+        
+        # Determine configuration method
+        if args.interactive:
+            print("\n--- Interactive Setup (from command line flag) ---")
+            config = AgentConfig.from_user_input()
+        else:
+            # Check if we need to ask for configuration method (if no specific files given)
+            if not args.design and not args.spec:
+                print("Choose configuration method:")
+                print("1. Use environment variables (default)")
+                print("2. Interactive setup with path detection")
+                print("3. Use environment variables, then allow reconfiguration")
+                
+                try:
+                    choice = input("Enter choice (1, 2, or 3) [Default: 1]: ").strip()
+                except EOFError:
+                    choice = "1"
+                
+                if choice == "2":
+                    print("\n--- Interactive Setup ---")
+                    config = AgentConfig.from_user_input()
+                elif choice == "3":
+                    print("\n--- Using Environment Variables (with reconfiguration option) ---")
+                    config = AgentConfig.from_env()
+                else:
+                    print("\n--- Using Environment Variables ---")
+                    config = AgentConfig.from_env()
+            else:
+                # Files specified via command line, use environment config
+                print("\n--- Using Environment Variables (files specified via command line) ---")
+                config = AgentConfig.from_env()
+        
+        print("\n--- Validating Configuration ---")
+        if not config.validate_paths():
+            print("Configuration validation failed.")
+            if not args.interactive and not args.design and not args.spec:
+                print("Would you like to reconfigure paths? (y/n): ", end="")
+                try:
+                    reconfigure = input().strip().lower()
+                    if reconfigure in ['y', 'yes']:
+                        # Create a temporary agent to use reconfigure method
+                        temp_agent = LangChainCodingAgent(config)
+                        if temp_agent.reconfigure_paths():
+                            config = temp_agent.config
+                        else:
+                            print("Reconfiguration failed. Exiting.")
+                            return
+                    else:
+                        print("Exiting due to configuration validation failure.")
+                        return
+                except EOFError:
+                    print("Exiting due to configuration validation failure.")
+                    return
+            else:
+                print("Please check your paths and try again.")
+                return
+        
+        print("\n--- Final Configuration ---")
+        for key, value in config.__dict__.items():
+            print(f"  {key}: {value}")
+        
+        print("\n--- Initializing Agent ---")
+        agent = LangChainCodingAgent(config)
+        
+        # Find JSON files based on arguments or fallback to latest
+        print("\n--- Finding JSON Files ---")
+        design_file, spec_file = find_json_files_from_args(args, config)
+        print(f"Using design file: {design_file}")
+        print(f"Using spec file: {spec_file}")
+        
+        print("\n--- Loading JSON Data ---")
         with open(design_file, 'r', encoding='utf-8') as f:
             design_data = json.load(f)
         
         with open(spec_file, 'r', encoding='utf-8') as f:
             spec_data = json.load(f)
         
+        print("\n--- Generating Project ---")
         result = agent.generate_project(design_data, spec_data)
         print(result)
-        # Assuming project_name is available from design_data
+        
+        # Display results
         project_name = design_data['folder_Structure']['root_Project_Directory_Name']
         project_root_for_errors = os.path.join(config.base_output_dir, project_name)
+        
+        print(f"\n--- Project Generation Complete ---")
+        print(f"Project location: {project_root_for_errors}")
         print(f"Check {os.path.join(project_root_for_errors, 'errors.json')} for any issues")
+        print(f"Python path used: {config.python_path}")
+        print(f"Base output directory: {config.base_output_dir}")
         
     except Exception as e:
         logging.getLogger(__name__).error(f"Main execution failed: {e}", exc_info=True)
         print(f"Error: {e}")
+        print("Check the log file for detailed error information.")
 
 if __name__ == "__main__":
     main()
