@@ -1,0 +1,217 @@
+{
+  "project_Overview": {
+    "project_Name": "RecipeKeep",
+    "project_Purpose": "To provide a web application for users to manage their personal recipe collections.",
+    "product_Scope": "A web application that allows users to register, log in, and manage their own private recipes. Users can create, read, update, and delete recipes, each containing a title, ingredients, instructions, and cooking time. The application includes a search function to filter recipes by title. The frontend is a single-page application built with HTML, CSS, and JavaScript, and the backend is built with Python and Flask, using a PostgreSQL database for storage. User passwords are securely hashed, and data ownership is strictly enforced."
+  },
+  "functional_Requirements": [
+    {
+      "id": "FR-001",
+      "title": "User Registration",
+      "description": "Allow users to register for an account using an email and password.",
+      "priority": "High",
+      "acceptance_criteria": [
+        "User can access a registration page.",
+        "User provides a valid email address and password.",
+        "System validates the email format and password strength.",
+        "System creates a new user account in the database.",
+        "System sends a confirmation email (optional).",
+        "User is redirected to the login page after successful registration."
+      ]
+    },
+    {
+      "id": "FR-002",
+      "title": "User Login",
+      "description": "Allow registered users to log in to their account using their email and password.",
+      "priority": "High",
+      "acceptance_criteria": [
+        "User can access a login page.",
+        "User provides their registered email address and password.",
+        "System authenticates the user against the stored credentials.",
+        "System grants access to the user's recipe dashboard upon successful login.",
+        "System displays an error message for invalid credentials."
+      ]
+    },
+    {
+      "id": "FR-003",
+      "title": "Create Recipe",
+      "description": "Allow logged-in users to create a new recipe with a title, ingredients, instructions, and cooking time.",
+      "priority": "High",
+      "acceptance_criteria": [
+        "User can access a 'create recipe' form.",
+        "User provides a recipe title, ingredients (as a single text block), step-by-step instructions, and an estimated cooking time in minutes.",
+        "System saves the new recipe associated with the logged-in user.",
+        "The newly created recipe appears in the user's recipe list on the dashboard."
+      ]
+    },
+    {
+      "id": "FR-004",
+      "title": "View Recipe List",
+      "description": "Allow logged-in users to view a list of all their created recipes on a main dashboard.",
+      "priority": "High",
+      "acceptance_criteria": [
+        "Upon login or navigation to the main dashboard, the user sees a list of their recipes.",
+        "Each recipe entry displays at least the recipe title.",
+        "The list is paginated if the number of recipes exceeds a certain limit (e.g., 10 recipes per page)."
+      ]
+    },
+    {
+      "id": "FR-005",
+      "title": "Update Recipe",
+      "description": "Allow logged-in users to update the details of any of their existing recipes.",
+      "priority": "High",
+      "acceptance_criteria": [
+        "User can select a recipe from the list to edit.",
+        "User can modify the recipe title, ingredients, instructions, and cooking time.",
+        "System saves the updated recipe details to the database.",
+        "The updated recipe details are reflected in the recipe list on the dashboard."
+      ]
+    },
+    {
+      "id": "FR-006",
+      "title": "Delete Recipe",
+      "description": "Allow logged-in users to permanently delete a recipe.",
+      "priority": "High",
+      "acceptance_criteria": [
+        "User can select a recipe from the list to delete.",
+        "System prompts the user for confirmation before deleting the recipe.",
+        "System permanently removes the recipe from the database.",
+        "The deleted recipe is no longer visible in the user's recipe list."
+      ]
+    },
+    {
+      "id": "FR-007",
+      "title": "Search Recipes",
+      "description": "Allow users to filter their recipe list in real-time by typing keywords that match the recipe's title.",
+      "priority": "High",
+      "acceptance_criteria": [
+        "The main dashboard includes a search bar.",
+        "As the user types in the search bar, the recipe list is filtered in real-time to display only recipes whose titles match the search query.",
+        "The search is case-insensitive.",
+        "If no recipes match the search query, a message is displayed indicating that no results were found."
+      ]
+    }
+  ],
+  "non_Functional_Requirements": [
+    {
+      "id": "NFR-001",
+      "category": "Security",
+      "description": "User passwords must be securely hashed before being stored.",
+      "acceptance_criteria": [
+        "Passwords are hashed using a strong hashing algorithm (e.g., bcrypt, Argon2).",
+        "Salts are used to prevent rainbow table attacks.",
+        "Password hashing is performed on the server-side."
+      ]
+    },
+    {
+      "id": "NFR-002",
+      "category": "Security",
+      "description": "The system must enforce strict data ownership, meaning a logged-in user can only ever view, edit, or delete their own recipes and never those created by other users.",
+      "acceptance_criteria": [
+        "All database queries are filtered to only return recipes belonging to the currently logged-in user.",
+        "API endpoints that modify recipes (e.g., update, delete) verify that the user owns the recipe before performing the operation.",
+        "Attempting to access or modify another user's recipe results in an authorization error."
+      ]
+    },
+    {
+      "id": "NFR-003",
+      "category": "Performance",
+      "description": "The application should provide a responsive user experience with minimal loading times.",
+      "acceptance_criteria": [
+        "Page load times should be less than 3 seconds.",
+        "Search results should be displayed in real-time with minimal delay.",
+        "Database queries should be optimized for performance."
+      ]
+    },
+    {
+      "id": "NFR-004",
+      "category": "Usability",
+      "description": "The user interface should be clean, intuitive, and easy to navigate.",
+      "acceptance_criteria": [
+        "The application should have a consistent look and feel.",
+        "Navigation should be clear and straightforward.",
+        "Error messages should be informative and helpful."
+      ]
+    },
+    {
+      "id": "NFR-005",
+      "category": "Reliability",
+      "description": "The application should be reliable and available with minimal downtime.",
+      "acceptance_criteria": [
+        "The application should be thoroughly tested to ensure stability.",
+        "The application should be deployed on a reliable hosting platform.",
+        "Regular backups should be performed to prevent data loss."
+      ]
+    }
+  ],
+  "external_Interface_Requirements": {
+    "user_Interfaces": [
+      "The application will have a registration page with fields for email and password.",
+      "The application will have a login page with fields for email and password.",
+      "The main dashboard will display a list of recipes, each with a title and potentially a short description or image.",
+      "The dashboard will include a search bar for filtering recipes by title.",
+      "Each recipe entry will have options to view, edit, and delete the recipe.",
+      "The recipe creation/editing form will include fields for the recipe title, ingredients (as a single text block), step-by-step instructions, and estimated cooking time in minutes.",
+      "The frontend should be a single-page application, updating content without full page reloads."
+    ],
+    "hardware_Interfaces": [
+      "No specific hardware requirements, assuming standard computer/mobile device hardware."
+    ],
+    "software_Interfaces": [
+      "Requires a modern web browser on the client side."
+    ],
+    "communication_Interfaces": [
+      "HTTPS for secure communication between client browser and web server.",
+      "RESTful API for communication between the frontend and backend."
+    ]
+  },
+  "technology_Stack": {
+    "backend": {
+      "language": "Python",
+      "framework": "Flask",
+      "api_Architecture": "RESTful"
+    },
+    "frontend": {
+      "language": "HTML, CSS, JavaScript",
+      "framework": "Vanilla",
+      "responsive_Design": true
+    }
+  },
+  "data_Storage": {
+    "storage_Type": "SQL",
+    "database_Type": "PostgreSQL",
+    "data_models": [
+      {
+        "entity_name": "User",
+        "key_attributes": [
+          "user_id",
+          "email",
+          "password_hash"
+        ]
+      },
+      {
+        "entity_name": "Recipe",
+        "key_attributes": [
+          "recipe_id",
+          "user_id",
+          "title",
+          "ingredients",
+          "instructions",
+          "cooking_time"
+        ]
+      }
+    ]
+  },
+  "assumptions_Made": [
+    "Assuming standard web security practices, such as input validation and protection against common web vulnerabilities, are required.",
+    "Assuming the application will be deployed on a standard web server.",
+    "Assuming the cooking time is stored as an integer representing minutes."
+  ],
+  "metadata": {
+    "generation_step": "specification",
+    "timestamp": "2025-06-27T17:27:42.023579",
+    "model_used": "gemini-2.0-flash",
+    "original_description": "Build a complete web application called \"RecipeKeep\" for managing a personal recipe collection where users can register for an account using an email and password and then log in to manage their own private recipes. Once authenticated, a user must be able to perform full CRUD operations on their recipes: create a new recipe with a title, a list of ingredients (as a single text block), step-by-step instructions, and an estimated cooking time in minutes; view a list of all their created recipes on a main dashboard; update the details of any of their existing recipes; and permanently delete a recipe. The main dashboard must also include a search bar that allows the user to filter their recipe list in real-time by typing keywords that match the recipe's title. For the technology stack, you must use a Python backend with the Flask framework and a PostgreSQL database for persistent storage, while the frontend should be built with vanilla HTML, CSS, and JavaScript to create a responsive, clean, and intuitive single-page-application-style interface where content updates happen without full page reloads. Critically, all user passwords must be securely hashed before being stored, and the system must enforce strict data ownership, meaning a logged-in user can only ever view, edit, or delete their own recipes and never those created by other users.",
+    "filepath": "C:\\Users\\Hoang Duy\\Documents\\Phan Lac Hung\\autocode_assistant\\code_generated_result\\spec_vs_design\\recipekeep_20250627.spec.json"
+  }
+}

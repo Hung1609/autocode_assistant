@@ -1,9 +1,9 @@
 import logging
 import os
 from datetime import datetime
-from .base_agent import BaseAgent
-from .prompt import SPECIFICATION_PROMPT
-from . import utils
+from base_agent import BaseAgent
+from prompt import SPECIFICATION_PROMPT
+import utils
 
 logger = logging.getLogger(__name__)
 
@@ -36,14 +36,14 @@ class SpecificationAgent(BaseAgent):
                 "original_description": user_description
             }
             #get the target directory
-            output_dir = utils.get_spec_design_output_dir
+            output_dir = utils.get_spec_design_output_dir()
             #generate a unique name for the file
             filename = utils.generate_filename(project_name=project_name, extension="spec.json")
             #combine into a full paath
             full_filepath = os.path.join(output_dir, filename)
             #store in metadata and save the file
             spec_data["metadata"]["filepath"] = full_filepath
-            utils.save_json_to_file(spec_data, filename=filename)
+            utils.save_json_to_file(spec_data, full_filepath)
 
             logger.info(f"Specification for '{project_name}' generated successfully and saved to {full_filepath}")
             return spec_data

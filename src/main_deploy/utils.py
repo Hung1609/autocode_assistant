@@ -2,6 +2,8 @@ import os
 import json
 import logging
 from datetime import datetime
+from pathlib import Path
+from typing import Tuple, Optional
 import config
 
 logger = logging.getLogger(__name__)
@@ -56,6 +58,53 @@ def parse_json_response(response_text: str) -> dict:
         logger.error(f"An unexpected error occurred while parsing JSON: {e}\nRaw response: {response_text}", exc_info=True)
         raise
 
+def find_latest_json_files(project_name: Optional[str] = None) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Finds the latest design and specification JSON files, optionally for a specific project.
+
+    This function searches in the directory defined by config.SPEC_DESIGN_OUTPUT_DIR.
+
+    Args:
+        project_name (Optional[str]): If provided, finds the latest files matching
+                                      this project name. If None, finds the overall
+                                      latest files in the directory.
+
+    Returns:
+        A tuple containing the paths to the (latest_design_file, latest_spec_file).
+        Returns (None, None) if files are not found.
+    """
+    output_dir = Path(config.SPEC_DESIGN_OUTPUT_DIR)
+    
+    if not output_dir.exists():
+        logger.error(f"Spec/Design output directory '{output_dir}' does not exist. Cannot find files.")
+        return None, None
+    
+    if project_name:
+        # Sanitize the project name to match the file naming convention
+        search_prefix = "".join(c if c.isalnum() else "_" for c in project_name).lower()
+        spec_files = list(output_dir.glob(f'{search_prefix}*.spec.json'))
+        design_files = list(output_dir.glob(f'{search_prefix}*.design.json'))
+    else:
+        # Find all spec and design files
+        spec_files = list(output_dir.glob('*.spec.json'))
+        design_files = list(output_dir.glob('*.design.json'))
+
+    latest_spec_path = None
+    latest_design_path = None
+
+    if spec_files:
+        latest_spec_path = str(max(spec_files, key=lambda p: p.stat().st_mtime))
+        logger.info(f"Found latest spec file: {latest_spec_path}")
+    else:
+        logger.warning(f"No .spec.json files found for project '{project_name or 'any'}'.")
+
+    if design_files:
+        latest_design_path = str(max(design_files, key=lambda p: p.stat().st_mtime))
+        logger.info(f"Found latest design file: {latest_design_path}")
+    else:
+        logger.warning(f"No .design.json files found for project '{project_name or 'any'}'.")
+
+    return latest_design_path, latest_spec_path
 
 # # Get the absolute path to the outputs directory.
 # def get_base_output_dir():

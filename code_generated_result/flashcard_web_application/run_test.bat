@@ -29,10 +29,17 @@ if exist "test_results.log" (
     echo No old test log file to delete: "test_results.log". >> debug_test_agent.log 2>&1
 )
 
-echo Checking for Python at: "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\python.exe" >> debug_test_agent.log 2>&1
-"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\python.exe" --version >> debug_test_agent.log 2>&1
+@REM echo Checking for Python at: "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\python.exe" >> debug_test_agent.log 2>&1
+@REM "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\python.exe" --version >> debug_test_agent.log 2>&1
+@REM if %ERRORLEVEL% neq 0 (
+@REM     echo ERROR: Python not found at "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\python.exe". Exiting with code %ERRORLEVEL%. >> debug_test_agent.log 2>&1
+@REM     exit /b 1
+@REM )
+
+echo Checking for Python at: "%~dp0venv\Scripts\python.exe" >> debug_test_agent.log 2>&1
+"%~dp0venv\Scripts\python.exe" --version >> debug_test_agent.log 2>&1
 if %ERRORLEVEL% neq 0 (
-    echo ERROR: Python not found at "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\python.exe". Exiting with code %ERRORLEVEL%. >> debug_test_agent.log 2>&1
+    echo ERROR: Python not found at "%~dp0venv\Scripts\python.exe". Exiting with code %ERRORLEVEL%. >> debug_test_agent.log 2>&1
     exit /b 1
 )
 
@@ -52,9 +59,14 @@ if %ERRORLEVEL% neq 0 (
     echo WARNING: python.exe not found in PATH after venv activation. This might indicate an issue with activate.bat. >> debug_test_agent.log 2>&1
 )
 
+@REM echo Running pytest with --exitfirst and --tb=long... >> debug_test_agent.log 2>&1
+@REM REM Pytest will automatically discover tests in tests/unit and tests/integration
+@REM "C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\python.exe" -m pytest tests --exitfirst --tb=long -v > "test_results.log" 2>&1
+@REM set TEST_EXIT_CODE=%ERRORLEVEL%
+
 echo Running pytest with --exitfirst and --tb=long... >> debug_test_agent.log 2>&1
 REM Pytest will automatically discover tests in tests/unit and tests/integration
-"C:\Users\ADMIN\Documents\Foxconn\autocode_assistant\code_generated_result\flashcard_web_application\venv\Scripts\python.exe" -m pytest tests --exitfirst --tb=long -v > "test_results.log" 2>&1
+"%~dp0venv\Scripts\python.exe" -m pytest tests --exitfirst --tb=long -v > "test_results.log" 2>&1
 set TEST_EXIT_CODE=%ERRORLEVEL%
 
 echo Deactivating virtual environment... >> debug_test_agent.log 2>&1

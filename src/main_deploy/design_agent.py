@@ -1,9 +1,9 @@
 import logging
 import json
 import os
-from .base_agent import BaseAgent
-from .prompt import DESIGN_PROMPT
-from . import utils
+from base_agent import BaseAgent
+from prompt import DESIGN_PROMPT
+import utils
 from datetime import datetime
 
 logger = logging.getLogger(__name__)

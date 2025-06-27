@@ -3,38 +3,42 @@ import os
 import json
 
 # --- Core Modules ---
+# These are our own refactored modules that provide configuration and setup.
 import config
-import setup
 from utils import save_json_to_file, generate_filename, get_spec_design_output_dir
 
 # --- Agent Classes ---
+# These are the refactored agent classes for the pre-coding phases.
 from specification_agent import SpecificationAgent
 from design_agent import DesignAgent
 from coding_agent import LangChainCodingAgent, AgentConfig
 
-# --- Phase-Specific Logic (from existing standalone scripts) ---
-# We import the necessary functions/classes from your testing and debugging scripts.
-# This is a pragmatic way to integrate them without a full rewrite.
-from testing_agent import run_full_test_pipeline  # Assuming we refactor testing_agent.py to have this entry point
-from debugging_agent import run_full_debugging_cycle # Assuming we refactor debugging_agent.py similarly
+# --- Phase-Specific Logic (from refactored standalone scripts) ---
+# We import the primary functions from our testing and debugging modules.
+from testing_agent import run_test_generation_and_execution
+from debug_agent import run_debugging_cycle
 
 # --- Third-Party Libraries ---
 import autogen
 
-# Get a logger for this module
+# Get a logger for this module, which will use the global config.
 logger = logging.getLogger(__name__)
 
 
 def run_autogen_coding_crew(spec_data: dict, design_data: dict) -> str:
     """
     Initializes and runs the AutoGen GroupChat for the code generation phase.
+    This function encapsulates the entire multi-agent coding conversation.
     
     Args:
         spec_data: The dictionary containing the project specification.
         design_data: The dictionary containing the system design.
 
     Returns:
-        The absolute path to the generated project's root directory.
+        The absolute path to the generated project's root directory upon success.
+    
+    Raises:
+        ValueError: If the project's root directory name cannot be determined.
     """
     logger.info("🚀 Initializing AutoGen Coding Crew...")
 
@@ -43,15 +47,14 @@ def run_autogen_coding_crew(spec_data: dict, design_data: dict) -> str:
     if not project_name_slug:
         raise ValueError("Could not determine 'root_Project_Directory_Name' from design data.")
     
+    # Construct the absolute path for the generated code
     project_root_path = os.path.abspath(os.path.join(config.BASE_OUTPUT_DIR, project_name_slug))
     logger.info(f"Code will be generated in: {project_root_path}")
     os.makedirs(project_root_path, exist_ok=True)
 
     # --- Instantiate the LangChainCodingAgent (the "tool" for AutoGen) ---
-    # The config now comes from our central config file via os.getenv
-    coding_agent_config = AgentConfig.from_env()
-    # Override the base_output_dir to ensure it matches our determined project path
-    coding_agent_config.base_output_dir = config.BASE_OUTPUT_DIR
+    # The agent's config is now created from our central config file.
+    coding_agent_config = AgentConfig.from_central_config()
     coding_agent_instance = LangChainCodingAgent(coding_agent_config)
 
     # --- Configure the AutoGen Agents ---
@@ -90,40 +93,26 @@ def run_autogen_coding_crew(spec_data: dict, design_data: dict) -> str:
     user_proxy = autogen.UserProxyAgent(
         name="UserProxy",
         human_input_mode="NEVER",
-        max_consecutive_auto_reply=5, # Reduced to prevent infinite loops
+        max_consecutive_auto_reply=5,
         is_termination_msg=lambda x: "TERMINATE" in x.get("content", "").upper(),
-        code_execution_config={
-            # This work_dir is where UserProxy might try to save files if it were to run code.
-            # The actual code generation path is handled by LangChainCodingAgent.
-            "work_dir": project_root_path,
-            "use_docker": False,
-        },
-        # Map the tool name to the actual Python function
-        function_map={
-            "generate_project": coding_agent_instance.generate_project,
-        }
+        code_execution_config={"work_dir": project_root_path, "use_docker": False},
+        function_map={"generate_project": coding_agent_instance.generate_project}
     )
 
     # --- Start the Conversation ---
     groupchat = autogen.GroupChat(
-        agents=[user_proxy, project_manager, coder],
-        messages=[],
-        max_round=15
+        agents=[user_proxy, project_manager, coder], messages=[], max_round=15
     )
     manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=autogen_llm_config)
 
     initial_message = f"""
     The specification and design phases are complete. Now, we must generate the project code.
-
-    ProjectManager, your task is to orchestrate this process.
-    Your first and only step is to instruct the Coder to call the `generate_project` function.
+    ProjectManager, your task is to instruct the Coder to call the `generate_project` function.
     Do not ask for reviews or other steps. Just call the function.
 
     Here is the required data:
-
     --- SPECIFICATION DATA ---
     {json.dumps(spec_data, indent=2)}
-
     --- DESIGN DATA ---
     {json.dumps(design_data, indent=2)}
     """
@@ -143,61 +132,53 @@ def run_autonomous_software_factory(user_description: str):
         user_description: The initial user prompt describing the software to build.
     """
     try:
-        # --- 0. Initial Setup ---
-        # This function is called once at the start of the workflow in run.py
-        # setup.configure_gemini_api() 
         logger.info("=================================================")
         logger.info("======= AUTONOMOUS SOFTWARE FACTORY START =======")
         logger.info("=================================================")
         logger.info(f"Received user request: '{user_description[:100]}...'")
 
-        # --- 1. Specification Phase ---
+        # --- PHASE 1: SPECIFICATION ---
         logger.info("\n----- PHASE 1: GENERATING SPECIFICATION -----")
         spec_agent = SpecificationAgent()
         spec_data = spec_agent.generate_specification(user_description)
         logger.info("✅ Specification generated successfully.")
 
-        # --- 2. Design Phase ---
+        # --- PHASE 2: DESIGN ---
         logger.info("\n----- PHASE 2: GENERATING SYSTEM DESIGN -----")
         design_agent = DesignAgent()
         design_data = design_agent.generate_design(spec_data)
         logger.info("✅ System Design generated successfully.")
 
-        # --- 3. Coding Phase ---
-        logger.info("\n----- PHASE 3: GENERATING PROJECT CODE (AUTOGEN) -----")
+        # --- PHASE 3: CODING (AUTOGEN) ---
+        logger.info("\n----- PHASE 3: GENERATING PROJECT CODE -----")
         project_root_path = run_autogen_coding_crew(spec_data, design_data)
         logger.info(f"✅ Code Generation complete. Project located at: {project_root_path}")
 
-        # --- 4. Testing Phase ---
+        # --- PHASE 4: TESTING ---
         logger.info("\n----- PHASE 4: GENERATING & RUNNING TESTS -----")
-        # We need to create a simple wrapper or refactor testing_agent.py to expose
-        # a main function that we can call.
-        # For now, let's assume a function `run_full_test_pipeline(project_root)` exists.
-        failed_tests = run_full_test_pipeline(project_root_path)
+        failed_tests = run_test_generation_and_execution(project_root_path, design_data, spec_data)
 
-        # --- 5. Debugging Phase ---
+        # --- PHASE 5: DEBUGGING (CONDITIONAL) ---
         if failed_tests:
-            logger.warning(f" Detected {len(failed_tests)} test failures. Entering debugging phase...")
+            logger.warning(f"Detected {len(failed_tests)} test failures. Entering debugging phase...")
             logger.info("\n----- PHASE 5: DEBUGGING FAILED TESTS -----")
-            # Similarly, we assume a function from debugging_agent.py
-            # This function would contain the iterative fix-and-retest loop.
-            debugging_successful = run_full_debugging_cycle(project_root_path, failed_tests)
+            debugging_successful = run_debugging_cycle(project_root_path, failed_tests)
 
             if debugging_successful:
-                logger.info("✅ All bugs fixed by the Debugging Agent!")
+                logger.info("✅ All bugs were successfully fixed by the Debugging Agent!")
             else:
                 logger.error("❌ Debugging Agent could not fix all issues after multiple attempts.")
         else:
             logger.info("✅ All tests passed successfully! No debugging needed.")
 
-        logger.info("================================================")
+        logger.info("\n================================================")
         logger.info("======= AUTONOMOUS SOFTWARE FACTORY END ========")
         logger.info("================================================")
-        logger.info(f"Final project located at: {project_root_path}")
+        logger.info(f"Final project is located at: {project_root_path}")
 
     except Exception as e:
-        logger.critical(f"A critical error occurred in the main workflow: {e}", exc_info=True)
-        # Potentially add cleanup logic here in the future
+        logger.critical(f"A critical error halted the main workflow: {e}", exc_info=True)
+        logger.critical("The process has been stopped.")
 
 
         
