@@ -39,6 +39,11 @@ class AgentConfig(BaseModel):
             max_retries=config.MAX_LLM_RETRIES
         )
     
+    @classmethod
+    def from_env(cls) -> 'AgentConfig':
+        """Create config from environment variables - alias for from_central_config()"""
+        return cls.from_central_config()
+    
     # @classmethod
     # def from_user_input(cls) -> 'AgentConfig':
     #     """Create config by prompting user for paths using detect_path functions"""
@@ -279,7 +284,10 @@ exit /b 0
         js_files = kwargs.get('js_files_to_link', [])
         json_design = kwargs.get('json_design', {})
         json_spec = kwargs.get('json_spec', {})
+        project_context_summary = kwargs.get('project_context_summary', '')
+        context_instructions = kwargs.get('context_instructions', '')
         js_links_for_prompt = "\n".join([f"- /{js_file}" for js_file in js_files]) or "No JavaScript files detected."
+        
         return f"""
         CONTEXT:
         - You are an expert Senior Software Engineer tasked with generating complete, syntactically correct code for a web application named {project_name}. The application uses:
@@ -289,8 +297,15 @@ exit /b 0
         - Your goal is to produce code for a specific file based on:
             - JSON Design: Technical implementation details (architecture, data models, APIs).
             - JSON Specification: Functional and non-functional requirements.
+            - Project Context: Cross-file awareness and dependency management.
             - Additional rules for logging, FastAPI static file serving, and CORS configuration.
         - The generated code must be executable, idiomatic, and aligned with the provided design and requirements.
+
+        PROJECT-WIDE CONTEXT AWARENESS:
+        {project_context_summary}
+
+        CONTEXT-SPECIFIC INSTRUCTIONS FOR THIS FILE:
+        {context_instructions}
 
         TARGET FILE INFORMATION:
         - Full Path of the File to Generate: {file_path}
@@ -318,6 +333,7 @@ exit /b 0
         - Outline the high-level structure of the code (Classes, Functions, Imports).
         - Use FastAPI conventions, Python logging, and StaticFiles for frontend serving.
         - Incorporate dependencies from `json_design.dependencies`.
+        - FOLLOW the project context instructions to avoid conflicts and ensure proper imports.
         5. Determine Entry Point Requirements:
         - For the main backend file `{backend_module_path.replace('.', '/')}.py`, include FastAPI app initialization, StaticFiles mounting, and CORS setup.
         - Ensure the file is runnable with `python -m uvicorn {backend_module_path}:app --reload --port 8001`.
@@ -329,6 +345,8 @@ exit /b 0
         - Do NOT include explanations, comments outside the code, or markdown formatting.
         2. Python Imports (Python files only):
         - Place all `import` statements at the top, before any executable code.
+        - STRICTLY FOLLOW the required imports specified in the context instructions.
+        - DO NOT include forbidden import patterns or redefinitions.
         3. Advanced Logging (Python files only):
         - For Main Backend File `{backend_module_path.replace('.', '/')}.py`:
             - Import `logging`, `logging.handlers`, `json`.
@@ -396,9 +414,826 @@ exit /b 0
         Generate the complete code for `{file_path}`, ensuring:
         - Compliance with FastAPI conventions, logging, CORS, and StaticFiles (if applicable).
         - Alignment with `json_design` and `json_spec`.
+        - STRICT adherence to project context instructions (imports, forbidden patterns, etc.).
         - Inclusion of language-specific entry points for executable files.
         - Readiness to run with `python -m uvicorn {backend_module_path}:app --reload --port 8001` for `{backend_module_path.replace('.', '/')}.py`.
     """
+
+# === CODE VALIDATION AND AUTO-FIX LAYER === logic mới vào chiều 28/6
+
+class ContentClassifier:
+    """Analyzes file content to determine its actual purpose and type"""
+    
+    @staticmethod
+    def classify_file_content(file_path: str, content: str) -> dict:
+        """
+        Classify file content by analyzing actual code patterns
+        Returns: {
+            'content_type': str,
+            'contains_pydantic': bool,
+            'contains_sqlalchemy': bool,
+            'imports_found': list,
+            'classes_found': list,
+            'functions_found': list
+        }
+        """
+        classification = {
+            'content_type': 'unknown',
+            'contains_pydantic': False,
+            'contains_sqlalchemy': False,
+            'imports_found': [],
+            'classes_found': [],
+            'functions_found': [],
+            'schema_classes': [],
+            'model_classes': []
+        }
+        
+        lines = content.split('\n')
+        filename = os.path.basename(file_path).lower()
+        
+        for line in lines:
+            line = line.strip()
+            
+            # Track imports
+            if line.startswith(('import ', 'from ')):
+                classification['imports_found'].append(line)
+                
+                # Detect framework patterns
+                if 'BaseModel' in line or 'pydantic' in line:
+                    classification['contains_pydantic'] = True
+                if 'declarative_base' in line or 'sqlalchemy' in line or 'Column' in line:
+                    classification['contains_sqlalchemy'] = True
+            
+            # Track class definitions
+            elif line.startswith('class ') and ':' in line:
+                class_name = line.split('class ')[1].split('(')[0].split(':')[0].strip()
+                classification['classes_found'].append(class_name)
+                
+                # Classify class type based on inheritance
+                if 'BaseModel' in line:
+                    classification['schema_classes'].append(class_name)
+                elif 'Base' in line and not 'BaseModel' in line:
+                    classification['model_classes'].append(class_name)
+            
+            # Track function definitions
+            elif line.startswith('def ') and '(' in line:
+                func_name = line.split('def ')[1].split('(')[0].strip()
+                classification['functions_found'].append(func_name)
+        
+        # Determine content type based on analysis
+        if classification['contains_pydantic'] or 'schema' in filename:
+            classification['content_type'] = 'pydantic_schemas'
+        elif classification['contains_sqlalchemy'] or 'model' in filename:
+            classification['content_type'] = 'sqlalchemy_models'
+        elif 'route' in filename or 'api' in filename:
+            classification['content_type'] = 'fastapi_routes'
+        elif 'database' in filename or 'db' in filename:
+            classification['content_type'] = 'database_config'
+        elif 'main' in filename or 'app' in filename:
+            classification['content_type'] = 'application_entry'
+        
+        return classification
+
+class ImportAnalyzer:
+    """Analyzes and validates imports within project context"""
+    
+    def __init__(self, project_context):
+        self.project_context = project_context
+        self.content_cache = {}  # Cache for file content classifications
+    
+    def analyze_imports(self, file_path: str, content: str, file_classification: dict) -> dict:
+        """
+        Analyze imports in generated content and detect issues
+        Returns: {
+            'valid_imports': list,
+            'invalid_imports': list,
+            'missing_imports': list,
+            'import_conflicts': list,
+            'auto_fix_suggestions': list
+        }
+        """
+        analysis = {
+            'valid_imports': [],
+            'invalid_imports': [],
+            'missing_imports': [],
+            'import_conflicts': [],
+            'auto_fix_suggestions': []
+        }
+        
+        # Analyze each import in the content
+        current_imports = file_classification['imports_found']
+        for import_stmt in current_imports:
+            validation_result = self._validate_single_import(import_stmt, file_path, file_classification)
+            
+            if validation_result['is_valid']:
+                analysis['valid_imports'].append(import_stmt)
+            else:
+                analysis['invalid_imports'].append({
+                    'import': import_stmt,
+                    'issue': validation_result['issue'],
+                    'suggested_fix': validation_result['suggested_fix']
+                })
+                
+                # Add auto-fix suggestion if available
+                if validation_result['suggested_fix']:                analysis['auto_fix_suggestions'].append({
+                    'action': 'replace_import',
+                    'old_import': import_stmt,
+                    'new_import': validation_result['suggested_fix'],
+                    'reason': validation_result['issue']
+                })
+                
+                # Add additional import if needed (for preserving model imports)
+                if validation_result.get('additional_import'):
+                    analysis['auto_fix_suggestions'].append({
+                        'action': 'add_import',
+                        'new_import': validation_result['additional_import'],
+                        'reason': 'Preserve model imports after fixing schema imports'
+                    })
+        
+        # Check for missing required imports
+        required_imports = self._get_required_imports_for_content(file_path, file_classification)
+        for required_import in required_imports:
+            if not self._is_import_present(required_import, current_imports):
+                analysis['missing_imports'].append(required_import)
+                analysis['auto_fix_suggestions'].append({
+                    'action': 'add_import',
+                    'new_import': required_import,
+                    'reason': f"Required import for {file_classification['content_type']}"
+                })
+        
+        return analysis
+    
+    def _validate_single_import(self, import_stmt: str, current_file_path: str, file_classification: dict) -> dict:
+        """Validate a single import statement"""
+        validation = {
+            'is_valid': True,
+            'issue': '',
+            'suggested_fix': None
+        }
+        
+        # Parse import statement
+        if 'from ' in import_stmt and ' import ' in import_stmt:
+            parts = import_stmt.split(' import ')
+            module_part = parts[0].replace('from ', '').strip()
+            imports_part = parts[1].strip()
+            
+            # Check for schema/model confusion
+            if module_part.endswith('.models') and any(name in imports_part for name in ['Create', 'Update', 'Base']):
+                # Check if these are actually Pydantic schemas
+                imported_items = [item.strip() for item in imports_part.split(',')]
+                schema_items = []
+                model_items = []
+                
+                for item in imported_items:
+                    if any(keyword in item for keyword in ['Create', 'Update']) and not item == 'Base':
+                        schema_items.append(item)
+                    else:
+                        model_items.append(item)
+                
+                if schema_items:
+                    validation['is_valid'] = False
+                    validation['issue'] = f"Schema classes {schema_items} should be imported from schemas module"
+                    validation['suggested_fix'] = f"from {module_part.replace('.models', '.schemas')} import {', '.join(schema_items)}"
+                    
+                    # If there are still model items, we need to preserve the model import
+                    if model_items:
+                        validation['additional_import'] = f"from {module_part} import {', '.join(model_items)}"
+        
+        return validation
+    
+    def _get_required_imports_for_content(self, file_path: str, file_classification: dict) -> list:
+        """Get required imports based on file content type"""
+        required_imports = []
+        content_type = file_classification['content_type']
+        
+        if content_type == 'fastapi_routes':
+            # Routes need database session and appropriate models/schemas
+            if self.project_context.project_structure['database_files']:
+                required_imports.append("from sqlalchemy.orm import Session")
+                required_imports.extend(self.project_context.get_required_imports(file_path))
+            
+            # If we see Pydantic class usage, ensure schema imports
+            for class_name in file_classification['classes_found']:
+                if any(keyword in class_name for keyword in ['Create', 'Update', 'Response']):
+                    schema_file = self._find_schema_file()
+                    if schema_file:
+                        schema_module = os.path.splitext(schema_file)[0].replace('/', '.').replace('\\', '.')
+                        required_imports.append(f"from {schema_module} import {class_name}")
+        
+        elif content_type == 'sqlalchemy_models':
+            # Models need Base from database
+            if self.project_context.project_structure['database_files']:
+                db_file = self.project_context.project_structure['database_files'][0]
+                db_module = os.path.splitext(db_file)[0].replace('/', '.').replace('\\', '.')
+                required_imports.append(f"from {db_module} import Base")
+        
+        return required_imports
+    
+    def _find_schema_file(self) -> str:
+        """Find the schema file in the project structure"""
+        for file_path in self.project_context.project_structure['model_files']:
+            if 'schema' in os.path.basename(file_path).lower():
+                return file_path
+        return None
+    
+    def _is_import_present(self, target_import: str, current_imports: list) -> bool:
+        """Check if a required import is already present"""
+        target_clean = target_import.strip()
+        for current_import in current_imports:
+            if target_clean == current_import.strip():
+                return True
+        return False
+
+class AutoFixer:
+    """Automatically fixes detected code issues"""
+    
+    @staticmethod
+    def apply_fixes(content: str, fix_suggestions: list) -> str:
+        """Apply all auto-fix suggestions to the content"""
+        fixed_content = content
+        import_fixes = []
+        
+        for suggestion in fix_suggestions:
+            if suggestion['action'] == 'replace_import':
+                fixed_content = AutoFixer._replace_import(
+                    fixed_content, 
+                    suggestion['old_import'], 
+                    suggestion['new_import']
+                )
+            elif suggestion['action'] == 'add_import':
+                import_fixes.append(suggestion['new_import'])
+            elif suggestion['action'] == 'fix_import_source':
+                # Handle complex import source fixes
+                fix_info = suggestion.get('new_import', suggestion)
+                if isinstance(fix_info, dict):
+                    if 'original' in fix_info and 'fixed' in fix_info:
+                        fixed_content = AutoFixer._replace_import(
+                            fixed_content, 
+                            fix_info['original'], 
+                            fix_info['fixed']
+                        )
+                        if fix_info.get('additional_import'):
+                            import_fixes.append(fix_info['additional_import'])
+        
+        # Add all missing imports at the beginning
+        if import_fixes:
+            fixed_content = AutoFixer._add_imports(fixed_content, import_fixes)
+        
+        return fixed_content
+    
+    @staticmethod
+    def _replace_import(content: str, old_import: str, new_import: str) -> str:
+        """Replace an import statement in the content"""
+        lines = content.split('\n')
+        for i, line in enumerate(lines):
+            if line.strip() == old_import.strip():
+                lines[i] = new_import
+                break
+        return '\n'.join(lines)
+    
+    @staticmethod
+    def _add_imports(content: str, new_imports: list) -> str:
+        """Add new imports at the appropriate location in the file"""
+        lines = content.split('\n')
+        
+        # Find the location to insert imports (after existing imports or at the top)
+        insert_index = 0
+        last_import_index = -1
+        
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped.startswith(('import ', 'from ')) and not stripped.startswith('#'):
+                last_import_index = i
+            elif stripped and not stripped.startswith('#') and last_import_index != -1:
+                # Found first non-import, non-comment line after imports
+                insert_index = last_import_index + 1
+                break
+        
+        # If no imports found, insert at the beginning (after any initial comments/docstrings)
+        if last_import_index == -1:
+            for i, line in enumerate(lines):
+                stripped = line.strip()
+                if stripped and not stripped.startswith('#') and not stripped.startswith('"""') and not stripped.startswith("'''"):
+                    insert_index = i
+                    break
+        else:
+            insert_index = last_import_index + 1
+        
+        # Insert new imports
+        for new_import in new_imports:
+            if new_import.strip() not in [line.strip() for line in lines]:  # Avoid duplicates
+                lines.insert(insert_index, new_import)
+                insert_index += 1
+        
+        return '\n'.join(lines)
+
+class CodeValidator:
+    """Main validation orchestrator that coordinates all validation activities"""
+    
+    def __init__(self, project_context):
+        self.project_context = project_context
+        self.content_classifier = ContentClassifier()
+        self.import_analyzer = ImportAnalyzer(project_context)
+        self.auto_fixer = AutoFixer()
+        self.validation_cache = {}
+    
+    def validate_and_fix_generated_code(self, file_path: str, generated_code: str) -> dict:
+        """
+        Main validation entry point - validates and auto-fixes generated code
+        Returns: {
+            'is_valid': bool,
+            'fixed_code': str,
+            'issues_found': list,
+            'fixes_applied': list,
+            'validation_summary': str
+        }
+        """
+        result = {
+            'is_valid': True,
+            'fixed_code': generated_code,
+            'issues_found': [],
+            'fixes_applied': [],
+            'validation_summary': ''
+        }
+        
+        try:
+            # Step 1: Classify file content
+            file_classification = self.content_classifier.classify_file_content(file_path, generated_code)
+            
+            # Step 2: Analyze imports
+            import_analysis = self.import_analyzer.analyze_imports(file_path, generated_code, file_classification)
+            
+            # Step 3: Collect all issues
+            if import_analysis['invalid_imports'] or import_analysis['missing_imports']:
+                result['is_valid'] = False
+                result['issues_found'].extend(import_analysis['invalid_imports'])
+                result['issues_found'].extend([{'type': 'missing_import', 'import': imp} for imp in import_analysis['missing_imports']])
+            
+            # Step 4: Auto-fix issues
+            if import_analysis['auto_fix_suggestions']:
+                result['fixed_code'] = self.auto_fixer.apply_fixes(generated_code, import_analysis['auto_fix_suggestions'])
+                result['fixes_applied'] = import_analysis['auto_fix_suggestions']
+                
+                # Re-validate after fixes
+                if result['fixed_code'] != generated_code:
+                    # Update project context with fixed content
+                    self.project_context.update_from_generated_file(file_path, result['fixed_code'])
+            
+            # Step 5: Generate validation summary
+            result['validation_summary'] = self._generate_validation_summary(file_path, file_classification, import_analysis, result['fixes_applied'])
+            
+        except Exception as e:
+            logger.error(f"Validation error for {file_path}: {e}", exc_info=True)
+            result['is_valid'] = False
+            result['issues_found'].append({'type': 'validation_error', 'error': str(e)})
+        
+        return result
+    
+    def _generate_validation_summary(self, file_path: str, classification: dict, analysis: dict, fixes: list) -> str:
+        """Generate a human-readable validation summary"""
+        summary_parts = []
+        summary_parts.append(f"File: {file_path}")
+        summary_parts.append(f"Content Type: {classification['content_type']}")
+        summary_parts.append(f"Classes Found: {classification['classes_found']}")
+        summary_parts.append(f"Schema Classes: {classification['schema_classes']}")
+        summary_parts.append(f"Model Classes: {classification['model_classes']}")
+        
+        if analysis['invalid_imports']:
+            summary_parts.append(f"Invalid Imports Fixed: {len(analysis['invalid_imports'])}")
+        
+        if analysis['missing_imports']:
+            summary_parts.append(f"Missing Imports Added: {len(analysis['missing_imports'])}")
+        
+        if fixes:
+            summary_parts.append("Auto-fixes Applied:")
+            for fix in fixes:
+                summary_parts.append(f"  - {fix['action']}: {fix.get('reason', 'General fix')}")
+        
+        return '\n'.join(summary_parts)
+        
+        if fixes:
+            summary_parts.append("Auto-fixes Applied:")
+            for fix in fixes:
+                summary_parts.append(f"  - {fix['action']}: {fix.get('reason', 'General fix')}")
+        
+        return '\n'.join(summary_parts)
+
+#Project Context Management for Cross-File Awareness
+class ProjectContext:
+    """Tracks shared definitions and dependencies across files during code generation"""
+    
+    def __init__(self, project_name: str, tech_stack: str, design_data: dict = None):
+        self.project_name = project_name
+        self.tech_stack = tech_stack.lower()
+        self.design_data = design_data or {}
+        
+        # Track what's been defined where
+        self.defined_classes = {}  # {class_name: file_path}
+        self.defined_functions = {}  # {function_name: file_path}
+        self.imports_used = {}  # {file_path: [import_statements]}
+        self.database_models = []  # [model_class_names]
+        self.api_endpoints = []  # [endpoint_info]
+        self.shared_components = {}  # {component_name: definition_location}
+        
+        # Track file generation order and dependencies
+        self.generation_order = []
+        self.file_dependencies = {}  # {file_path: [required_files]}
+        
+        # Analyze project structure to determine patterns dynamically
+        self.project_structure = self._analyze_project_structure()
+        self.established_patterns = self._init_dynamic_framework_patterns()
+        
+    def _analyze_project_structure(self) -> dict:
+        """Dynamically analyze the project structure from design data"""
+        structure_info = {
+            'files_by_type': {},
+            'directories': [],
+            'file_relationships': {},
+            'entry_points': [],
+            'database_files': [],
+            'model_files': [],
+            'route_files': [],
+            'config_files': [],
+            'frontend_files': []
+        }
+        
+        if not self.design_data:
+            return structure_info
+        
+        folder_structure = self.design_data.get('folder_Structure', {})
+        structure_items = folder_structure.get('structure', [])
+        
+        for item in structure_items:
+            path = item.get('path', '').strip('/\\')
+            description = item.get('description', '').lower()
+            
+            # Skip directories
+            if 'directory' in description:
+                structure_info['directories'].append(path)
+                continue
+            
+            filename = os.path.basename(path)
+            file_ext = os.path.splitext(filename)[1]
+            file_base = os.path.splitext(filename)[0]
+            
+            # Categorize files by extension
+            if file_ext not in structure_info['files_by_type']:
+                structure_info['files_by_type'][file_ext] = []
+            structure_info['files_by_type'][file_ext].append(path)
+            
+            # Identify specific file types based on name patterns and descriptions
+            if filename in ['main.py', 'app.py', 'run.py'] or 'main' in description or 'entry' in description:
+                structure_info['entry_points'].append(path)
+            
+            if any(keyword in filename.lower() for keyword in ['database', 'db']) or 'database' in description:
+                structure_info['database_files'].append(path)
+            
+            if any(keyword in filename.lower() for keyword in ['model', 'schema']) or 'model' in description:
+                structure_info['model_files'].append(path)
+            
+            if any(keyword in filename.lower() for keyword in ['route', 'api', 'endpoint']) or any(keyword in description for keyword in ['route', 'api', 'endpoint']):
+                structure_info['route_files'].append(path)
+            
+            if any(keyword in filename.lower() for keyword in ['config', 'setting']) or 'config' in description:
+                structure_info['config_files'].append(path)
+            
+            if file_ext in ['.html', '.css', '.js'] or any(keyword in description for keyword in ['frontend', 'ui', 'web']):
+                structure_info['frontend_files'].append(path)
+        
+        return structure_info
+    
+    def _init_dynamic_framework_patterns(self) -> dict:
+        """Initialize framework-specific patterns based on actual project structure"""
+        patterns = {
+            'import_patterns': {},
+            'component_locations': {},
+            'file_dependencies': {},
+            'shared_definitions': {}
+        }
+        
+        if self.tech_stack not in ['fastapi', 'django', 'flask']:
+            return patterns
+        
+        # Dynamically determine component locations based on actual files
+        structure = self.project_structure
+        
+        # Find database-related files
+        if structure['database_files']:
+            db_file = structure['database_files'][0]  # Use first database file
+            patterns['component_locations']['database'] = db_file
+            patterns['component_locations']['database_base'] = db_file
+            patterns['component_locations']['database_session'] = db_file
+            
+            # Generate import patterns based on actual file location
+            db_module = os.path.splitext(db_file)[0].replace('/', '.').replace('\\', '.')
+            patterns['import_patterns']['database_base'] = f'from {db_module} import Base'
+            patterns['import_patterns']['database_session'] = f'from {db_module} import get_db'
+            patterns['import_patterns']['database_engine'] = f'from {db_module} import engine'
+            
+            # Mark Base as shared definition that should only be defined once
+            patterns['shared_definitions']['Base'] = {
+                'location': db_file,
+                'definition': 'Base = declarative_base()',
+                'import_pattern': patterns['import_patterns']['database_base']
+            }
+        
+        # Find model files
+        if structure['model_files']:
+            model_file = structure['model_files'][0]  # Use first model file
+            patterns['component_locations']['models'] = model_file
+            
+            model_module = os.path.splitext(model_file)[0].replace('/', '.').replace('\\', '.')
+            patterns['import_patterns']['models'] = f'from {model_module} import {{model_name}}'
+            
+            # Models depend on database if it exists
+            if structure['database_files']:
+                patterns['file_dependencies'][model_file] = structure['database_files']
+        
+        # Find route/API files
+        if structure['route_files']:
+            for route_file in structure['route_files']:
+                route_module = os.path.splitext(route_file)[0].replace('/', '.').replace('\\', '.')
+                patterns['import_patterns'][f'routes_{os.path.basename(route_file)}'] = f'from {route_module} import router'
+                
+                # Routes typically depend on models and database
+                dependencies = []
+                if structure['model_files']:
+                    dependencies.extend(structure['model_files'])
+                if structure['database_files']:
+                    dependencies.extend(structure['database_files'])
+                if dependencies:
+                    patterns['file_dependencies'][route_file] = dependencies
+        
+        # Entry points depend on everything except themselves
+        for entry_file in structure['entry_points']:
+            dependencies = []
+            dependencies.extend(structure['database_files'])
+            dependencies.extend(structure['model_files'])
+            # Only add route files that are not the entry file itself
+            dependencies.extend([rf for rf in structure['route_files'] if rf != entry_file])
+            if dependencies:
+                patterns['file_dependencies'][entry_file] = dependencies
+        
+        return patterns
+    
+    def register_class(self, class_name: str, file_path: str, is_database_model: bool = False):
+        """Register a class definition"""
+        self.defined_classes[class_name] = file_path
+        if is_database_model:
+            self.database_models.append(class_name)
+    
+    def register_function(self, function_name: str, file_path: str):
+        """Register a function definition"""
+        self.defined_functions[function_name] = file_path
+    
+    def register_import(self, file_path: str, import_statement: str):
+        """Register an import statement for a file"""
+        if file_path not in self.imports_used:
+            self.imports_used[file_path] = []
+        if import_statement not in self.imports_used[file_path]:
+            self.imports_used[file_path].append(import_statement)
+    
+    def get_forbidden_redefinitions(self, current_file_path: str) -> list:
+        """Get list of things that should NOT be redefined in the current file"""
+        forbidden = []
+        
+        # Don't redefine classes defined elsewhere
+        for class_name, file_path in self.defined_classes.items():
+            if file_path != current_file_path:
+                forbidden.append(f"class {class_name}")
+        
+        # Don't redefine shared definitions in wrong files
+        shared_defs = self.established_patterns.get('shared_definitions', {})
+        for def_name, def_info in shared_defs.items():
+            if def_info['location'] != current_file_path:
+                forbidden.append(def_info['definition'])
+        
+        return forbidden
+    
+    def get_required_imports(self, current_file_path: str) -> list:
+        """Get list of imports that should be used in the current file based on dependencies"""
+        required_imports = []
+        
+        # Get file dependencies from patterns
+        file_deps = self.established_patterns.get('file_dependencies', {})
+        if current_file_path in file_deps:
+            dependency_files = file_deps[current_file_path]
+            
+            for dep_file in dependency_files:
+                # Add imports based on what's expected to be in dependency files
+                if dep_file in self.project_structure['database_files']:
+                    # Import database components
+                    db_imports = self.established_patterns.get('import_patterns', {})
+                    if 'database_base' in db_imports:
+                        required_imports.append(db_imports['database_base'])
+                    if 'database_session' in db_imports:
+                        required_imports.append(db_imports['database_session'])
+                
+                elif dep_file in self.project_structure['model_files']:
+                    # Import models (will be filled in during generation)
+                    model_imports = self.established_patterns.get('import_patterns', {})
+                    if 'models' in model_imports and self.database_models:
+                        # Replace placeholder with actual model names
+                        model_import_template = model_imports['models']
+                        for model_name in self.database_models:
+                            required_imports.append(model_import_template.replace('{model_name}', model_name))
+        
+        # Add SQLAlchemy imports for route/API files
+        if current_file_path in self.project_structure['route_files'] or current_file_path in self.project_structure['entry_points']:
+            if self.project_structure['database_files']:
+                required_imports.append("from sqlalchemy.orm import Session")
+        
+        return list(set(required_imports))  # Remove duplicates
+    
+    def get_generation_context_for_file(self, file_path: str) -> dict:
+        """Get comprehensive context for generating a specific file"""
+        context = {
+            'file_type': self._determine_file_type(file_path),
+            'dependencies': self.get_required_imports(file_path),
+            'forbidden_redefinitions': self.get_forbidden_redefinitions(file_path),
+            'shared_definitions_locations': self.established_patterns.get('shared_definitions', {}),
+            'related_files': self._get_related_files(file_path),
+            'is_entry_point': file_path in self.project_structure['entry_points'],
+            'framework_patterns': self.established_patterns
+        }
+        return context
+    
+    def _determine_file_type(self, file_path: str) -> str:
+        """Determine the type/purpose of a file based on project structure analysis"""
+        if file_path in self.project_structure['database_files']:
+            return 'database'
+        elif file_path in self.project_structure['model_files']:
+            return 'models'
+        elif file_path in self.project_structure['route_files']:
+            return 'routes'
+        elif file_path in self.project_structure['entry_points']:
+            return 'entry_point'
+        elif file_path in self.project_structure['config_files']:
+            return 'config'
+        elif file_path in self.project_structure['frontend_files']:
+            return 'frontend'
+        else:
+            return 'utility'
+    
+    def _get_related_files(self, file_path: str) -> list:
+        """Get list of files that are related to the current file"""
+        related = []
+        
+        # Files that depend on this file
+        for other_file, deps in self.established_patterns.get('file_dependencies', {}).items():
+            if file_path in deps:
+                related.append(other_file)
+        
+        # Files this file depends on
+        if file_path in self.established_patterns.get('file_dependencies', {}):
+            related.extend(self.established_patterns['file_dependencies'][file_path])
+        
+        return list(set(related))
+    
+    
+    def update_from_generated_file(self, file_path: str, generated_code: str):
+        """Analyze generated code and update context with validation and auto-fixing"""
+        # Initialize validator if not already done
+        if not hasattr(self, 'code_validator'):
+            self.code_validator = CodeValidator(self)
+        
+        # Validate and auto-fix the generated code
+        validation_result = self.code_validator.validate_and_fix_generated_code(file_path, generated_code)
+        
+        # Use the fixed code for analysis
+        final_code = validation_result['fixed_code']
+        
+        # Log validation results
+        if validation_result['fixes_applied']:
+            logger.info(f"🔧 Auto-fixed {len(validation_result['fixes_applied'])} issues in {file_path}")
+            for fix in validation_result['fixes_applied']:
+                logger.debug(f"  Applied: {fix['action']} - {fix.get('reason', '')}")
+        
+        if not validation_result['is_valid']:
+            logger.warning(f"⚠️ Validation issues remain in {file_path}: {len(validation_result['issues_found'])} issues")
+        
+        # Parse the final code for context tracking
+        lines = final_code.split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            
+            # Track class definitions with enhanced classification
+            if line.startswith('class ') and ':' in line:
+                class_name = line.split('class ')[1].split('(')[0].split(':')[0].strip()
+                
+                # Enhanced DB model detection
+                is_db_model = False
+                if 'Base' in line and not 'BaseModel' in line:
+                    is_db_model = True
+                elif any(keyword in class_name for keyword in ['Model']) and 'BaseModel' not in line:
+                    is_db_model = True
+                
+                self.register_class(class_name, file_path, is_db_model)
+            
+            # Track function definitions
+            elif line.startswith('def ') and '(' in line:
+                func_name = line.split('def ')[1].split('(')[0].strip()
+                self.register_function(func_name, file_path)
+            
+            # Track import statements
+            elif line.startswith(('import ', 'from ')):
+                self.register_import(file_path, line)
+        
+        # Add to generation order if not already there
+        if file_path not in self.generation_order:
+            self.generation_order.append(file_path)
+        
+        # Store validation result for reporting
+        if not hasattr(self, 'validation_results'):
+            self.validation_results = {}
+        self.validation_results[file_path] = validation_result
+        
+        return validation_result  # Return the validation result for caller use
+    
+    def get_context_summary(self) -> str:
+        """Get a summary of the current project context for prompts"""
+        summary = f"""
+PROJECT CONTEXT SUMMARY:
+- Project: {self.project_name}
+- Framework: {self.tech_stack}
+- Generated Files: {len(self.generation_order)}
+
+PROJECT STRUCTURE ANALYSIS:
+- Database Files: {self.project_structure['database_files']}
+- Model Files: {self.project_structure['model_files']}
+- Route Files: {self.project_structure['route_files']}
+- Entry Points: {self.project_structure['entry_points']}
+- Frontend Files: {len(self.project_structure['frontend_files'])} files
+
+DEFINED CLASSES: {list(self.defined_classes.keys())}
+DATABASE MODELS: {self.database_models}
+DEFINED FUNCTIONS: {list(self.defined_functions.keys())}
+
+DYNAMIC PATTERNS DETECTED:
+{json.dumps(self.established_patterns, indent=2)}
+
+GENERATION ORDER: {self.generation_order}
+        """.strip()
+        return summary
+    
+    def get_context_for_prompt(self, current_file_path: str) -> str:
+        """Get context-aware instructions for LLM prompt"""
+        context = self.get_generation_context_for_file(current_file_path)
+        file_type = context['file_type']
+        
+        instructions = []
+        
+        # Add file-specific instructions
+        instructions.append(f"FILE TYPE: {file_type.upper()}")
+        
+        # Add forbidden redefinitions
+        if context['forbidden_redefinitions']:
+            instructions.append("FORBIDDEN PATTERNS (DO NOT include these):")
+            for forbidden in context['forbidden_redefinitions']:
+                instructions.append(f"  - {forbidden}")
+        
+        # Add required imports
+        if context['dependencies']:
+            instructions.append("REQUIRED IMPORTS:")
+            for imp in context['dependencies']:
+                instructions.append(f"  - {imp}")
+        
+        # Add shared definitions info
+        if context['shared_definitions_locations']:
+            instructions.append("SHARED DEFINITIONS (already defined elsewhere):")
+            for def_name, def_info in context['shared_definitions_locations'].items():
+                if def_info['location'] != current_file_path:
+                    instructions.append(f"  - {def_name} is defined in {def_info['location']}")
+                    instructions.append(f"    Use: {def_info['import_pattern']}")
+        
+        # Add file-specific guidance
+        if file_type == 'models' and self.project_structure['database_files']:
+            instructions.append("MODEL FILE GUIDANCE:")
+            instructions.append("  - Import Base from database module")
+            instructions.append("  - Define SQLAlchemy models inheriting from Base")
+            instructions.append("  - Do NOT redefine declarative_base()")
+        
+        elif file_type == 'database':
+            instructions.append("DATABASE FILE GUIDANCE:")
+            instructions.append("  - Define Base = declarative_base() HERE")
+            instructions.append("  - Define database engine and session factory")
+            instructions.append("  - This file provides shared database components")
+        
+        elif file_type == 'routes':
+            instructions.append("ROUTES FILE GUIDANCE:")
+            instructions.append("  - Import models and database session")
+            instructions.append("  - Define FastAPI router with endpoints")
+            instructions.append("  - Use dependency injection for database sessions")
+        
+        elif file_type == 'entry_point':
+            instructions.append("ENTRY POINT GUIDANCE:")
+            instructions.append("  - Import and configure all application components")
+            instructions.append("  - Set up CORS, static files, and routes")
+            instructions.append("  - Make runnable with uvicorn")
+        
+        return "\n".join(instructions)
+# --- end logic mới 28/6 ---
 
 #Tool for generating individual files
 class FileGeneratorTool(BaseTool):
@@ -430,23 +1265,39 @@ class FileGeneratorTool(BaseTool):
                 storage_type=context.get('design_data', {}).get('data_Design', {}).get('storage_Type', 'sqlite')
             )
         
+        # --- modify lại dựa trên logic mới 28/6 ---
         # Generate code using LLM with retries
         for attempt in range(self._config.max_retries):
             try:
+                # Build enhanced prompt with project context
+                base_prompt_args = {
+                    'file_path': file_path,
+                    'project_name': requirements.get('project_Overview', {}).get('project_Name', 'this application'),
+                    'backend_language_framework': f"{requirements.get('technology_Stack', {}).get('backend', {}).get('language', 'Python')} {requirements.get('technology_Stack', {}).get('backend', {}).get('framework', 'FastAPI')}",
+                    'frontend_language_framework': f"{requirements.get('technology_Stack', {}).get('frontend', {}).get('language', 'HTML/CSS/JS')} {requirements.get('technology_Stack', {}).get('frontend', {}).get('framework', 'Vanilla')}",
+                    'storage_type': context.get('design_data', {}).get('data_Design', {}).get('storage_Type', 'sqlite'),
+                    'backend_module_path': context.get('backend_module_path', 'main'),
+                    'frontend_dir': context.get('frontend_dir', 'frontend'),
+                    'css_path': context.get('css_path', 'css/style.css'),
+                    'js_files_to_link': context.get('js_files_to_link', []),
+                    'json_design': context.get('design_data', {}),
+                    'json_spec': requirements
+                }
+                
+                # Add project context if available
+                if 'project_context' in context:
+                    project_context = context['project_context']
+                    base_prompt_args['project_context_summary'] = project_context.get_context_summary()
+                    base_prompt_args['context_instructions'] = context.get('context_instructions', '')
+                else:
+                    base_prompt_args['project_context_summary'] = "No project context available"
+                    base_prompt_args['context_instructions'] = ""
+                
                 prompt_template = self._template_manager.get_template(
                     tech_stack, 'prompt_template',
-                    file_path=file_path,
-                    project_name=requirements.get('project_Overview', {}).get('project_Name', 'this application'),
-                    backend_language_framework=f"{requirements.get('technology_Stack', {}).get('backend', {}).get('language', 'Python')} {requirements.get('technology_Stack', {}).get('backend', {}).get('framework', 'FastAPI')}",
-                    frontend_language_framework=f"{requirements.get('technology_Stack', {}).get('frontend', {}).get('language', 'HTML/CSS/JS')} {requirements.get('technology_Stack', {}).get('frontend', {}).get('framework', 'Vanilla')}",
-                    storage_type=context.get('design_data', {}).get('data_Design', {}).get('storage_Type', 'sqlite'),
-                    backend_module_path=context.get('backend_module_path', 'main'),
-                    frontend_dir=context.get('frontend_dir', 'frontend'),
-                    css_path=context.get('css_path', 'css/style.css'),
-                    js_files_to_link=context.get('js_files_to_link', []),
-                    json_design=context.get('design_data', {}),
-                    json_spec=requirements
+                    **base_prompt_args
                 )
+                # --- end modify ---
                 
                 response = self._llm.invoke([HumanMessage(content=prompt_template)])
                 generated_code = response.content.strip()
@@ -639,40 +1490,48 @@ class LangChainCodingAgent:
     def generate_project(self, design_data: dict, spec_data: dict) -> str:
         project_name = None
         try:
+            logger.info("🚀 Starting project generation...")
+            logger.info(f"Design data keys: {list(design_data.keys()) if design_data else 'None'}")
+            logger.info(f"Spec data keys: {list(spec_data.keys()) if spec_data else 'None'}")
+            
             # 1. Determine project root and initialize tools/error tracker for this run
             project_name = design_data.get('folder_Structure', {}).get('root_Project_Directory_Name')
             if not project_name:
+                logger.error("❌ Missing 'root_Project_Directory_Name' in design data")
                 raise ValueError("Design data is missing 'root_Project_Directory_Name'.")
             
+            logger.info(f"📁 Project name: {project_name}")
             project_root = os.path.abspath(os.path.join(self.config.base_output_dir, project_name))
+            logger.info(f"📂 Project root: {project_root}")
+            
             self._setup_project_tools(project_root)
             
             logger.info(f"Starting project generation for: {project_name} at {project_root}")
             
             # 2. Validate JSON inputs
             self._validate_json(design_data, spec_data)
-            logger.info("JSON inputs validated successfully.")
+            logger.info("✅ JSON inputs validated successfully.")
 
             # 3. Create project structure
             structure_result = self._create_project_structure(design_data, project_root)
-            logger.info(f"Structure creation result: {structure_result}")
+            logger.info(f"✅ Structure creation result: {structure_result}")
             
             # 4. Generate all project files
             files_result = self._generate_project_files(design_data, spec_data, project_root)
-            logger.info(f"File generation result: {files_result}")
+            logger.info(f"✅ File generation result: {files_result}")
             
             # 5. Create the run script to start the application
             self._create_run_script(project_root, spec_data, design_data)
-            logger.info(f"Created run script for project '{project_name}'.")
+            logger.info(f"✅ Created run script for project '{project_name}'.")
             
-            logger.info(f"Project generation completed successfully for: {project_root}")
+            logger.info(f"🎉 Project generation completed successfully for: {project_root}")
             
             # This success message is what the AutoGen Coder will report back to the ProjectManager.
             return f"Successfully generated project '{project_name}' at {project_root}. The 'run.bat' script is ready."
 
         except Exception as e:
             error_project_name = project_name or "unknown_project"
-            logger.error(f"Project generation failed for '{error_project_name}': {e}", exc_info=True)
+            logger.error(f"❌ Project generation failed for '{error_project_name}': {e}", exc_info=True)
             if self.error_tracker:
                 self.error_tracker.add_error("project_generation_fatal", error_project_name, str(e))
             # Re-raise the exception so the orchestrator (AutoGen) knows something went wrong.
@@ -715,10 +1574,24 @@ class LangChainCodingAgent:
         structure = design_data['folder_Structure']['structure']
         context_for_generation = self._build_context(design_data, spec_data, project_root)
         
+        # Initialize project context for cross-file awareness
+        project_name = design_data.get('folder_Structure', {}).get('root_Project_Directory_Name', 'project')
+        tech_stack = spec_data.get('technology_Stack', {}).get('backend', {}).get('framework', 'fastapi')
+        project_context = ProjectContext(project_name, tech_stack, design_data)
+        
+        logger.info(f"🧠 Initialized ProjectContext with structure analysis:")
+        logger.info(f"   Database files: {project_context.project_structure['database_files']}")
+        logger.info(f"   Model files: {project_context.project_structure['model_files']}")
+        logger.info(f"   Route files: {project_context.project_structure['route_files']}")
+        logger.info(f"   Entry points: {project_context.project_structure['entry_points']}")
+        
         file_generator = next(t for t in self.tools if isinstance(t, FileGeneratorTool))
         generated_files = []
         
-        for item in structure:
+        # Sort files to generate database/model files first, then routes, then entry points
+        sorted_files = self._sort_files_by_dependency_order(structure, project_context)
+        
+        for item in sorted_files:
             if 'directory' not in item.get('description', '').lower():
                 # Validate and sanitize the path to prevent directory traversal
                 item_path = item['path'].strip('/\\')
@@ -731,17 +1604,71 @@ class LangChainCodingAgent:
                 # Ensure the directory exists before creating the file
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
                 
+                # --- logic mới 28/6 ---
+                # Build enhanced context with project-wide awareness
                 file_context = context_for_generation.copy()
                 file_context['file_info'] = item
+                file_context['project_context'] = project_context
+                file_context['context_instructions'] = project_context.get_context_for_prompt(item_path)
+                
+                logger.info(f"📝 Generating {item_path} (type: {project_context._determine_file_type(item_path)})")
                 
                 code = file_generator._run(file_path, file_context, spec_data)
                 
+                # Update project context with what was generated (includes validation and auto-fixing)
+                validation_result = project_context.update_from_generated_file(item_path, code)
+                
+                # Use the fixed code for writing to file
+                final_code = validation_result['fixed_code']
+                # --- end logic mới ---
+                
                 with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(code)
+                    f.write(final_code)
                 
                 generated_files.append(file_path)
                 
-        return f"Generated {len(generated_files)} files"
+                # Log validation results
+                if validation_result['fixes_applied']:
+                    logger.info(f"  ✅ Auto-fixed {len(validation_result['fixes_applied'])} issues")
+                else:
+                    logger.debug(f"  ✅ No issues found")
+                logger.debug(f"✅ Generated and analyzed {item_path}")
+        
+        logger.info(f"📊 Final project context summary:")
+        logger.info(project_context.get_context_summary())
+        
+        return f"Generated {len(generated_files)} files with project-wide context awareness"
+    
+    def _sort_files_by_dependency_order(self, structure: list, project_context: ProjectContext) -> list:
+        """Sort files by dependency order to generate foundational files first"""
+        files_by_priority = {
+            'config': [],
+            'database': [], 
+            'models': [],
+            'routes': [],
+            'entry_points': [],
+            'frontend': [],
+            'other': []
+        }
+        
+        for item in structure:
+            if 'directory' in item.get('description', '').lower():
+                continue
+                
+            item_path = item['path'].strip('/\\')
+            file_type = project_context._determine_file_type(item_path)
+            
+            if file_type in files_by_priority:
+                files_by_priority[file_type].append(item)
+            else:
+                files_by_priority['other'].append(item)
+        
+        # Return in dependency order
+        sorted_files = []
+        for priority in ['config', 'database', 'models', 'routes', 'other', 'frontend', 'entry_points']:
+            sorted_files.extend(files_by_priority[priority])
+        
+        return sorted_files
     
     def _build_context(self, design_data: dict, spec_data: dict, project_root: str) -> dict:
         """Build a comprehensive context dictionary for prompt generation"""
